@@ -1,0 +1,251 @@
+package graph;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.alg.GabowStrongConnectivityInspector;
+import org.jgrapht.graph.DefaultEdge;
+
+public class TNF {
+	boolean checkFrgVio;
+	PGraph pgraph;
+	float lmbda;
+	gtGraph scc;
+	int[] node2comp;
+	PrintStream op;
+	int N;
+
+	public TNF(PGraph pgraph, PrintStream op, float lmbda, boolean checkFrgVio) {
+		this.checkFrgVio = checkFrgVio;
+		this.op = op;
+		this.pgraph = pgraph;
+		this.lmbda = lmbda;
+		List<Edge> sortedEdges = pgraph.getSortedEdges();
+		System.out.println("heree"+pgraph.nodes.size()+" "+pgraph.sortedEdges);
+		this.N = pgraph.nodes.size();
+
+		this.formGraphInit(sortedEdges, this.lmbda);
+	}
+
+	static boolean isConnectedScc(DirectedGraph<Integer, DefaultEdge> scc, int[] node2comp, int i, int j) {
+		int idx1 = node2comp[i];
+		int idx2 = node2comp[j];
+		return idx1 == idx2 || scc.containsEdge(idx1, idx2);
+
+	}
+	
+	static boolean check_FRG_vio_edge(gtGraph scc, int[] node2comp, int i, int j, boolean checkFrgVio) {
+		int idx1 = node2comp[i];
+		int idx2 = node2comp[j];
+		assert idx1 != idx2;
+		int numVio = 0;
+		for (DefaultEdge e : scc.outgoingEdgesOf(idx1)) {
+			int idx3 = scc.getEdgeTarget(e);
+			if (idx3 == idx1 || idx3 == idx2) {
+				continue;
+			}
+			if (!scc.containsEdge(idx3, idx2) && !scc.containsEdge(idx2, idx3)) {
+				// System.out.println("frg vio: "+idx1+" "+idx2+" "+idx3);
+				numVio++;
+				if (checkFrgVio) {
+					return true;
+				} else if (numVio > 1) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	// 0: nothing added
+	// 1: added, but no loop
+	// 2: loop added
+	int get_tr_cl_edges_scc(gtGraph scc, int[] node2comp, int i, int j) {
+		PGraph pgraph = this.pgraph;
+		LinkedList<Edge> q = new LinkedList<>();
+		int idx1 = node2comp[i];
+		int idx2 = node2comp[j];
+		assert idx1 != idx2;
+
+		q.add(new Edge(idx1, idx2, 0));
+		Set<Long> seenEdges = new HashSet<>();
+		seenEdges.add((long) (idx1) + (long) N * idx2);
+
+		double sumSims = 0;
+
+		while (q.size() > 0) {
+			Edge e = q.poll();
+			idx1 = e.i;
+			idx2 = e.j;
+
+			assert idx1 != idx2;
+
+			if (this.lmbda > 0) {
+				List<Integer> nodes1 = scc.comps.get(idx1);
+				List<Integer> nodes2 = scc.comps.get(idx2);
+				for (int ii : nodes1) {
+					for (int jj : nodes2) {
+						float sim = pgraph.getW(ii, jj);
+						sumSims += sim - this.lmbda;
+					}
+				}
+			}
+
+			// Do transitive closure
+			for (DefaultEdge ee : scc.incomingEdgesOf(idx1)) {
+				int k = scc.getEdgeSource(ee);
+				if (k != idx2 && !scc.containsEdge(k, idx2) && !seenEdges.contains((long) k + (long) N * idx2)) {
+					q.add(new Edge(k, idx2, 0));
+					seenEdges.add((long) k + (long) N * idx2);
+				}
+			}
+
+			for (DefaultEdge ee : scc.outgoingEdgesOf(idx2)) {
+				int k = scc.getEdgeTarget(ee);
+				if (k != idx1 && !scc.containsEdge(idx1, k) && !seenEdges.contains((long) idx1 + (long) N * k)) {
+					q.add(new Edge(idx1, k, 0));
+					seenEdges.add((long) idx1 + (long) N * k);
+				}
+			}
+		}
+
+		// System.out.println("sumSims: "+sumSims);
+
+		if (this.lmbda > 0 && sumSims <= 0) {
+			return 0;
+		} else {
+			boolean loopAdded = false;
+			for (long x : seenEdges) {
+				// System.out.println("set to true");
+				idx1 = (int) (x % N);
+				idx2 = (int) (x / N);
+				// System.out.println("adding edge: "+idx1+" "+idx2);
+				scc.addEdge(idx1, idx2);
+				if (scc.containsEdge(idx2, idx1)) {
+					// System.out.println("loop added");
+					loopAdded = true;
+				}
+			}
+			if (loopAdded) {
+				return 2;
+			} else if (seenEdges.size() > 0) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+
+	}
+
+	void formGraphInit(List<Edge> sortedEdges, float lmbda) {
+		int N = pgraph.nodes.size();
+		this.node2comp = new int[N];
+		this.scc = new gtGraph(DefaultEdge.class);
+		for (int i = 0; i < N; i++) {
+			scc.addVertex(i);
+
+			List<Integer> l = new ArrayList<>();
+			l.add(i);
+			scc.comps.add(l);
+			node2comp[i] = i;
+
+		}
+
+		for (Edge e : sortedEdges) {
+			float sim = e.sim - lmbda;
+			if (sim <= lmbda) {
+				break;
+			}
+			int i = e.i;
+			int j = e.j;
+			
+			System.out.println("checking: " + i + " " + j + " " + sim + " " + pgraph.nodes.get(i).id + " "
+					+ pgraph.nodes.get(j).id);
+			if (isConnectedScc(scc, node2comp, i, j) || (check_FRG_vio_edge(scc, node2comp, i, j, checkFrgVio))) {
+				continue;
+			}
+			System.out.println("no frg vio");
+			int tr = get_tr_cl_edges_scc(scc, node2comp, i, j);
+			boolean loopAdded = tr == 2;
+			System.out.println("anyAdded: " + (tr > 0));
+
+			if (loopAdded) {
+				System.out.println("loop added");
+				updateSCC();
+			}
+		}
+
+	}
+
+	void updateSCC() {
+		GabowStrongConnectivityInspector<Integer, DefaultEdge> insp = new GabowStrongConnectivityInspector<>(scc);
+		List<Set<Integer>> comps = insp.stronglyConnectedSets();
+
+		gtGraph scc0 = this.scc;
+		this.scc = new gtGraph(DefaultEdge.class);
+		int[] scc0Node2comp = new int[scc0.vertexSet().size()];
+
+		for (int i = 0; i < comps.size(); i++) {
+			scc.addVertex(i);
+		}
+
+		for (int i = 0; i < comps.size(); i++) {
+			Set<Integer> c = comps.get(i);
+			ArrayList<Integer> cnodes = new ArrayList<>();
+			for (int j : c) {
+				List<Integer> l = scc0.comps.get(j);
+
+				for (int k : l) {
+					cnodes.add(k);
+				}
+				scc0Node2comp[j] = i;
+			}
+
+			Collections.sort(cnodes);
+			scc.comps.add(cnodes);
+			for (int k : cnodes) {
+				node2comp[k] = i;
+			}
+		}
+
+		for (DefaultEdge e : scc0.edgeSet()) {
+			int v = scc.getEdgeSource(e);
+			int nbr = scc.getEdgeTarget(e);
+			int idx = scc0Node2comp[v];
+			int idx2 = scc0Node2comp[nbr];
+
+			if (idx != idx2 && !scc.containsEdge(idx, idx2)) {
+				scc.addEdge(idx, idx2);
+			}
+		}
+
+	}
+
+	void writeSCC() {
+		// example: person#location_sim.txt
+		op.println("lambda: " + this.lmbda);
+		for (int i = 0; i < scc.vertexSet().size(); i++) {
+			op.println("\ncomponent " + i);
+			List<Integer> nodesIdxes = scc.comps.get(i);
+			for (int idx : nodesIdxes) {
+				Node n = pgraph.nodes.get(idx);
+				op.println(n.id);
+			}
+
+			for (DefaultEdge e : scc.outgoingEdgesOf(i)) {
+				int neigh = scc.getEdgeTarget(e);
+				int firstNIdx = scc.comps.get(neigh).get(0);
+				String id = pgraph.nodes.get(firstNIdx).id;
+				op.println(" => " + neigh + " " + id);
+			}
+		}
+		op.println("writing Done\n");
+	}
+
+}
