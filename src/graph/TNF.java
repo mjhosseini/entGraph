@@ -55,7 +55,7 @@ public class TNF {
 				numVio++;
 				if (checkFrgVio) {
 					return true;
-				} else if (numVio > 1) {
+				} else if (numVio > 1) { 
 					return true;
 				}
 			}
