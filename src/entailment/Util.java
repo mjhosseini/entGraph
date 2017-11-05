@@ -55,6 +55,7 @@ import edu.stanford.nlp.util.CoreMap;
 import entailment.entityLinking.SimpleSpot;
 import entailment.stringUtils.RelationString;
 import entailment.vector.EntailGraphFactoryAggregator;
+import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 public class Util {
 
@@ -188,7 +189,7 @@ public class Util {
 					docS += s + " ";
 					// System.out.println("#line: " + s);
 					HashMap<String, String> posTags = new HashMap<>();
-					if (shouldLink){
+					if (shouldLink) {
 						posTags = getAllPOSTags(s);
 					}
 					// for (String t:posTags.keySet()){
@@ -774,7 +775,7 @@ public class Util {
 		if (!EntailGraphFactoryAggregator.isTyped) {
 			return "thing";
 		}
-		if (EntailGraphFactoryAggregator.figerTypes) {
+		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 			if (entToFigerType == null) {
 				try {
 					loadFigerTypes(defaultEntToFigerType);
@@ -794,23 +795,26 @@ public class Util {
 
 			// System.out.println(arg+" "+type);
 			return type;
-		}
-		String type;
-		if (isEntity) {
-			type = entToType.get(arg);
-			if (type == null || type.equals("none")) {
-				// System.err.println("no type for " + arg1);
-				type = "thing";
+		} else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.GKG) {
+			String type;
+			if (isEntity) {
+				type = entToType.get(arg);
+				if (type == null || type.equals("none")) {
+					// System.err.println("no type for " + arg1);
+					type = "thing";
+				}
+			} else {
+				type = genToType.get(arg);
+				if (type == null) {
+					// System.err.println("no type for " + arg1);
+					type = "thing";
+				}
 			}
-		} else {
-			type = genToType.get(arg);
-			if (type == null) {
-				// System.err.println("no type for " + arg1);
-				type = "thing";
-			}
-		}
 
-		return type;
+			return type;
+		}
+		return null;
+
 	}
 
 	// things like BROTHER, WINGs, etc. Because we might wrongly ground a noun
@@ -837,7 +841,7 @@ public class Util {
 			String[] ss = line.split("\t");
 			boolean onlyNE = shouldBeONLYNE(ss[1]);
 			String ent = simpleNormalize(ss[1]);
-//			ent = StringUtils.stripAccents(ent);//Changed on 6 OCT
+			// ent = StringUtils.stripAccents(ent);//Changed on 6 OCT
 			String type = ss[2];
 			if (type.startsWith("/")) {
 				type = type.substring(1);

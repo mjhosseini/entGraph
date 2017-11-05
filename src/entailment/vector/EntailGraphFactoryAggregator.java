@@ -15,6 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import entailment.Util;
+import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
 
 //This is to do multithreading over EntGrFactory
@@ -42,7 +43,8 @@ public class EntailGraphFactoryAggregator {
 	public static boolean useTimeEx = false;
 	public static boolean isCCG = true;
 	public static boolean isTyped = true;
-	public static boolean figerTypes = true;
+	public static boolean figerTypes = false;
+	public static TypeScheme typeScheme = TypeScheme.LDA;
 	public static final int smoothParam = 0;// 0 means no smoothing
 	static final int minArgPairForPred = 3;
 	static final int minPredForArgPair = 3;// min num of unique predicates for
@@ -127,9 +129,9 @@ public class EntailGraphFactoryAggregator {
 				continue;
 			}
 			System.out.println("num of types: " + entGrFact.acceptableTypes.size());
-			for (String s : entGrFact.acceptableTypes) {
-				System.out.println(s);
-			}
+//			for (String s : entGrFact.acceptableTypes) {
+//				System.out.println(s);
+//			}
 			Runnable extractor = entGrFact;
 			entGrFact.runPart = 0;
 			threadPool.execute(extractor);
@@ -201,16 +203,21 @@ public class EntailGraphFactoryAggregator {
 
 		allTypes.add("thing");
 		if (EntailGraphFactoryAggregator.isTyped) {
-			if (EntailGraphFactoryAggregator.figerTypes) {
+			if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 				for (String s : Util.getEntToFigerType().values()) {
 					allTypes.add(s);
 				}
-			} else {
+			} else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.GKG) {
 				for (String s : Util.entToType.values()) {
 					allTypes.add(s);
 				}
 				for (String s : Util.genToType.values()) {
 					allTypes.add(s);
+				}
+			}
+			else if (EntailGraphFactoryAggregator.typeScheme==TypeScheme.LDA){
+				for (int i=0; i<DistrTyping.numTopics; i++){
+					allTypes.add("type"+i);
 				}
 			}
 		}
@@ -311,12 +318,13 @@ public class EntailGraphFactoryAggregator {
 			// typedEntGrDir = "typedEntGrDir_untyped_unlinked";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_30_30";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_20_20";
-			typedEntGrDir = "typedEntGrDir_aida_figer_smooth2";
+			typedEntGrDir = "typedEntGrDir_aida_LDA2";
 			// typedEntGrDir = "typedEntGrDir_gbooks_all";
-			numThreads = 20;
+			numThreads = 15;
 		}
 
 		EntailGraphFactoryAggregator agg = new EntailGraphFactoryAggregator(numThreads);
+		DistrTyping.loadLDATypes();
 		agg.runAllEntGrFacts(fileName, entTypesFName, genTypesFName, typedEntGrDir);
 
 	}

@@ -23,18 +23,18 @@ public class PGraph {
 
 	public final static boolean checkFrgVio = true;
 	public final static boolean shouldWrite = true;
-	public static boolean emb = false;
+	public static boolean emb = true;
+	public static boolean transitive = false;
 	public final static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1;// -1 if don't want to
 	public static String suffix = "_sim.txt";
-	static final String embSuffix = "_embsims11.txt";
-	public static boolean transitive = true;
-	static final String fpath = "../../python/gfiles/ent/ccg3.sim";// TODO: be
-																	// careful
+	static final String embSuffix = "_embsims16.txt";
+	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
 	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
+	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
 	static final int maxEmbIter = 2;
-
-	public static float threshold = -1;// isn't worth it! .05 reduces
+	
+	public static float edgeThreshold = -1;// isn't worth it! .05 reduces
 	// edges by half, but not worth it
 
 	static int allEdges = 0;
@@ -46,7 +46,6 @@ public class PGraph {
 	List<Node> nodes;
 	Map<Integer, Node> idx2node;
 	Map<String, Node> pred2node;
-	String root;
 	public static Map<String, List<PredSim>> rels2Sims;
 	public static Map<String, List<PredSim>> invRels2Sims;
 	public static Set<String> targetRels;
@@ -101,7 +100,7 @@ public class PGraph {
 			for (int k = 1; k < PGraph.maxEmbIter; k++) {
 				System.out.println("iter: " + k);
 				nextG = getNextEmbeddingGr(nextG, PGraph.invRels2Sims, prevIds, prevPred2Node, targetRels,
-						k == PGraph.maxEmbIter - 1);
+						false);/*k == PGraph.maxEmbIter - 1*/
 				gs.add(nextG);
 				nextIds = new ArrayList<>();
 				for (String s : prevIds) {
@@ -592,7 +591,7 @@ public class PGraph {
 						continue;
 					}
 					allEdges++;
-					if (sim < threshold) {
+					if (sim < edgeThreshold) {
 //						System.out.println("lt: " + sim);
 						continue;
 					}
@@ -633,7 +632,7 @@ public class PGraph {
 		// String root = "../../python/gfiles/typedEntGrDir_aida/";
 		// PGraph pgraph = new PGraph(root+"location#person_sim.txt");
 
-		String root = "../../python/gfiles/typedEntGrDir_aida_figer_smooth/";
+		
 		double maxLmbda = .2;
 		double numLmbdas = 11;
 		List<Float> lmbdas = new ArrayList<>();

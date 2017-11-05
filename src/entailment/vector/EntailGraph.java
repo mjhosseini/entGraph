@@ -13,7 +13,7 @@ public class EntailGraph extends SimpleEntailGraph{
 	static final int numSimilarsToShow = 100000000;// inf!
 	ArrayList<String> argPairs = new ArrayList<String>();
 	HashMap<String, Integer> argPairToIdx = new HashMap<>();
-	HashMap<Integer, Integer> argPairIdxToCount = new HashMap<>();
+	HashMap<Integer, Float> argPairIdxToCount = new HashMap<>();
 	private ArrayList<PredicateVector> pvecs = new ArrayList<PredicateVector>();
 	
 	int numTuples;
@@ -89,8 +89,6 @@ public class EntailGraph extends SimpleEntailGraph{
 			pvec.cutoffInfreqArgPairs();
 		}
 
-		setPvecNorms();
-
 		HashMap<Integer, Integer> occToCount = new HashMap<Integer, Integer>();
 		for (PredicateVector pvec : pvecs) {
 			int occ = pvec.argIdxes.size();
@@ -128,7 +126,9 @@ public class EntailGraph extends SimpleEntailGraph{
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
-
+		
+		setPvecNorms();
+		
 		try {
 			if (writeInfo) {
 				this.graphOp1 = new PrintStream(new File(opFileName + ".txt"));
@@ -319,10 +319,16 @@ public class EntailGraph extends SimpleEntailGraph{
 			for (int i = 0; i < invIdx.samplesIdxes.size(); i++) {
 				int pvecIdx1 = invIdx.samplesIdxes.get(i);
 				float val1 = invIdx.vals.get(i);
+				
 				float PMI1 = invIdx.PMIs.get(i);
 				String leftInterval1 = invIdx.maxLeftTimes.get(i);
 				String rightInterval1 = invIdx.minRightTimes.get(i);
 				PredicateVector pvec1 = pvecs.get(pvecIdx1);
+				
+				if (val1==0){
+					System.err.println("weird val1: "+pvec1.predicate+" ");
+				}
+				
 				// System.out.println("intervals: "+ pvec1.predicate + " "+
 				// leftInterval1+" "+rightInterval1);
 				for (int j = i + 1; j < invIdx.samplesIdxes.size(); j++) {
@@ -461,7 +467,7 @@ public class EntailGraph extends SimpleEntailGraph{
 		}
 	}
 
-	void addBinaryRelation(String pred, String featName, String timeInterval, int count) {
+	void addBinaryRelation(String pred, String featName, String timeInterval, float count) {
 		if (!predToIdx.containsKey(pred)) {
 			PredicateVector pvec = new PredicateVector(pred, predToIdx.size(), this);
 			predToIdx.put(pred, pvec.uniqueId);
@@ -477,7 +483,7 @@ public class EntailGraph extends SimpleEntailGraph{
 			argPairToIdx.put(featName, idx);
 			argPairs.add(featName);
 
-			argPairIdxToCount.put(idx, 0);
+			argPairIdxToCount.put(idx, 0.0f);
 		}
 
 		int pairIdx = argPairToIdx.get(featName);

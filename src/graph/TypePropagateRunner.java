@@ -15,15 +15,17 @@ import java.util.concurrent.TimeUnit;
 public class TypePropagateRunner {
 	ThreadPoolExecutor threadPool;
 	ArrayList<PGraph> pGraphs;
-	public final static float edgeThreshold = .01f;// edgeThreshold
+	public final static float edgeThreshold = .05f;// edgeThreshold
 	static int numThreads = 15;
+	Map<String,Integer> graphToNumEdges;
 
 	public TypePropagateRunner(String root) {
 		PGraph.emb = false;
 		PGraph.suffix = "_sim.txt";
 		PGraph.transitive = false;
-		PGraph.threshold = edgeThreshold;
+		PGraph.edgeThreshold = edgeThreshold;
 		pGraphs = new ArrayList<>();
+		graphToNumEdges = new HashMap<String, Integer>();
 
 		File folder = new File(root);
 		File[] files = folder.listFiles();
@@ -60,6 +62,10 @@ public class TypePropagateRunner {
 			}
 
 			pGraphs.add(pgraph);
+			String[] ss = pgraph.types.split("#");
+			String types2 = ss[1]+"#"+ss[0];
+			graphToNumEdges.put(pgraph.types, pgraph.sortedEdges.size());
+			graphToNumEdges.put(types2, pgraph.sortedEdges.size());
 
 			System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 		}
@@ -99,7 +105,12 @@ public class TypePropagateRunner {
 		System.out.println("compatibles:");
 
 		for (String propStr : candidateEdges.keySet()) {
-			System.out.println(propStr + " " + matchedEdges.get(propStr) + " " + candidateEdges.get(propStr));
+			String[] ss = propStr.split("#");
+			String types2 = ss[3]+"#"+ss[4];
+			if (ss[3].endsWith("_1") || ss[3].endsWith("_2")){
+				types2 = ss[3].substring(0, ss[3].length()-2)+"#"+ss[3].substring(0, ss[3].length()-2);
+			}
+			System.out.println(propStr + " " + matchedEdges.get(propStr) + " " + candidateEdges.get(propStr) +" "+ graphToNumEdges.get(types2));
 		}
 		
 		

@@ -25,6 +25,7 @@ import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 import entailment.Util;
+import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
 import entailment.vector.EntailGraphFactoryAggregator;
 import graph.PGraph;
@@ -553,7 +554,7 @@ public class Scripts {
 		for (int i=0; i<numTopics; i++){
 			for (String word:wordToWeights.keySet()){
 				double w = wordToWeights.get(word)[i];
-				if (w>1e-3){
+				if (w>DistrTyping.typePropThresh){
 					System.out.println(i+"\t"+word+"\t"+w);
 				}
 			}

@@ -12,7 +12,7 @@ public class PredicateVector extends SimplePredicateVector {
 	// Don't store a HashMap here so that after the pvecs are formed, the speed
 	// will be high.
 	ArrayList<Integer> argIdxes;// we store in sparse format
-	ArrayList<Integer> vals;
+	ArrayList<Float> vals;
 	ArrayList<String> minRightIntervals;
 	ArrayList<String> maxLeftIntervals;
 	ArrayList<Float> PMIs;
@@ -38,7 +38,7 @@ public class PredicateVector extends SimplePredicateVector {
 		this.uniqueId = uniqueId;
 		this.argIdxes = new ArrayList<Integer>();
 		this.argIdxToArrayIdx = new HashMap<Integer, Integer>();
-		this.vals = new ArrayList<Integer>();
+		this.vals = new ArrayList<Float>();
 		this.minRightIntervals = new ArrayList<>();
 		this.maxLeftIntervals = new ArrayList<>();
 		this.similarityInfos = new HashMap<Integer, SimilaritiesInfo>();
@@ -48,11 +48,11 @@ public class PredicateVector extends SimplePredicateVector {
 
 	// adds the idx of an arg-pair. It returns whether this idx has been added
 	// for the first time
-	void addArgPair(int idx, String timeInterval, int count) {
+	void addArgPair(int idx, String timeInterval, float count) {
 		if (!argIdxToArrayIdx.containsKey(idx)) {
 			argIdxToArrayIdx.put(idx, argIdxToArrayIdx.size());
 			argIdxes.add(idx);
-			vals.add(0);
+			vals.add(0.0f);
 			if (EntailGraphFactoryAggregator.useTimeEx) {
 				minRightIntervals.add("3000-01-01");
 				maxLeftIntervals.add("1000-01-01");
@@ -61,12 +61,39 @@ public class PredicateVector extends SimplePredicateVector {
 				maxLeftIntervals.add(null);
 			}
 
-			int prevCount = entGraph.argPairIdxToCount.get(idx);
-			entGraph.argPairIdxToCount.put(idx, prevCount + 1);
+			float prevCount = entGraph.argPairIdxToCount.get(idx);
+			if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
+				entGraph.argPairIdxToCount.put(idx, prevCount + 1);// TODO:
+																	// should we
+																	// care
+																	// about
+																	// this in
+																	// cutoffs?
+			} else {
+				entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
+																		// should
+																		// we
+																		// care
+																		// about
+																		// this
+																		// in
+																		// cutoffs?
+			}
 			EntailGraphFactoryAggregator.allNonZero++;
 		}
 		int arrIdx = argIdxToArrayIdx.get(idx);
 		vals.set(arrIdx, vals.get(arrIdx) + count);
+
+		if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
+			float prevCount = entGraph.argPairIdxToCount.get(idx);
+			entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
+																	// should we
+																	// care
+																	// about
+																	// this in
+																	// cutoffs?
+		}
+
 		if (EntailGraphFactoryAggregator.useTimeEx) {
 
 			String[] lr = Util.getLeftRightTimes(timeInterval);
@@ -92,11 +119,15 @@ public class PredicateVector extends SimplePredicateVector {
 			if (entGraph.argPairIdxToCount.get(argIdxes.get(i)) < entGraph.minPredForArgPair) {
 				toberemovedIdxes.add(i);
 			}
+			// else{
+			// System.err.println("no remove:
+			// "+entGraph.argPairIdxToCount.get(argIdxes.get(i)));
+			// }
 		}
 
 		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
 														// format
-		ArrayList<Integer> vals = new ArrayList<>();
+		ArrayList<Float> vals = new ArrayList<>();
 		HashMap<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
 
 		for (int i = 0; i < this.argIdxes.size(); i++) {
@@ -135,7 +166,7 @@ public class PredicateVector extends SimplePredicateVector {
 		for (int argIdx : argIdxes) {
 			String argPairStr = entGraph.argPairs.get(argIdx);
 			int arrIdx = argIdxToArrayIdx.get(argIdx);
-			int count = vals.get(arrIdx);
+			float count = vals.get(arrIdx);
 			ArgPair argPair = new ArgPair(argPairStr, count);
 			thisArgPairs.add(argPair);
 		}
@@ -192,6 +223,9 @@ public class PredicateVector extends SimplePredicateVector {
 			n += v;
 		}
 		this.norm1 = n;
+		if (n==0){
+			System.err.println("norm1 is zero");
+		}
 	}
 
 	void setSumPMIs() {
@@ -254,9 +288,23 @@ public class PredicateVector extends SimplePredicateVector {
 			}
 
 			// add Weed's prob similarity
-			float weedProbPr = (float) (simInfo.basics.sumFreq+EntailGraphFactoryAggregator.smoothParam) / (this.norm1 + 2*EntailGraphFactoryAggregator.smoothParam);
-			float weedProbRec = (float) (simInfo2.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam) / (pvec2.norm1 + 2*EntailGraphFactoryAggregator.smoothParam);
+			if (simInfo.basics.sumFreq==0){
+				System.err.println("simInfo is zero");
+			}
+			if (simInfo2.basics.sumFreq==0){
+				System.err.println("simInfo2 is zero");
+			}
+			float weedProbPr = (float) (simInfo.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam)
+					/ (this.norm1 + 2 * EntailGraphFactoryAggregator.smoothParam);
+			float weedProbRec = (float) (simInfo2.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam)
+					/ (pvec2.norm1 + 2 * EntailGraphFactoryAggregator.smoothParam);
 			float weedProbSim = (2 * weedProbPr * weedProbRec) / (weedProbPr + weedProbRec);
+			if (new Float(weedProbPr).isNaN()) {
+				System.err.println(this.predicate+" "+pvec2.predicate);
+				System.err.println(
+						"Nan: " + weedProbPr + " " + weedProbPr + " " + weedProbRec + " " + simInfo.basics.sumFreq
+						+simInfo2.basics.sumFreq +" "+this.norm1+" "+pvec2.norm2);
+			}
 			// if (entGraph.writeSims) {
 			// WeedsProbList.add(new Similarity(pvec2.predicate, weedProbSim));
 			// }
@@ -305,15 +353,18 @@ public class PredicateVector extends SimplePredicateVector {
 			// add Weed's PMI similarity
 			// The conditions says if there is any feature in the intersection!
 			if (simInfo.basics.sumPMI > 0 && simInfo2.basics.sumPMI > 0) {
-				weedPMIPr = (simInfo.basics.sumPMI+EntailGraphFactoryAggregator.smoothParam) / (this.sumPMIs + 2*EntailGraphFactoryAggregator.smoothParam);
-				weedPMIRec = (simInfo2.basics.sumPMI+EntailGraphFactoryAggregator.smoothParam) / (pvec2.sumPMIs + 2*EntailGraphFactoryAggregator.smoothParam );
+				weedPMIPr = (simInfo.basics.sumPMI + EntailGraphFactoryAggregator.smoothParam)
+						/ (this.sumPMIs + 2 * EntailGraphFactoryAggregator.smoothParam);
+				weedPMIRec = (simInfo2.basics.sumPMI + EntailGraphFactoryAggregator.smoothParam)
+						/ (pvec2.sumPMIs + 2 * EntailGraphFactoryAggregator.smoothParam);
 				weedPMISim = (2 * weedPMIPr * weedPMIRec) / (weedPMIPr + weedPMIRec);
 				// if (entGraph.writeSims) {
 				// WeedsPMIList.add(new Similarity(pvec2.predicate,
 				// weedPMISim));
 				// }
 
-				LinSim = (simInfo.basics.sumPMI + simInfo2.basics.sumPMI + EntailGraphFactoryAggregator.smoothParam) / (this.sumPMIs + pvec2.sumPMIs + 2*EntailGraphFactoryAggregator.smoothParam);
+				LinSim = (simInfo.basics.sumPMI + simInfo2.basics.sumPMI + EntailGraphFactoryAggregator.smoothParam)
+						/ (this.sumPMIs + pvec2.sumPMIs + 2 * EntailGraphFactoryAggregator.smoothParam);
 				// if (entGraph.writeSims) {
 				// LinList.add(new Similarity(pvec2.predicate, LinSim));
 				// }
@@ -376,22 +427,23 @@ class Similarity implements Comparable<Similarity> {
 	}
 
 	public int compareTo(Similarity dp2) {
-		if (sim > dp2.sim) {
-			return 1;
-		} else if (sim < dp2.sim) {
-			return -1;
-		}
-
-		return 0;
+		return (new Float(sim)).compareTo(new Float(dp2.sim));
+		// if (sim > dp2.sim) {
+		// return 1;
+		// } else if (sim < dp2.sim) {
+		// return -1;
+		// }
+		//
+		// return 0;
 	}
 
 }
 
 class ArgPair implements Comparable<ArgPair> {
 	String argPairStr;
-	int count;
+	float count;
 
-	public ArgPair(String argPairStr, int count) {
+	public ArgPair(String argPairStr, float count) {
 		this.argPairStr = argPairStr;
 		this.count = count;
 	}

@@ -42,20 +42,23 @@ public class SimilaritiesInfo {
 
 class SimilarityInfoBasics {
 	float dotProd = 0;
-	int sumFreq = 0;
+	float sumFreq = 0;
 	float sumPMI = 0;
-	int SR = 0;
-	int SRBinary = 0;
+//	int SR = 0;
+//	int SRBinary = 0;
 	float timePreceding = 0;
 
 	void addSims(float dot, float freq, float PMI, float minFreq, float timePreceding) {
 		this.dotProd += dot;
 		this.sumFreq += freq;
+		if (sumFreq==0){
+			System.out.println("weird: "+" "+freq);
+		}
 		if (PMI > 0) {
 			this.sumPMI += PMI;
 		}
-		this.SRBinary++;
-		this.SR += minFreq;
+//		this.SRBinary++;
+//		this.SR += minFreq;
 		this.timePreceding += timePreceding;
 
 	}

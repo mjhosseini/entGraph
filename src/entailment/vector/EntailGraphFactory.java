@@ -12,6 +12,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -19,6 +21,8 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import entailment.Util;
+import entailment.entityLinking.DistrTyping;
+import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 public class EntailGraphFactory implements Runnable {
 	String fName, entTypesFName;
@@ -35,8 +39,8 @@ public class EntailGraphFactory implements Runnable {
 
 	// TODO: remove
 	// static PrintStream typedOp;
-	static HashMap<String, Integer> allPredCounts = new HashMap<>();
-	static HashMap<String, String> predToDocument = new HashMap<>();
+	static ConcurrentHashMap<String, Integer> allPredCounts = new ConcurrentHashMap<>();
+	static ConcurrentHashMap<String, String> predToDocument = new ConcurrentHashMap<>();
 
 	// static {
 	// try {
@@ -118,6 +122,9 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
+//			if (lineNumbers==100000){
+//				break;
+//			}
 			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
 				continue;
 			}
@@ -209,12 +216,14 @@ public class EntailGraphFactory implements Runnable {
 					// if (lineNumbers%100==0){
 					// sharedTime += (System.currentTimeMillis() - t0);
 					// }
-					/*!acceptableTypes.contains(type1) && !acceptableTypes.contains(type2) &&
+					/*
+					 * !acceptableTypes.contains(type1) &&
+					 * !acceptableTypes.contains(type2) &&
 					 * 
 					 * 
 					 */
-					if (
-						!acceptableTypes.contains(type1 + "#" + type2)
+					if (EntailGraphFactoryAggregator.typeScheme!=TypeScheme.LDA &&
+							!acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
 						continue;
 					}
@@ -276,6 +285,157 @@ public class EntailGraphFactory implements Runnable {
 						allPredCounts.put(pred, 1);
 					}
 
+					// Added for LDA types
+					if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
+						List<float[]> types = DistrTyping.getType(pred, arg1, arg2);
+//						System.err.println(pred + "," + arg1 + "," + arg2);
+//						System.err.println("types:");
+						ArrayList<Integer> types1 = new ArrayList<>();//only the non-zero ones
+						ArrayList<Integer> types2 = new ArrayList<>();//only the non-zero ones
+						for (int k = 0; k < types.get(0).length; k++) {
+							if (types.get(0)[k] != 0) {
+								types1.add(k);
+//								System.err.print(k + ":" + types.get(0)[k] + " ");
+							}
+						}
+//						System.err.println();
+						for (int k = 0; k < types.get(1).length; k++) {
+							if (types.get(1)[k] != 0) {
+								types2.add(k);
+//								System.err.print(k + ":" + types.get(1)[k] + " ");
+							}
+						}
+//						System.err.println();
+						
+						//Now, find all the likely type-pairs
+						for (int t1:types1){
+							for (int t2:types2){
+								float prob = types.get(0)[t1] * types.get(1)[t2];
+								if (prob<.1){
+									continue;
+								}
+								type1 = "type"+t1;
+								type2 = "type"+t2;
+//								System.err.println("adding");
+								
+								if (!acceptableTypes.contains(type1 + "#" + type2)
+										&& !acceptableTypes.contains(type2 + "#" + type1)) {
+									continue;
+								}
+								
+								
+								addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
+										prob, false, false);
+								if (type1.equals(type2)) {
+									// the main one! (arg1-arg2)
+									// String featName = arg1 + "#" + arg2;
+									// String thisType = type1 + "#" + type2;
+									addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, prob,
+											true, false);
+								}
+							}
+						}
+						
+						
+					} else {
+						// the main one! (arg1-arg2)
+						// String featName = arg1 + "#" + arg2;
+						// String thisType = type1 + "#" + type2;
+						//boolean rev = 
+						addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
+								count, false, false);
+
+						// F_X mixed
+						// featName = arg1;
+						// thisType = type1 + "#" + type2;
+						// addRelationToEntGraphs(rev ? typesToGraphY :
+						// typesToGraphX, pred, arg1, "", type1, type2,
+						// timeInterval, count, rev, true);
+
+						// F_Y mixed
+						// featName = arg2;
+						// thisType = type1 + "#" + type2;
+						// addRelationToEntGraphs(rev ? typesToGraphX :
+						// typesToGraphY, pred, "", arg2, type1, type2,
+						// timeInterval, count, rev, true);
+
+						// F_X unary
+						// featName = arg1;
+						// thisType = type1;
+						// addRelationToEntGraphs(rev ? typesToGraphUnaryY :
+						// typesToGraphUnaryX, pred, arg1, "", type1, "", rev,
+						// true);
+						// System.out.println("adding to unX: "+pred+" "+arg1+"
+						// "+type1);
+						// addRelationToEntGraphs(typesToGraphUnaryX, pred,
+						// arg1,
+						// "", type1, "", timeInterval, count, false,
+						// true);
+
+						// F_Y unary
+						// featName = arg2;
+						// thisType = type2;
+						// addRelationToEntGraphs(rev ? typesToGraphUnaryX :
+						// typesToGraphUnaryY, pred, "", arg2, "", type2, rev,
+						// true);
+						// addRelationToEntGraphs(typesToGraphUnaryY, pred, "",
+						// arg2, "", type2, timeInterval, count, false,
+						// true);
+
+						if (type1.equals(type2)) {
+							// the main one! (arg1-arg2)
+							// String featName = arg1 + "#" + arg2;
+							// String thisType = type1 + "#" + type2;
+							addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, count,
+									true, false);
+
+							// F_X mixed
+							// featName = arg1;
+							// thisType = type1 + "#" + type2;
+							// addRelationToEntGraphs(typesToGraphX, pred, "",
+							// arg2,
+							// type1, type2, timeInterval, count, true,
+							// true);
+
+							// F_Y mixed
+							// featName = arg2;
+							// thisType = type1 + "#" + type2;
+							// addRelationToEntGraphs(typesToGraphY, pred, arg1,
+							// "",
+							// type1, type2, timeInterval, count, true,
+							// true);
+
+							// F_X unary
+							// featName = arg1;
+							// thisType = type1;
+							// addRelationToEntGraphs(typesToGraphUnaryX, pred,
+							// "",
+							// arg2, "", type2, true, true);
+							// addRelationToEntGraphs(typesToGraphUnaryX, pred,
+							// "",
+							// arg2, "", type2, true, true);
+
+							// F_Y unary
+							// featName = arg2;
+							// thisType = type2;
+							// addRelationToEntGraphs(typesToGraphUnaryY, pred,
+							// arg1,
+							// "", type1, "", true, true);
+							// addRelationToEntGraphs(typesToGraphUnaryY, pred,
+							// arg1,
+							// "", type1, "", true, true);
+
+							// // duplicate nodes for equal types
+							// if (type1.equals(type2) && !arg1.equals("") &&
+							// !arg2.equals("")) {
+							// thisEntailGraph.addBinaryRelation(Util.swapParts(pred),
+							// thisArg2);
+							// }
+						}
+					}
+
+					// Added for LDA types
+
 					// if (EntailGraphFactoryAggregator.isCCG &&
 					// !pred.contains("__")) {
 					// String pred0 = pred.substring(1, pred.length() - 1);
@@ -297,95 +457,6 @@ public class EntailGraphFactory implements Runnable {
 					// predToDocument.put(predY, d + arg2.replace(" ", "_") + "
 					// ");
 					// }
-
-					// the main one! (arg1-arg2)
-					// String featName = arg1 + "#" + arg2;
-					// String thisType = type1 + "#" + type2;
-					boolean rev = addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
-							count, false, false);
-
-					// F_X mixed
-					// featName = arg1;
-					// thisType = type1 + "#" + type2;
-					// addRelationToEntGraphs(rev ? typesToGraphY :
-					// typesToGraphX, pred, arg1, "", type1, type2,
-					// timeInterval, count, rev, true);
-
-					// F_Y mixed
-					// featName = arg2;
-					// thisType = type1 + "#" + type2;
-					// addRelationToEntGraphs(rev ? typesToGraphX :
-					// typesToGraphY, pred, "", arg2, type1, type2,
-					// timeInterval, count, rev, true);
-
-					// F_X unary
-					// featName = arg1;
-					// thisType = type1;
-					// addRelationToEntGraphs(rev ? typesToGraphUnaryY :
-					// typesToGraphUnaryX, pred, arg1, "", type1, "", rev,
-					// true);
-					// System.out.println("adding to unX: "+pred+" "+arg1+"
-					// "+type1);
-					// addRelationToEntGraphs(typesToGraphUnaryX, pred, arg1,
-					// "", type1, "", timeInterval, count, false,
-					// true);
-
-					// F_Y unary
-					// featName = arg2;
-					// thisType = type2;
-					// addRelationToEntGraphs(rev ? typesToGraphUnaryX :
-					// typesToGraphUnaryY, pred, "", arg2, "", type2, rev,
-					// true);
-					// addRelationToEntGraphs(typesToGraphUnaryY, pred, "",
-					// arg2, "", type2, timeInterval, count, false,
-					// true);
-
-					if (type1.equals(type2)) {
-						// the main one! (arg1-arg2)
-						// String featName = arg1 + "#" + arg2;
-						// String thisType = type1 + "#" + type2;
-						addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, count, true,
-								false);
-
-						// F_X mixed
-						// featName = arg1;
-						// thisType = type1 + "#" + type2;
-						// addRelationToEntGraphs(typesToGraphX, pred, "", arg2,
-						// type1, type2, timeInterval, count, true,
-						// true);
-
-						// F_Y mixed
-						// featName = arg2;
-						// thisType = type1 + "#" + type2;
-						// addRelationToEntGraphs(typesToGraphY, pred, arg1, "",
-						// type1, type2, timeInterval, count, true,
-						// true);
-
-						// F_X unary
-						// featName = arg1;
-						// thisType = type1;
-						// addRelationToEntGraphs(typesToGraphUnaryX, pred, "",
-						// arg2, "", type2, true, true);
-						// addRelationToEntGraphs(typesToGraphUnaryX, pred, "",
-						// arg2, "", type2, true, true);
-
-						// F_Y unary
-						// featName = arg2;
-						// thisType = type2;
-						// addRelationToEntGraphs(typesToGraphUnaryY, pred,
-						// arg1,
-						// "", type1, "", true, true);
-						// addRelationToEntGraphs(typesToGraphUnaryY, pred,
-						// arg1,
-						// "", type1, "", true, true);
-
-						// // duplicate nodes for equal types
-						// if (type1.equals(type2) && !arg1.equals("") &&
-						// !arg2.equals("")) {
-						// thisEntailGraph.addBinaryRelation(Util.swapParts(pred),
-						// thisArg2);
-						// }
-					}
 
 				}
 
@@ -414,7 +485,7 @@ public class EntailGraphFactory implements Runnable {
 	// pred. forceRev is because for unaryX you might have previously reversed
 	// a pred, so you must do it again!
 	boolean addRelationToEntGraphs(HashMap<String, EntailGraph> thisTypesToGraph, String pred, String arg1, String arg2,
-			String type1, String type2, String timeInterval, int count, boolean forceRev, boolean unary) {
+			String type1, String type2, String timeInterval, float count, boolean forceRev, boolean unary) {
 
 		String thisType = getThisType(type1, type2);
 
