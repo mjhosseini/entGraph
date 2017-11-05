@@ -7,8 +7,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -16,7 +18,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import entailment.PredicateArgumentExtractor;
 import entailment.Util;
+import entailment.entityLinking.DistrTyping;
 import entailment.vector.EntailGraphFactoryAggregator;
+import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 
 public class Processing {
@@ -134,97 +138,103 @@ public class Processing {
 	}
 
 	// split the data based on chunks of [q_type,q_pred]
-//	static void split_chunks_unordered() throws IOException {
-//		BufferedReader br = new BufferedReader(new FileReader(root + "all_re.txt"));
-//		PrintWriter train = new PrintWriter(root + "train_re.txt");
-//		PrintWriter dev = new PrintWriter(root + "dev_re.txt");
-//		PrintWriter test = new PrintWriter(root + "test_re.txt");
-//
-//		int ds = -1;
-//
-//		int[] counts = new int[] { 0, 0, 0 };
-//		double[] ratios = new double[] { 0, 0, 0 };
-//		double[] ratios_goal = new double[] { .4, .2, .4 };
-//		int allCount = 0;
-//
-//		HashMap<String, Integer> qTypeqPredToDS = new HashMap<>();
-//
-//		String line;
-//		while ((line = br.readLine()) != null) {
-//			System.out.println(line);
-//			String[] ss = StringUtils.split(line, "\t");
-//			String[] qss = ss[0].split(",");
-//			String[] pss = ss[1].split(",");
-//			String pair1 = Util.getPredicateLemma(qss[1].trim(), false)[0] + "#" + Util.normalizeArg(qss[0].trim());
-//
-//			String pair2 = Util.getPredicateLemma(pss[1].trim(), false)[0] + "#" + Util.normalizeArg(pss[0].trim());
-//
-//			System.out.println(pair1);
-//			System.out.println(pair2);
-//
-//			if (qTypeqPredToDS.containsKey(pair1) && qTypeqPredToDS.containsKey(pair2)) {
-//				if (qTypeqPredToDS.get(pair1) != qTypeqPredToDS.get(pair2)) {
-//					System.out.println("inconsitency: " + line + " " + pair1 + " " + pair2);
-//				}
-//			}
-//
-//			if (qTypeqPredToDS.containsKey(pair1) && !qTypeqPredToDS.containsKey(pair2)) {
-//				qTypeqPredToDS.put(pair2, qTypeqPredToDS.get(pair1));
-//			}
-//
-//			if (qTypeqPredToDS.containsKey(pair2) && !qTypeqPredToDS.containsKey(pair1)) {
-//				qTypeqPredToDS.put(pair1, qTypeqPredToDS.get(pair2));
-//			}
-//
-//			if (!qTypeqPredToDS.containsKey(pair1)) {// so, it won't have pair2
-//														// as well
-//				double r = -1;
-//				while (true) {
-//					r = Math.random();
-//
-//					if (r < .4) {
-//						ds = 0;
-//					} else if (r < .6) {
-//						ds = 1;
-//					} else {
-//						ds = 2;
-//					}
-//
-//					if (ratios[ds] <= ratios_goal[ds]) {
-//						break;
-//					}
-//				}
-//
-//				qTypeqPredToDS.put(pair1, ds);
-//				qTypeqPredToDS.put(pair2, ds);
-//				System.out.println("assign " + pair1 + " to " + ds);
-//				System.out.println("assign " + pair2 + " to " + ds);
-//			} else {
-//				ds = qTypeqPredToDS.get(pair1);
-//				System.out.println("was assigned to: " + ds + " " + line);
-//			}
-//
-//			counts[ds]++;
-//			allCount++;
-//
-//			for (int i = 0; i < ratios.length; i++) {
-//				ratios[i] = (counts[i] + 0.0) / allCount;
-//			}
-//
-//			if (ds == 0) {
-//				train.println(line);
-//			} else if (ds == 1) {
-//				dev.println(line);
-//			} else {
-//				test.println(line);
-//			}
-//
-//		}
-//		br.close();
-//		train.close();
-//		dev.close();
-//		test.close();
-//	}
+	// static void split_chunks_unordered() throws IOException {
+	// BufferedReader br = new BufferedReader(new FileReader(root +
+	// "all_re.txt"));
+	// PrintWriter train = new PrintWriter(root + "train_re.txt");
+	// PrintWriter dev = new PrintWriter(root + "dev_re.txt");
+	// PrintWriter test = new PrintWriter(root + "test_re.txt");
+	//
+	// int ds = -1;
+	//
+	// int[] counts = new int[] { 0, 0, 0 };
+	// double[] ratios = new double[] { 0, 0, 0 };
+	// double[] ratios_goal = new double[] { .4, .2, .4 };
+	// int allCount = 0;
+	//
+	// HashMap<String, Integer> qTypeqPredToDS = new HashMap<>();
+	//
+	// String line;
+	// while ((line = br.readLine()) != null) {
+	// System.out.println(line);
+	// String[] ss = StringUtils.split(line, "\t");
+	// String[] qss = ss[0].split(",");
+	// String[] pss = ss[1].split(",");
+	// String pair1 = Util.getPredicateLemma(qss[1].trim(), false)[0] + "#" +
+	// Util.normalizeArg(qss[0].trim());
+	//
+	// String pair2 = Util.getPredicateLemma(pss[1].trim(), false)[0] + "#" +
+	// Util.normalizeArg(pss[0].trim());
+	//
+	// System.out.println(pair1);
+	// System.out.println(pair2);
+	//
+	// if (qTypeqPredToDS.containsKey(pair1) &&
+	// qTypeqPredToDS.containsKey(pair2)) {
+	// if (qTypeqPredToDS.get(pair1) != qTypeqPredToDS.get(pair2)) {
+	// System.out.println("inconsitency: " + line + " " + pair1 + " " + pair2);
+	// }
+	// }
+	//
+	// if (qTypeqPredToDS.containsKey(pair1) &&
+	// !qTypeqPredToDS.containsKey(pair2)) {
+	// qTypeqPredToDS.put(pair2, qTypeqPredToDS.get(pair1));
+	// }
+	//
+	// if (qTypeqPredToDS.containsKey(pair2) &&
+	// !qTypeqPredToDS.containsKey(pair1)) {
+	// qTypeqPredToDS.put(pair1, qTypeqPredToDS.get(pair2));
+	// }
+	//
+	// if (!qTypeqPredToDS.containsKey(pair1)) {// so, it won't have pair2
+	// // as well
+	// double r = -1;
+	// while (true) {
+	// r = Math.random();
+	//
+	// if (r < .4) {
+	// ds = 0;
+	// } else if (r < .6) {
+	// ds = 1;
+	// } else {
+	// ds = 2;
+	// }
+	//
+	// if (ratios[ds] <= ratios_goal[ds]) {
+	// break;
+	// }
+	// }
+	//
+	// qTypeqPredToDS.put(pair1, ds);
+	// qTypeqPredToDS.put(pair2, ds);
+	// System.out.println("assign " + pair1 + " to " + ds);
+	// System.out.println("assign " + pair2 + " to " + ds);
+	// } else {
+	// ds = qTypeqPredToDS.get(pair1);
+	// System.out.println("was assigned to: " + ds + " " + line);
+	// }
+	//
+	// counts[ds]++;
+	// allCount++;
+	//
+	// for (int i = 0; i < ratios.length; i++) {
+	// ratios[i] = (counts[i] + 0.0) / allCount;
+	// }
+	//
+	// if (ds == 0) {
+	// train.println(line);
+	// } else if (ds == 1) {
+	// dev.println(line);
+	// } else {
+	// test.println(line);
+	// }
+	//
+	// }
+	// br.close();
+	// train.close();
+	// dev.close();
+	// test.close();
+	// }
 
 	// split the data based on chunks of [q_pred,p_pred]
 	static void split_preds() throws IOException {
@@ -517,6 +527,7 @@ public class Processing {
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
 		PrintWriter op = new PrintWriter(new File(root + fname + "_rels.txt"));
+		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDArels.txt"));
 
 		while ((line = br.readLine()) != null) {
 			line2 = brOrig.readLine();
@@ -544,6 +555,9 @@ public class Processing {
 			System.out.println("rel2: " + rel2);
 			System.out.println("rel1: " + rel1);
 
+			String LDArel1 = "", LDArel2 = "";
+			String LDAtypes1 = "";//, LDAtypes2 = "";
+
 			if (!rel1.equals("")) {
 				String[] rel1ss = rel1.split(" ");
 				String[] lemmas = Util.getPredicateLemma(rel1ss[0], true);
@@ -558,8 +572,13 @@ public class Processing {
 				System.out.println(line + " " + lt1 + " " + lt2);
 
 				if (lemmas[1].equals("false")) {
+					LDArel1 = rel1ss[0] + " " + rel1ss[1] + " " + rel1ss[2];// no change. e.g.: (write.1,write.2)
+									// dramatist hamlet
+					LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[1], rel1ss[2]);
 					rel1 = rel1ss[0] + " " + lt1 + " " + lt2;
 				} else {
+					LDArel1 = rel1ss[0] + " " + rel1ss[2] + " " + rel1ss[1];
+					LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[2], rel1ss[1]);
 					rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
 				}
 			}
@@ -577,18 +596,78 @@ public class Processing {
 				System.out.println(line + " " + lt1 + " " + lt2);
 
 				if (lemmas[1].equals("false")) {
+					LDArel2 = rel2ss[0] + " " + rel2ss[1] + " " + rel2ss[2];// no change. e.g.: (write.1,write.2)
+									// dramatist hamlet
+//					LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[1], rel2ss[2]);
 					rel2 = rel2ss[0] + " " + lt1 + " " + lt2;
 				} else {
+					LDArel2 = rel2ss[0] + " " + rel2ss[2] + " " + rel2ss[1];
+//					LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[2], rel2ss[1]);
 					rel2 = rel2ss[0] + " " + lt2 + " " + lt1;
 				}
 			}
 
 			op.println(rel1 + "\t" + rel2 + "\t" + ss[2]);
+			
+			//We'll assume that the LDAtypes are inherited only from the LHS of Levy (q)
+			opLDA.println(LDArel1 + "\t" + LDArel2 + "\t" + ss[2]+"\t"+LDAtypes1);
 		}
 		br.close();
 		op.close();
 		brOrig.close();
+		opLDA.close();
 
+	}
+
+	static String getLDATypesStr(String pred, String arg1, String arg2) {
+		String ret = "";
+		List<float[]> types = DistrTyping.getType(pred, arg1, arg2);
+		// System.err.println(pred + "," + arg1 + "," + arg2);
+		// System.err.println("types:");
+		ArrayList<Integer> types1 = new ArrayList<>();// only the non-zero
+														// ones
+		ArrayList<Integer> types2 = new ArrayList<>();// only the non-zero
+														// ones
+		for (int k = 0; k < types.get(0).length; k++) {
+			if (types.get(0)[k] != 0) {
+				types1.add(k);
+				// System.err.print(k + ":" + types.get(0)[k] + " ");
+			}
+		}
+		// System.err.println();
+		for (int k = 0; k < types.get(1).length; k++) {
+			if (types.get(1)[k] != 0) {
+				types2.add(k);
+				// System.err.print(k + ":" + types.get(1)[k] + " ");
+			}
+		}
+		// System.err.println();
+		String type1, type2;
+		// Now, find all the likely type-pairs
+		double sum = 0;
+		for (int t1 : types1) {
+			for (int t2 : types2) {
+				float prob = types.get(0)[t1] * types.get(1)[t2];
+				if (prob < .1) {
+					continue;
+				}
+
+				// System.err.println("adding");
+				sum += prob;
+			}
+		}
+		for (int t1 : types1) {
+			for (int t2 : types2) {
+				float prob = types.get(0)[t1] * types.get(1)[t2];
+				if (prob < .1) {
+					continue;
+				}
+				type1 = "type" + t1;
+				type2 = "type" + t2;
+				ret += type1 + "#" + type2 + " " + (prob / sum)+" ";// sum up to 1!
+			}
+		}
+		return ret.trim();
 	}
 
 	// the oil : oil
@@ -632,12 +711,14 @@ public class Processing {
 
 	static void formOIEDSAll() {
 		// String[] fileNames = new String[] { "train1", "dev1", "test1" };//
-//		String[] fileNames = new String[] { "all", "train1", "dev1", "test1", "all_new", "train_new", "dev_new",
-//				"test_new", "all_new_dir", "dev_new_dir", "train_new_dir", "test_new_dir" };//
-		
-		String[] fileNames = new String[] { "train_new", "dev_new",
-				"test_new", "dev_new_dir", "train_new_dir", "test_new_dir" };//
-//		String[] fileNames = new String[] { "all_new", "all_new_dir" };//
+		// String[] fileNames = new String[] { "all", "train1", "dev1", "test1",
+		// "all_new", "train_new", "dev_new",
+		// "test_new", "all_new_dir", "dev_new_dir", "train_new_dir",
+		// "test_new_dir" };//
+
+		String[] fileNames = new String[] { "train_new", "dev_new", "test_new", "dev_new_dir", "train_new_dir",
+				"test_new_dir" };//
+		// String[] fileNames = new String[] { "all_new", "all_new_dir" };//
 		for (String s : fileNames) {
 			try {
 				fixNEs(s);
@@ -852,8 +933,8 @@ public class Processing {
 		// split_preds();
 		// split_chunks_unordered();
 
-//		convertDSToRelsCCG();
-		formOIEDSAll();
+		convertDSToRelsCCG();
+		// formOIEDSAll();
 		// testTime1();
 		// splitBasedOnPrevDS(root + "all_new.txt");
 		// splitBasedOnPrevDS(root + "all_new_dir.txt");

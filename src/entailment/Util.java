@@ -775,7 +775,7 @@ public class Util {
 		if (!EntailGraphFactoryAggregator.isTyped) {
 			return "thing";
 		}
-		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
+		if (EntailGraphFactoryAggregator.figerTypes) {
 			if (entToFigerType == null) {
 				try {
 					loadFigerTypes(defaultEntToFigerType);
@@ -795,7 +795,7 @@ public class Util {
 
 			// System.out.println(arg+" "+type);
 			return type;
-		} else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.GKG) {
+		} else{
 			String type;
 			if (isEntity) {
 				type = entToType.get(arg);
@@ -813,7 +813,7 @@ public class Util {
 
 			return type;
 		}
-		return null;
+//		return null;
 
 	}
 

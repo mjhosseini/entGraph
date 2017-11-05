@@ -43,7 +43,7 @@ public class EntailGraphFactoryAggregator {
 	public static boolean useTimeEx = false;
 	public static boolean isCCG = true;
 	public static boolean isTyped = true;
-	public static boolean figerTypes = false;
+	public static boolean figerTypes = true;
 	public static TypeScheme typeScheme = TypeScheme.LDA;
 	public static final int smoothParam = 0;// 0 means no smoothing
 	static final int minArgPairForPred = 3;
