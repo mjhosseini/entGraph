@@ -518,11 +518,12 @@ public class Scripts {
 	}
 	
 	static void normalizeLDAWeights() throws IOException{
-		BufferedReader br = new BufferedReader(new FileReader("topic-weights50"));
+		int numTopics = DistrTyping.numTopics;
+		BufferedReader br = new BufferedReader(new FileReader("topic-weights"+numTopics));
 		String line = null;
 //		int lineNumber = 0;
 		HashMap<String, double[]> wordToWeights = new HashMap<>();
-		int numTopics = 50;
+		
 		
 		//read weights
 		while ((line = br.readLine()) != null) {

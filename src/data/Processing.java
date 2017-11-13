@@ -527,7 +527,7 @@ public class Processing {
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
 		PrintWriter op = new PrintWriter(new File(root + fname + "_rels.txt"));
-		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDArels.txt"));
+		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA"+DistrTyping.numTopics+"rels.txt"));
 
 		while ((line = br.readLine()) != null) {
 			line2 = brOrig.readLine();

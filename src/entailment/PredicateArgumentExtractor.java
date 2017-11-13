@@ -1060,9 +1060,13 @@ public class PredicateArgumentExtractor implements Runnable {
 	// }
 	// }
 
-	// public static void main(String[] args) {
-	// breakFile();
-	// }
+	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
+		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
+		String s = "Ben visited London on Monday.";
+		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true);
+		String mainRels = exPrss[0];
+		System.out.println(mainRels);
+	}
 
 	public static boolean isEntity(String pos) {
 		// System.out.println(node.getLemma());

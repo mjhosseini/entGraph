@@ -23,15 +23,16 @@ public class PGraph {
 
 	public final static boolean checkFrgVio = true;
 	public final static boolean shouldWrite = true;
-	public static boolean emb = true;
-	public static boolean transitive = false;
+	public static boolean emb = false;
+	public static boolean transitive = true;
 	public final static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1;// -1 if don't want to
 	public static String suffix = "_sim.txt";
 	static final String embSuffix = "_embsims16.txt";
 	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
 	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
-	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
+//	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
+	static final String root = "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
 	static final int maxEmbIter = 2;
 	
 	public static float edgeThreshold = -1;// isn't worth it! .05 reduces
@@ -632,16 +633,26 @@ public class PGraph {
 		// String root = "../../python/gfiles/typedEntGrDir_aida/";
 		// PGraph pgraph = new PGraph(root+"location#person_sim.txt");
 
+		//TODO: be careful
+//		double maxLmbda = .2;
+//		double numLmbdas = 11;
+//		List<Float> lmbdas = new ArrayList<>();
+//		for (float lmbda = 0; lmbda <= maxLmbda; lmbda += maxLmbda / (numLmbdas - 1)) {
+//			lmbdas.add(lmbda);
+//		}
+//		lmbdas.add(.3f);
+//		lmbdas.add(.4f);
+//		lmbdas.add(.5f);
 		
-		double maxLmbda = .2;
-		double numLmbdas = 11;
+//		double maxLmbda = .12;
+//		double numLmbdas = 3;
 		List<Float> lmbdas = new ArrayList<>();
-		for (float lmbda = 0; lmbda <= maxLmbda; lmbda += maxLmbda / (numLmbdas - 1)) {
-			lmbdas.add(lmbda);
-		}
-		lmbdas.add(.3f);
-		lmbdas.add(.4f);
-		lmbdas.add(.5f);
+//		for (float lmbda = 0.4f; lmbda <= maxLmbda; lmbda += maxLmbda / (numLmbdas - 1)) {
+//			lmbdas.add(lmbda);
+//		}
+		lmbdas.add(.04f);
+		lmbdas.add(.08f);
+		lmbdas.add(.12f);
 
 		File folder = new File(root);
 		File[] files = folder.listFiles();

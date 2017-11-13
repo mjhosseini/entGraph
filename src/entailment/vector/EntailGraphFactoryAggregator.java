@@ -44,10 +44,10 @@ public class EntailGraphFactoryAggregator {
 	public static boolean isCCG = true;
 	public static boolean isTyped = true;
 	public static boolean figerTypes = true;
-	public static TypeScheme typeScheme = TypeScheme.LDA;
+	public static TypeScheme typeScheme = TypeScheme.FIGER;
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static final int minArgPairForPred = 3;
-	static final int minPredForArgPair = 3;// min num of unique predicates for
+	static final int minArgPairForPred = 2;
+	static final int minPredForArgPair = 2;// min num of unique predicates for
 											// argpair
 	static final int minPredForArg = -1;// min num of unique predicates for
 
@@ -318,7 +318,7 @@ public class EntailGraphFactoryAggregator {
 			// typedEntGrDir = "typedEntGrDir_untyped_unlinked";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_30_30";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_20_20";
-			typedEntGrDir = "typedEntGrDir_aida_LDA2";
+			typedEntGrDir = "typedEntGrDir_aida_LDA15_2_2";
 			// typedEntGrDir = "typedEntGrDir_gbooks_all";
 			numThreads = 15;
 		}
