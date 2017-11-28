@@ -15,6 +15,8 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 
+import com.google.gson.JsonObject;
+
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
@@ -516,47 +518,46 @@ public class Scripts {
 			allStrs.add(line);
 		}
 	}
-	
-	static void normalizeLDAWeights() throws IOException{
+
+	static void normalizeLDAWeights() throws IOException {
 		int numTopics = DistrTyping.numTopics;
-		BufferedReader br = new BufferedReader(new FileReader("topic-weights"+numTopics));
+		BufferedReader br = new BufferedReader(new FileReader("topic-weights" + numTopics));
 		String line = null;
-//		int lineNumber = 0;
+		// int lineNumber = 0;
 		HashMap<String, double[]> wordToWeights = new HashMap<>();
-		
-		
-		//read weights
+
+		// read weights
 		while ((line = br.readLine()) != null) {
-//			lineNumber++;
+			// lineNumber++;
 			String[] ss = line.split("\t");
 			int topicNumber = Integer.parseInt(ss[0]);
 			String word = ss[1];
 			double w = Double.parseDouble(ss[2]);
-			if (!wordToWeights.containsKey(word)){
+			if (!wordToWeights.containsKey(word)) {
 				wordToWeights.put(word, new double[numTopics]);
 			}
 			wordToWeights.get(word)[topicNumber] = w;
 		}
-		
-		//normalize
-		for (String word:wordToWeights.keySet()){
+
+		// normalize
+		for (String word : wordToWeights.keySet()) {
 			double[] ws = wordToWeights.get(word);
 			double sum = 0;
-			for (double w:ws){
-				sum+=w;
+			for (double w : ws) {
+				sum += w;
 			}
-			for (int i=0; i<ws.length; i++){
-				
-				ws[i]/=sum;
+			for (int i = 0; i < ws.length; i++) {
+
+				ws[i] /= sum;
 			}
 		}
-		
-		//write results
-		for (int i=0; i<numTopics; i++){
-			for (String word:wordToWeights.keySet()){
+
+		// write results
+		for (int i = 0; i < numTopics; i++) {
+			for (String word : wordToWeights.keySet()) {
 				double w = wordToWeights.get(word)[i];
-				if (w>DistrTyping.typePropThresh){
-					System.out.println(i+"\t"+word+"\t"+w);
+				if (w > DistrTyping.typePropThresh) {
+					System.out.println(i + "\t" + word + "\t" + w);
 				}
 			}
 		}
@@ -577,16 +578,48 @@ public class Scripts {
 			}
 
 			String[] ss = line.split("\t");
-			if (ss[0].contains("__") || ss.length<3) {
+			if (ss[0].contains("__") || ss.length < 3) {
 				continue;
 			}
 			String[] ss2 = ss[2].split(" ");
-			if (ss2.length<3){
+			if (ss2.length < 3) {
 				continue;
 			}
 
 			System.out.println(line);
 		}
+		br.close();
+	}
+
+	static void makeSNLIFormatJsonAll() {
+		String root = "/Users/hosseini/Documents/python/gfiles/ent/";
+		String[] paths = new String[] { "train_new_s", "dev_new_s", "test_new_s" };
+		String[] opaths = new String[] { "train_snli.json", "dev_snli.json", "test_snli.json" };
+		for (int i = 0; i < paths.length; i++) {
+			try {
+				makeSNLIFormatJson(root+paths[i]+".txt", root+opaths[i]+".txt");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	static void makeSNLIFormatJson(String path, String opath) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(path));
+		PrintStream op = new PrintStream(new File(opath));
+		JsonObject jo = new JsonObject();
+		String line = null;
+		while ((line = br.readLine()) != null) {
+			String[] ss = line.split("\t");
+			jo.addProperty("sentence1", ss[1]);
+			jo.addProperty("sentence2", ss[0]);
+			String label = ss[2].equals("True")?"entailment":"contradiction";
+			jo.addProperty("gold_label", label);
+			op.println(jo);
+		}
+		op.close();
 		br.close();
 	}
 
@@ -612,9 +645,9 @@ public class Scripts {
 		// combineCCG3WTargetRels();
 		// getThresholdsCCGEmbs();
 
-//		postProcess();
-		normalizeLDAWeights();
-
+		// postProcess();
+		// normalizeLDAWeights();
+		makeSNLIFormatJsonAll();
 	}
 
 }

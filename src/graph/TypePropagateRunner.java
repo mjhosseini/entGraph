@@ -15,14 +15,14 @@ import java.util.concurrent.TimeUnit;
 public class TypePropagateRunner {
 	ThreadPoolExecutor threadPool;
 	ArrayList<PGraph> pGraphs;
-	public final static float edgeThreshold = .05f;// edgeThreshold
-	static int numThreads = 15;
+	public final static float edgeThreshold = -1;// edgeThreshold
+	static int numThreads = 10;
 	Map<String,Integer> graphToNumEdges;
 
 	public TypePropagateRunner(String root) {
 		PGraph.emb = false;
 		PGraph.suffix = "_sim.txt";
-		PGraph.transitive = false;
+		PGraph.formBinaryGraph = false;
 		PGraph.edgeThreshold = edgeThreshold;
 		pGraphs = new ArrayList<>();
 		graphToNumEdges = new HashMap<String, Integer>();

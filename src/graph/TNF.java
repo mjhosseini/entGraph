@@ -27,10 +27,14 @@ public class TNF {
 		this.pgraph = pgraph;
 		this.lmbda = lmbda;
 		List<Edge> sortedEdges = pgraph.getSortedEdges();
-		System.out.println("heree"+pgraph.nodes.size()+" "+pgraph.sortedEdges);
+//		System.out.println("heree" + pgraph.nodes.size() + " " + pgraph.sortedEdges);
 		this.N = pgraph.nodes.size();
-
-		this.formGraphInit(sortedEdges, this.lmbda);
+		if (PGraph.transitive){
+			this.formGraphInit(sortedEdges, this.lmbda);
+		}
+		else{
+			this.formGraphPlain(sortedEdges, lmbda);
+		}
 	}
 
 	static boolean isConnectedScc(DirectedGraph<Integer, DefaultEdge> scc, int[] node2comp, int i, int j) {
@@ -39,7 +43,7 @@ public class TNF {
 		return idx1 == idx2 || scc.containsEdge(idx1, idx2);
 
 	}
-	
+
 	static boolean check_FRG_vio_edge(gtGraph scc, int[] node2comp, int i, int j, boolean checkFrgVio) {
 		int idx1 = node2comp[i];
 		int idx2 = node2comp[j];
@@ -55,7 +59,7 @@ public class TNF {
 				numVio++;
 				if (checkFrgVio) {
 					return true;
-				} else if (numVio > 1) { 
+				} else if (numVio > 1) {
 					return true;
 				}
 			}
@@ -143,6 +147,37 @@ public class TNF {
 
 	}
 
+	void formGraphPlain(List<Edge> sortedEdges, float lmbda) {
+		int N = pgraph.nodes.size();
+		this.node2comp = new int[N];
+		this.scc = new gtGraph(DefaultEdge.class);
+		
+		for (int i = 0; i < N; i++) {
+			scc.addVertex(i);
+
+			List<Integer> l = new ArrayList<>();
+			l.add(i);
+			scc.comps.add(l);
+			node2comp[i] = i;
+
+		}
+
+		for (Edge e : sortedEdges) {
+			float sim = e.sim - lmbda;
+			if (sim <= lmbda) {
+				break;
+			}
+			int i = e.i;
+			int j = e.j;
+
+			scc.addEdge(i, j);
+
+		}
+		
+		updateSCC();
+
+	}
+
 	void formGraphInit(List<Edge> sortedEdges, float lmbda) {
 		int N = pgraph.nodes.size();
 		this.node2comp = new int[N];
@@ -164,7 +199,7 @@ public class TNF {
 			}
 			int i = e.i;
 			int j = e.j;
-			
+
 			System.out.println("checking: " + i + " " + j + " " + sim + " " + pgraph.nodes.get(i).id + " "
 					+ pgraph.nodes.get(j).id);
 			if (isConnectedScc(scc, node2comp, i, j) || (check_FRG_vio_edge(scc, node2comp, i, j, checkFrgVio))) {

@@ -24,17 +24,21 @@ public class PGraph {
 	public final static boolean checkFrgVio = true;
 	public final static boolean shouldWrite = true;
 	public static boolean emb = false;
-	public static boolean transitive = true;
+	public static boolean weightEdgeSimilarities = true;
+	public static boolean formBinaryGraph = true;
+	public static boolean transitive = false;
 	public final static int maxNeighs = 1000;// more than 30!
-	public static float relMinSim = -1;// -1 if don't want to
+	public static float relMinSim = -1f;// -1 if don't want to
 	public static String suffix = "_sim.txt";
-	static final String embSuffix = "_embsims16.txt";
+	static final String embSuffix = "_embsims22.txt";
 	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
 	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
-//	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
-	static final String root = "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
-	static final int maxEmbIter = 2;
-	
+	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
+
+	// static final String root =
+	// "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
+	static final int maxEmbIter = 5;
+
 	public static float edgeThreshold = -1;// isn't worth it! .05 reduces
 	// edges by half, but not worth it
 
@@ -98,10 +102,10 @@ public class PGraph {
 			}
 			allPredsList.add(nextIds);
 
-			for (int k = 1; k < PGraph.maxEmbIter; k++) {
-				System.out.println("iter: " + k);
+			for (int k = 0; k < PGraph.maxEmbIter; k++) {
+				System.out.println("iter: " + (k + 1));
 				nextG = getNextEmbeddingGr(nextG, PGraph.invRels2Sims, prevIds, prevPred2Node, targetRels,
-						false);/*k == PGraph.maxEmbIter - 1*/
+						k == PGraph.maxEmbIter - 1);
 				gs.add(nextG);
 				nextIds = new ArrayList<>();
 				for (String s : prevIds) {
@@ -345,7 +349,25 @@ public class PGraph {
 							ee = g.getEdge(p, q);
 							w = g.getEdgeWeight(ee);
 						}
-						g.setEdgeWeight(ee, w + sim * ps.sim * qs.sim);
+						if (!PGraph.weightEdgeSimilarities) {
+							g.setEdgeWeight(ee, w + sim * ps.sim * qs.sim);
+						} else {
+							List<Integer> l = new ArrayList<>();
+							// r and rp are always in g0. p and q might be new!
+							if (p < prevN) {
+								l.add(g0.outDegreeOf(p));
+							}
+							l.add(g0.outDegreeOf(r));
+							if (q < prevN) {
+								l.add(g0.inDegreeOf(q));
+							}
+
+							l.add(g0.inDegreeOf(rp));
+
+							double beta = Math.max(Collections.min(l), 1);
+
+							g.setEdgeWeight(ee, w + sim * ps.sim * qs.sim * beta);
+						}
 
 						// if (sim != 0) {// similar to python. Avg only if
 						// r->rp
@@ -396,6 +418,7 @@ public class PGraph {
 				// For pairs that both are in the graph, we consider their feats
 				// (even if zero)
 				for (PredSim ps : pss) {
+					int r = curPred2Node.get(ps.pred);
 					if (curPred2Node.get(ps.pred) >= prevN) {
 						// System.out.println("cont1: " + curIds.get(p) + " " +
 						// ps.pred + " " + curPred2Node.get(ps.pred)
@@ -413,7 +436,26 @@ public class PGraph {
 						// else{
 						// System.out.println("add w: " + ps +" " + qs);
 						// }
-						wCor += ps.sim * qs.sim;
+						if (!PGraph.weightEdgeSimilarities) {
+							wCor += ps.sim * qs.sim;
+						} else {
+							int rp = curPred2Node.get(qs.pred);
+
+							List<Integer> l = new ArrayList<>();
+							// r and rp are always in g0. p and q might be new!
+							if (p < prevN) {
+								l.add(g0.outDegreeOf(p));
+							}
+							l.add(g0.outDegreeOf(r));
+							if (q < prevN) {
+								l.add(g0.inDegreeOf(q));
+							}
+
+							l.add(g0.inDegreeOf(rp));
+
+							double beta = Math.max(Collections.min(l), 1);
+							wCor += ps.sim * qs.sim * beta;
+						}
 					}
 				}
 
@@ -526,7 +568,7 @@ public class PGraph {
 
 	void buildGraphFromFile(String fname) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(fname));
-		String typeStr = fname.substring(fname.lastIndexOf('/')+1, fname.lastIndexOf('_'));
+		String typeStr = fname.substring(fname.lastIndexOf('/') + 1, fname.lastIndexOf('_'));
 		this.types = typeStr;
 		String line = "";
 		int lIdx = 0;
@@ -593,7 +635,7 @@ public class PGraph {
 					}
 					allEdges++;
 					if (sim < edgeThreshold) {
-//						System.out.println("lt: " + sim);
+						// System.out.println("lt: " + sim);
 						continue;
 					}
 					// else{
@@ -633,40 +675,35 @@ public class PGraph {
 		// String root = "../../python/gfiles/typedEntGrDir_aida/";
 		// PGraph pgraph = new PGraph(root+"location#person_sim.txt");
 
-		//TODO: be careful
-//		double maxLmbda = .2;
-//		double numLmbdas = 11;
-//		List<Float> lmbdas = new ArrayList<>();
-//		for (float lmbda = 0; lmbda <= maxLmbda; lmbda += maxLmbda / (numLmbdas - 1)) {
-//			lmbdas.add(lmbda);
-//		}
-//		lmbdas.add(.3f);
-//		lmbdas.add(.4f);
-//		lmbdas.add(.5f);
-		
-//		double maxLmbda = .12;
-//		double numLmbdas = 3;
+		// TODO: be careful
+		double maxLmbda = .2;
+		double numLmbdas = 11;
 		List<Float> lmbdas = new ArrayList<>();
-//		for (float lmbda = 0.4f; lmbda <= maxLmbda; lmbda += maxLmbda / (numLmbdas - 1)) {
-//			lmbdas.add(lmbda);
-//		}
-		lmbdas.add(.04f);
-		lmbdas.add(.08f);
-		lmbdas.add(.12f);
+		for (float lmbda = 0; lmbda <= maxLmbda; lmbda += maxLmbda / (numLmbdas - 1)) {
+			lmbdas.add(lmbda);
+		}
+		lmbdas.add(.3f);
+		lmbdas.add(.4f);
+		lmbdas.add(.5f);
+
+		// List<Float> lmbdas = new ArrayList<>();
+		// lmbdas.add(.04f);
+		// lmbdas.add(.08f);
+		// lmbdas.add(.12f);
 
 		File folder = new File(root);
 		File[] files = folder.listFiles();
 		Arrays.sort(files);
 
-		// boolean seenLoc = false;//TODO: be carful
+		boolean seenLoc = false;// TODO: be careful
 		for (File f : files) {
 			String fname = f.getName();
-			// if (fname.startsWith("location#title_sim.txt")) {
-			// seenLoc = true;
-			// }
-			// if (!seenLoc) {
-			// continue;
-			// }
+			if (fname.startsWith("location#location_sim.txt")) {
+				seenLoc = true;
+			}
+			if (!seenLoc) {
+				continue;
+			}
 
 			if (!fname.contains(PGraph.suffix)) {
 				continue;
@@ -680,12 +717,12 @@ public class PGraph {
 
 			System.out.println("allEdgesRem, allEdges: " + allEdgesRemained + " " + allEdges);
 
-			if (!PGraph.transitive) {
+			if (!PGraph.formBinaryGraph) {
 				continue;
 			}
 
 			int lastDotIdx = pgraph.fname.lastIndexOf('.');
-			String postFix = "_graphs.txt";// TODO: be careful
+			String postFix = "_graphsPlain.txt";// TODO: be careful
 
 			if (!checkFrgVio) {
 				postFix = "_graphsNoFrg2.txt";
