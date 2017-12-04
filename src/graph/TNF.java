@@ -174,7 +174,7 @@ public class TNF {
 
 		}
 		
-		updateSCC();
+//		updateSCC();
 
 	}
 
@@ -264,7 +264,7 @@ public class TNF {
 
 	void writeSCC() {
 		// example: person#location_sim.txt
-		op.println("lambda: " + this.lmbda);
+		op.println("lambda: " + this.lmbda+" N: "+scc.vertexSet().size());
 		for (int i = 0; i < scc.vertexSet().size(); i++) {
 			op.println("\ncomponent " + i);
 			List<Integer> nodesIdxes = scc.comps.get(i);

@@ -695,15 +695,15 @@ public class PGraph {
 		File[] files = folder.listFiles();
 		Arrays.sort(files);
 
-		boolean seenLoc = false;// TODO: be careful
+//		boolean seenLoc = false;// TODO: be careful
 		for (File f : files) {
 			String fname = f.getName();
-			if (fname.startsWith("location#location_sim.txt")) {
-				seenLoc = true;
-			}
-			if (!seenLoc) {
-				continue;
-			}
+//			if (fname.startsWith("location#location_sim.txt")) {
+//				seenLoc = true;
+//			}
+//			if (!seenLoc) {
+//				continue;
+//			}
 
 			if (!fname.contains(PGraph.suffix)) {
 				continue;
@@ -722,7 +722,7 @@ public class PGraph {
 			}
 
 			int lastDotIdx = pgraph.fname.lastIndexOf('.');
-			String postFix = "_graphsPlain.txt";// TODO: be careful
+			String postFix = "_graphsPlain2.txt";// TODO: be careful
 
 			if (!checkFrgVio) {
 				postFix = "_graphsNoFrg2.txt";

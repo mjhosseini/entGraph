@@ -26,7 +26,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static HashSet<String> acceptableGEStrs;
 
 	static {
-		String[] accepteds = new String[] { "GE", "EG", "EE" };//
+		String[] accepteds = new String[] { "GE", "EG", "EE","GG" };//
 		acceptableGEStrs = new HashSet<>();
 		for (String s : accepteds) {
 			acceptableGEStrs.add(s);
@@ -110,7 +110,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-//		System.out.println(mainStr);
+		System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {
@@ -360,7 +360,7 @@ public class PredicateArgumentExtractor implements Runnable {
 							}
 						}
 					}
-
+					edge.getRelation().getLeft();
 					String leftPred = edge.getRelation().getLeft().toString();
 					String rightPred = edge.getRelation().getRight().toString();
 
@@ -399,7 +399,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 					String arg1 = idx2Node.get(arg1Index).getLemma();
 					String arg2 = idx2Node.get(arg2Index).getLemma();
-
+					
 					// //41 shots -> shots
 					//
 					// if (idx2Node.get(arg1Index).getPos().equals("CD")) {
