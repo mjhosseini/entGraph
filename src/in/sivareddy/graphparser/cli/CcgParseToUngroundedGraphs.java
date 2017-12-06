@@ -46,7 +46,7 @@ public class CcgParseToUngroundedGraphs {
 		jsonParser = new JsonParser();
 		gson = new Gson();
 		logger = Logger.getLogger(CcgParseToUngroundedGraphs.class);
-		nbestParses = 10;
+		nbestParses = 1;
 		
 		String ccgModelDir = Paths.get(dataFolder, "easyccg_model").toString();
 

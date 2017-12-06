@@ -26,12 +26,14 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static HashSet<String> acceptableGEStrs;
 
 	static {
-		String[] accepteds = new String[] { "GE", "EG", "EE","GG" };//
+		String[] accepteds = new String[] { "GE", "EG", "EE" };//
 		acceptableGEStrs = new HashSet<>();
 		for (String s : accepteds) {
 			acceptableGEStrs.add(s);
 		}
 	}
+
+	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
 
 	String line;
 	public static CcgParseToUngroundedGraphs parser;
@@ -54,7 +56,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// props.put("annotators", "tokenize,ssplit");
 
 		// pipeline = new StanfordCoreNLP(props);
-
+		
 		// props = new Properties();
 		// props.put("annotators", "tokenize,ssplit");
 		// pipelineLemma = new StanfordCoreNLP(props);
@@ -110,7 +112,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-		System.out.println(mainStr);
+//		System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {
@@ -261,6 +263,20 @@ public class PredicateArgumentExtractor implements Runnable {
 		return extractPredArgsStrs(text, 0, false, false);
 	}
 
+	String[] getLeftRightPred(Edge<LexicalItem> edge) {
+		String leftPred = edge.getRelation().getLeft().toString();
+		leftPred = leftPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
+		// System.out.println("leftPred: " + leftPred + " "
+		// + leftPred.replaceFirst(edge.getMediator().getWord(),
+		// edge.getMediator().getLemma()));
+		String rightPred = edge.getRelation().getRight().toString();
+		rightPred = rightPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
+		// System.out.println("rightPred: " + rightPred + " "
+		// + rightPred.replaceFirst(edge.getMediator().getWord(),
+		// edge.getMediator().getLemma()));
+		return new String[] { leftPred, rightPred };
+	}
+
 	// syntaxIdx means what syntactic parse we're interested in. Default is 0
 	// (the best one), but sometimes we wanna look at others too!
 	public String[] extractPredArgsStrs(String text, int syntaxIdx, boolean acceptNP, boolean acceptGG)
@@ -313,7 +329,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				// mainStr += ungroundedGraph+"\n";
 				// mainStr += ungroundedGraph.getSyntacticParse() + "\n";
 				String syntacticParse = ungroundedGraph.getSyntacticParse();
-				// System.out.println(syntacticParse);
+//				System.out.println(syntacticParse);
 
 				if (!acceptNP && syntacticParse.startsWith("(<T NP")) {
 					// mainStr += "not interesting: " + "\n";
@@ -360,9 +376,10 @@ public class PredicateArgumentExtractor implements Runnable {
 							}
 						}
 					}
-					edge.getRelation().getLeft();
-					String leftPred = edge.getRelation().getLeft().toString();
-					String rightPred = edge.getRelation().getRight().toString();
+
+					String[] lr = getLeftRightPred(edge);
+					String leftPred = lr[0];
+					String rightPred = lr[1];
 
 					if ((leftPred.contains(".'s.") && !rightPred.contains(".'s."))
 							|| (rightPred.contains(".'s.") && !leftPred.contains(".'s."))) {
@@ -399,7 +416,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 					String arg1 = idx2Node.get(arg1Index).getLemma();
 					String arg2 = idx2Node.get(arg2Index).getLemma();
-					
+
 					// //41 shots -> shots
 					//
 					// if (idx2Node.get(arg1Index).getPos().equals("CD")) {
@@ -446,11 +463,15 @@ public class PredicateArgumentExtractor implements Runnable {
 					// adding!
 					BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index,
 							eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+					// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
+					// true);
 					relInfos.add(relInfo0);
 					if (!modifierStr.equals("")) {
 						predArgStr = getPredArgString("", leftPred, rightPred, arg1, arg2, negated, eventIndex);
 						relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index, eventIndex,
 								accepted, dsStr.length() > 0, idx2Node, sentIdx);
+						// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
+						// true);
 						relInfos.add(relInfo0);
 					}
 
@@ -507,7 +528,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 			sentIdx++;
 		}
-		
+
 		// if (relCount>1){
 		// System.out.println("relCount: "+relCount+" "+text+" \n "+mainStr);
 		// }
@@ -574,8 +595,10 @@ public class PredicateArgumentExtractor implements Runnable {
 			}
 			int lidx = edge2.getLeft().getWordPosition();
 			int ridx = edge2.getRight().getWordPosition();
-			String lStr = edge2.getRelation().getLeft().toString();
-			String rStr = edge2.getRelation().getRight().toString();
+
+			String[] lr = getLeftRightPred(edge2);
+			String lStr = lr[0];
+			String rStr = lr[1];
 
 			String arg2 = "";
 			int thisArg2Index = -1;
@@ -616,16 +639,20 @@ public class PredicateArgumentExtractor implements Runnable {
 			// System.out.println("added new relation (VP): " + predArgStr);
 			BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
 					eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+			// false);
 			relInfos.add(relInfo0);
+			// System.out.println("added relInfo twohop vp: "+relInfo0.mainStr);
 
 			if (!modifierStr.equals("")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIdx2);
 				// System.out.println("added new relation (VP): " + predArgStr);
 				relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
 						accepted, dsStr.length() > 0, idx2Node, sentIdx);
+				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+				// false);
 				relInfos.add(relInfo0);
 			}
-
 		}
 
 	}
@@ -656,12 +683,28 @@ public class PredicateArgumentExtractor implements Runnable {
 			thisRightPred = thisRightPred.substring(0, lastRightDot + 1);
 			String arg2 = "";
 			int thisArg2Index = -1;
+			String[] lr = getLeftRightPred(edge2);
+			boolean shouldAdd = true;
 			if (edge2.getLeft().getWordPosition() == arg2Index) {
-				thisRightPred += edge2.getRelation().getRight();
+				thisRightPred += lr[1];
+				try {
+					if (Util.prepositions.contains(lr[1].split("\\.")[0])) {
+						shouldAdd = false;
+					}
+				} catch (Exception e) {
+				}
+
 				arg2 = edge2.getRight().getLemma();
 				thisArg2Index = edge2.getRight().getWordPosition();
 			} else if (edge2.getRight().getWordPosition() == arg2Index) {
-				thisRightPred += edge2.getRelation().getLeft();
+				thisRightPred += lr[0];
+				try {
+					if (Util.prepositions.contains(lr[0].split("\\.")[0])) {
+						shouldAdd = false;
+					}
+				} catch (Exception e) {
+				}
+
 				arg2 = edge2.getLeft().getLemma();
 				thisArg2Index = edge2.getLeft().getWordPosition();
 			} else {
@@ -685,13 +728,24 @@ public class PredicateArgumentExtractor implements Runnable {
 			// System.out.println("added new relation: " + predArgStr);
 			BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
 					eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
-			relInfos.add(relInfo0);
+			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+			// false);
+			if (shouldAdd) {
+				relInfos.add(relInfo0);
+				// System.out.println("added relInfo twohop np: "+relInfo0.mainStr);
+				// System.out.println(edge2.getMediator().getLemma()+"
+				// "+edge2.getMediator().getPos()+" "+lr[0].equals(lr[1])+" "+lr[0]+" "+lr[1]);
+			} else {
+				// System.out.println("not adding: "+relInfo0.mainStr);
+			}
 
 			if (!modifierStr.equals("")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
 				// System.out.println("added new relation: " + predArgStr);
 				relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
 						accepted, dsStr.length() > 0, idx2Node, sentIdx);
+				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+				// false);
 				relInfos.add(relInfo0);
 			}
 
@@ -753,8 +807,9 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (!foundNonTrivalDSStr) {
 				relInfo.dsStr = predArgStr + " " + GEStr;
 			}
-//			System.out.println("not interesting: " + eventIndex + " " + arg1Index + "" + arg2Index + " " + arg1 + " "
-//					+ arg2 + " " + predArgStr);
+			// System.out.println("not interesting: " + eventIndex + " " + arg1Index + "" +
+			// arg2Index + " " + arg1 + " "
+			// + arg2 + " " + predArgStr);
 		} else {
 			relInfo.foundInteresting = true;
 			relInfo.dsStr = predArgStr + " " + GEStr;

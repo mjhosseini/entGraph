@@ -87,6 +87,7 @@ public class Util {
 	static HashMap<String, String[]> predToLemma = new HashMap<>();;
 
 	static HashSet<String> modals;
+	static HashSet<String> prepositions;//I need a predefined list when extending the predArg extraction
 	static Logger logger;
 
 	static {
@@ -131,6 +132,18 @@ public class Util {
 		for (String s : modalsList) {
 			modals.add(s);
 		}
+		
+		try {
+			Scanner sc = new Scanner(new File("prepositions.txt"));
+			prepositions = new HashSet<>();
+			while (sc.hasNext()) {
+				prepositions.add(sc.nextLine().toLowerCase());
+			}
+			sc.close();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		
 
 		try {
 			biuNormalizer = new BiuNormalizer(new File("lib_data/biu_string_rules.txt"));
