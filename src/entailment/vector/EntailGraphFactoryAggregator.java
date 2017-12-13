@@ -21,8 +21,6 @@ import entailment.entityLinking.SimpleSpot;
 //This is to do multithreading over EntGrFactory
 public class EntailGraphFactoryAggregator {
 
-	int numThreads;
-
 	ThreadPoolExecutor threadPool;
 
 	EntailGraphFactory[] entGrFacts;
@@ -37,7 +35,7 @@ public class EntailGraphFactoryAggregator {
 	// for
 	// static final int minPredForArg = 30;// min num of unique predicates for
 	// arg
-
+	
 	public static boolean onlyDSPreds = false;
 	public static boolean rawExtractions = false;// gbooks
 	public static boolean useTimeEx = false;
@@ -45,16 +43,22 @@ public class EntailGraphFactoryAggregator {
 	public static boolean isTyped = true;
 	public static boolean figerTypes = true;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
+	public static boolean lemmatizePredWords = true;//if it has been already lemmatized when rel extraction
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static final int minArgPairForPred = 2;
-	static final int minPredForArgPair = 2;// min num of unique predicates for
+	static final int minArgPairForPred = 3;
+	static final int minPredForArgPair = 3;// min num of unique predicates for
 											// argpair
 	static final int minPredForArg = -1;// min num of unique predicates for
 
+	static final String relAddress = "news_gen9_aida.json";
+	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_d";
+	static final int numThreads = 15;
+	
+	
 	static int allNonZero = 0;
 	static int allEdgeCounts = 0;
 
-	public EntailGraphFactoryAggregator(int numThreads) {
+	public EntailGraphFactoryAggregator() {
 		try {
 			dsPreds = new HashSet<>();
 			String root = "data/ent/";
@@ -85,7 +89,7 @@ public class EntailGraphFactoryAggregator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		this.numThreads = numThreads;
+		
 		renewThreadPool();
 	}
 
@@ -306,7 +310,7 @@ public class EntailGraphFactoryAggregator {
 			// fileName = "test.json";
 			// fileName = "news_gen5_unlinked.txt";
 			// fileName = "news_gen6_aida.txt";
-			fileName = "news_gen7_aida.json";
+			fileName = relAddress;
 			// fileName = "OIE/oie_unlinked.json";
 			// fileName = "gbooks_norm.txt";
 			// fileName = "gnews.txt";
@@ -318,12 +322,12 @@ public class EntailGraphFactoryAggregator {
 			// typedEntGrDir = "typedEntGrDir_untyped_unlinked";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_30_30";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_20_20";
-			typedEntGrDir = "typedEntGrDir_aida_LDA15_2_2";
+			typedEntGrDir = simsFolder;
 			// typedEntGrDir = "typedEntGrDir_gbooks_all";
-			numThreads = 15;
+			numThreads = EntailGraphFactoryAggregator.numThreads;
 		}
 
-		EntailGraphFactoryAggregator agg = new EntailGraphFactoryAggregator(numThreads);
+		EntailGraphFactoryAggregator agg = new EntailGraphFactoryAggregator();
 		DistrTyping.loadLDATypes();
 		agg.runAllEntGrFacts(fileName, entTypesFName, genTypesFName, typedEntGrDir);
 

@@ -416,10 +416,17 @@ public class Util {
 				ii++;
 				continue;
 			}
+			String lemma;
+			if (EntailGraphFactoryAggregator.lemmatizePredWords) {
+				lemma = getLemma(part);
+			}
+			else {
+				lemma = part;
+			}
 			if (ii < parts.length - 1) {
-				ret.append(getLemma(part) + ".");
+				ret.append( lemma + ".");
 			} else {
-				ret.append(getLemma(part));
+				ret.append(lemma);
 			}
 			ii++;
 		}
@@ -1830,7 +1837,7 @@ public class Util {
 		// }
 		// System.out.println(isGeneric("los angeles", allPOSTags));
 		//
-		convertToPArgFormat(args);
+//		convertToPArgFormat(args);
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);
@@ -1838,7 +1845,7 @@ public class Util {
 		// System.out.println(1d);
 		// readJSONSimple();
 		// convertReleaseToRawJson();
-		// convertPredArgsToJson(args);
+		convertPredArgsToJson(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));
 

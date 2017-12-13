@@ -27,5 +27,10 @@ public class Node {
 			
 		}
 	}
-
+	
+	public void clean() {
+		this.oedges = null;
+		this.idx2oedges = null;
+	}
+	
 }

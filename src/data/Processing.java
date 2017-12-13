@@ -526,8 +526,8 @@ public class Processing {
 
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels.txt"));
-		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA"+DistrTyping.numTopics+"rels.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l2.txt"));
+		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA"+DistrTyping.numTopics+"rels_l.txt"));
 
 		while ((line = br.readLine()) != null) {
 			line2 = brOrig.readLine();
@@ -841,6 +841,8 @@ public class Processing {
 		// String[] fileNames = new String[] { "all_new" };//
 		EntailGraphFactoryAggregator.isTyped = true;
 		EntailGraphFactoryAggregator.figerTypes = true;
+		EntailGraphFactoryAggregator.isCCG = true;
+		
 		// String[] fileNames = new String[] { "all_new", "all_new_dir" };//
 		String[] fileNames = new String[] { "all", "train1", "dev1", "test1", "all_new", "train_new", "dev_new",
 				"test_new", "all_new_dir", "train_new_dir", "dev_new_dir", "test_new_dir" };//

@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
@@ -31,6 +32,7 @@ public class PGraph {
 	public static float relMinSim = -1f;// -1 if don't want to
 	public static String suffix = "_sim.txt";
 	static final String embSuffix = "_embsims22.txt";
+	static final String tPropSuffix = "_tProp3.txt";
 	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
 	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
 	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
@@ -56,8 +58,10 @@ public class PGraph {
 	public static Set<String> targetRels;
 	ArrayList<Edge> sortedEdges;
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
+	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
+	Map<String,Double> edgeToMNWeight = new ConcurrentHashMap<>();//the weight for MN average. Edge is p+"#"+q
 
-	static List<SimpleScore> scores = new ArrayList<>();
+//	static List<SimpleScore> scores = new ArrayList<>();
 
 	public PGraph(String fname) {
 		this.fname = fname;
@@ -224,10 +228,6 @@ public class PGraph {
 	}
 
 	/*
-	 * Two differences with my previous python code! 1) In one typed graph, to
-	 * get average for p=>q, in python we were just averaging over the r=>r' s
-	 * that have nonzero links! But now, if r=>r' have zero, we still consider
-	 * their weights (so the overll score will be lower than before)
 	 * 
 	 * 2) for p#q##t1#t2#a, in a graph for t1 and t2, we were checking both
 	 * p#t1#t2 and q#t1#t2 (if aligned), and p#t2#t1 and q#t2#t1. We're not
@@ -542,7 +542,14 @@ public class PGraph {
 		}
 		return g0;
 	}
-
+	
+	public void clean() {
+		for (Node n:nodes) {
+			n.clean();
+		}
+//		sortedEdges = null;
+	}
+	
 	float getW(int i, int j) {
 		if (i == j) {
 			return 1;
@@ -653,9 +660,9 @@ public class PGraph {
 						nNode = pred2node.get(nPred);
 						nIdx = nNode.idx;
 					}
-					if (sim > .5) {
-						PGraph.scores.add(new SimpleScore(node.id, nNode.id, sim));
-					}
+//					if (sim > .5) {
+//						PGraph.scores.add(new SimpleScore(node.id, nNode.id, sim));
+//					}
 					node.addNeighbor(nIdx, sim);
 				}
 			}
@@ -939,4 +946,7 @@ public class PGraph {
 		}
 		return true;
 	}
+	
+	
+	
 }

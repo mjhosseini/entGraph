@@ -35,7 +35,7 @@ import it.cnr.isti.hpc.dexter.rest.domain.SpottedDocument;
 public class LinesHandler {
 	final int maxLinesToRun = 100000;// This is because of the memory leak in
 									// easyCCG
-	final int numThreads = 20;
+	final int numThreads = 15;
 	final int maxMBallowd = 14000;
 //	final int maxMBallowd = 140;
 	int numPortionsToSkip;
