@@ -45,7 +45,7 @@ public class EntailGraphFactoryAggregator {
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
 	public static boolean lemmatizePredWords = true;//if it has been already lemmatized when rel extraction
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static final int minArgPairForPred = 3;
+	static final int minArgPairForPred = 2;
 	static final int minPredForArgPair = 3;// min num of unique predicates for
 											// argpair
 	static final int minPredForArg = -1;// min num of unique predicates for
