@@ -305,11 +305,19 @@ public class Util {
 	// (visited.As.2,visited.during.2) => [(visit.as.2,visit.during.2),False]
 	// the second arg shows whether the name has been reversed
 	public static String[] getPredicateLemma(String pred, boolean isCCG) {
+		
+		String[] ret = new String[2];
+		if (!EntailGraphFactoryAggregator.lemmatizePredicate) {
+			ret[0] = pred;
+			ret[1] = "false";
+			return ret;
+		}
+		
 		String pred0 = pred;
 		if (predToLemma.containsKey(pred)) {
 			return predToLemma.get(pred);
 		}
-		String[] ret = new String[2];
+		
 		if (!isCCG) {
 			pred = pred.replace("_", " ");
 			try {
