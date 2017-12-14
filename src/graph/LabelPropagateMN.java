@@ -38,7 +38,8 @@ public class LabelPropagateMN implements Runnable {
 
 		Map<String, Set<Integer>> rawPred2PGraphs = TypePropagateMN.rawPred2PGraphs;
 
-		// r => rp is used to update p=>q. propagate similarities of pgraph to all its neighbors
+		// r => rp is used to update p=>q. propagate similarities of pgraph to all its
+		// neighbors
 		for (PGraph pgraph : thispGraphs) {
 			System.out.println("MN prop: " + pgraph.fname + " " + threadIdx);
 			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gPrev = pgraph.g0;
@@ -133,7 +134,7 @@ public class LabelPropagateMN implements Runnable {
 	// return t.replace("_1", "").replace("_2", "");
 	// }
 
-	//propagate for one edge (r => rp) from pgraph to pgraph_neigh (pred_p=>pred_q)
+	// propagate for one edge (r => rp) from pgraph to pgraph_neigh (pred_p=>pred_q)
 	void propagateOneEdge(PGraph pgraph, PGraph pgraph_neigh, String pred_p, String pred_q, double sim,
 			double compScore, String rawPred_p, String rawPred_q, String tp1, String tp2, boolean aligned,
 			Set<Integer> neighborGraphs) {
@@ -208,11 +209,13 @@ public class LabelPropagateMN implements Runnable {
 			}
 
 			if (pgraph_neigh.pred2node.containsKey(p1) && pgraph_neigh.pred2node.containsKey(q1)) {
-//				System.out.println("propagating: "+rawPred_p+" "+rawPred_q+" "+tp1+" "+tp2+" "+aligned+" "+t1+" "+t2+" "+compScore1);
+				// System.out.println("propagating: "+rawPred_p+" "+rawPred_q+" "+tp1+" "+tp2+"
+				// "+aligned+" "+t1+" "+t2+" "+compScore1);
 				sumCoefs += compScore1;
 			}
 			if (pgraph_neigh.pred2node.containsKey(p2) && pgraph_neigh.pred2node.containsKey(q2)) {
-//				System.out.println("propagating: "+rawPred_p+" "+rawPred_q+" "+tp1+" "+tp2+" "+aligned+" "+t2+" "+t1+" "+compScore2);
+				// System.out.println("propagating: "+rawPred_p+" "+rawPred_q+" "+tp1+" "+tp2+"
+				// "+aligned+" "+t2+" "+t1+" "+compScore2);
 				sumCoefs += compScore2;
 			}
 		}
@@ -263,11 +266,12 @@ public class LabelPropagateMN implements Runnable {
 	}
 
 	void getAvg() {
-		
-		for (PGraph pgraph: thispGraphs) {
+
+		for (PGraph pgraph : thispGraphs) {
 			// Get the average
 			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN = pgraph.gMN;
 			int curN = gMN.vertexSet().size();
+			List<DefaultWeightedEdge> removableEdges = new ArrayList<>();
 			for (int p = 0; p < curN; p++) {
 				for (DefaultWeightedEdge e : gMN.outgoingEdgesOf(p)) {
 					int q = gMN.getEdgeTarget(e);
@@ -275,37 +279,53 @@ public class LabelPropagateMN implements Runnable {
 						gMN.setEdgeWeight(e, 1);
 					} else {
 						double denom = pgraph.edgeToMNWeight.get(p + "#" + q);
-						double w = gMN.getEdgeWeight(e) / denom;
+						double c = gMN.getEdgeWeight(e);
 
-//						System.out.println("avg: " + pgraph.idx2node.get(p).id + " " + pgraph.idx2node.get(q).id + " ");
-//						System.out.println("avg: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
+						if (c <= TypePropagateMN.lmbda && c >= -TypePropagateMN.lmbda) {
+							removableEdges.add(e);
+							continue;
+						} else {
+							double w;
+							if (c > 0) {
+								w = (c - TypePropagateMN.lmbda) / denom;
+							} else {
+								w = (c + TypePropagateMN.lmbda) / denom;
+							}
+//							System.out.println(
+//									"avg: " + pgraph.idx2node.get(p).id + " " + pgraph.idx2node.get(q).id + " ");
+							// System.out.println("avg: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
 
-						if (w > 1.01) {
-							System.out.println("bug: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
-							// System.out.println(curIds.get(p) + " " + curIds.get(q) + " ");
+							if (w > 1.01) {
+								System.out.println("bug: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
+								// System.out.println(curIds.get(p) + " " + curIds.get(q) + " ");
+							}
+							gMN.setEdgeWeight(e, w);
 						}
-						gMN.setEdgeWeight(e, w);
+
+						//
 					}
 				}
 			}
-			
-			//now, g0 is null, gMN is the next one
-			
+
+			gMN.removeAllEdges(removableEdges);//TODO: you can do better here, by changing the order of the stuff
+
+			// now, g0 is null, gMN is the next one
+
 		}
-		
+
 	}
-	
+
 	// write the output of all of thispGraphs
 	void writeResults() {
 		while (thispGraphs.size() > 0) {
 			PGraph pgraph = thispGraphs.remove(0);
-			
+
 			List<DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge>> gs = new ArrayList<>();
 			pgraph.g0 = pgraph.formWeightedGraph(pgraph.sortedEdges, pgraph.nodes.size());
 			gs.add(pgraph.g0);
 			gs.add(pgraph.gMN);
-			
-			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_')) + PGraph.tPropSuffix;
+
+			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_')) + TypePropagateMN.tPropSuffix;
 			writeTPropResults(pgraph, gs, fnameTProp);
 		}
 	}
@@ -315,10 +335,9 @@ public class LabelPropagateMN implements Runnable {
 		if (runIdx == 0) {
 			propagateLabel();
 			allpGraphs = null;
-		} else if (runIdx==1){
+		} else if (runIdx == 1) {
 			getAvg();
-		}
-		else {
+		} else {
 			writeResults();
 		}
 

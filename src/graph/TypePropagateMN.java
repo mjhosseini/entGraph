@@ -26,8 +26,10 @@ public class TypePropagateMN {
 	ThreadPoolExecutor threadPool;
 	ArrayList<PGraph> pGraphs;
 	// public final static float edgeThreshold = -1;// edgeThreshold
-	static int numThreads = 25;
+	static int numThreads = 30;
 	static int numIters = 3;
+	public static double lmbda = .001;// lmbda for L1 regularization
+	static final String tPropSuffix = "_tProp3_.001.txt";
 	Map<String, Integer> graphToNumEdges;
 	String compatiblesPath = "../../python/gfiles/ent/compatibles_all.txt";
 	static Map<String, Double> compatibles;
@@ -161,8 +163,8 @@ public class TypePropagateMN {
 		for (int iter = 0; iter < numIters; iter++) {
 
 			for (PGraph pgraph : pGraphs) {
-				
-				//initialize gMN (next g) based on g0 (cur g)
+
+				// initialize gMN (next g) based on g0 (cur g)
 				int N = pgraph.g0.vertexSet().size();
 				pgraph.gMN = new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
 				for (int i = 0; i < N; i++) {
@@ -195,24 +197,22 @@ public class TypePropagateMN {
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-			
-			//now let's put g0 = gMN
-			if (iter!=numIters-1) {
-				for (PGraph pgraph: pGraphs) {
+
+			// now let's put g0 = gMN
+			if (iter != numIters - 1) {
+				for (PGraph pgraph : pGraphs) {
 					pgraph.g0 = pgraph.gMN;
 				}
 			}
-			
 
 		}
-		
-		//now, let's write the results
+
+		// now, let's write the results
 		try {
 			propagateAll(2);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-		
 
 	}
 

@@ -32,7 +32,6 @@ public class PGraph {
 	public static float relMinSim = -1f;// -1 if don't want to
 	public static String suffix = "_sim.txt";
 	static final String embSuffix = "_embsims22.txt";
-	static final String tPropSuffix = "_tProp3.txt";
 	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
 	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
 	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
