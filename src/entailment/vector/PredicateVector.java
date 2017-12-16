@@ -62,6 +62,7 @@ public class PredicateVector extends SimplePredicateVector {
 			}
 
 			float prevCount = entGraph.argPairIdxToCount.get(idx);
+			
 			if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
 				entGraph.argPairIdxToCount.put(idx, prevCount + 1);// TODO:
 																	// should we
@@ -84,15 +85,15 @@ public class PredicateVector extends SimplePredicateVector {
 		int arrIdx = argIdxToArrayIdx.get(idx);
 		vals.set(arrIdx, vals.get(arrIdx) + count);
 
-		if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
-			float prevCount = entGraph.argPairIdxToCount.get(idx);
-			entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
-																	// should we
-																	// care
-																	// about
-																	// this in
-																	// cutoffs?
-		}
+//		if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
+//			float prevCount = entGraph.argPairIdxToCount.get(idx);
+//			entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
+//																	// should we
+//																	// care
+//																	// about
+//																	// this in
+//																	// cutoffs?
+//		}
 
 		if (EntailGraphFactoryAggregator.useTimeEx) {
 
@@ -223,7 +224,7 @@ public class PredicateVector extends SimplePredicateVector {
 			n += v;
 		}
 		this.norm1 = n;
-		if (n==0){
+		if (n == 0) {
 			System.err.println("norm1 is zero");
 		}
 	}
@@ -288,10 +289,10 @@ public class PredicateVector extends SimplePredicateVector {
 			}
 
 			// add Weed's prob similarity
-			if (simInfo.basics.sumFreq==0){
+			if (simInfo.basics.sumFreq == 0) {
 				System.err.println("simInfo is zero");
 			}
-			if (simInfo2.basics.sumFreq==0){
+			if (simInfo2.basics.sumFreq == 0) {
 				System.err.println("simInfo2 is zero");
 			}
 			float weedProbPr = (float) (simInfo.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam)
@@ -300,10 +301,9 @@ public class PredicateVector extends SimplePredicateVector {
 					/ (pvec2.norm1 + 2 * EntailGraphFactoryAggregator.smoothParam);
 			float weedProbSim = (2 * weedProbPr * weedProbRec) / (weedProbPr + weedProbRec);
 			if (new Float(weedProbPr).isNaN()) {
-				System.err.println(this.predicate+" "+pvec2.predicate);
-				System.err.println(
-						"Nan: " + weedProbPr + " " + weedProbPr + " " + weedProbRec + " " + simInfo.basics.sumFreq
-						+simInfo2.basics.sumFreq +" "+this.norm1+" "+pvec2.norm2);
+				System.err.println(this.predicate + " " + pvec2.predicate);
+				System.err.println("Nan: " + weedProbPr + " " + weedProbPr + " " + weedProbRec + " "
+						+ simInfo.basics.sumFreq + simInfo2.basics.sumFreq + " " + this.norm1 + " " + pvec2.norm2);
 			}
 			// if (entGraph.writeSims) {
 			// WeedsProbList.add(new Similarity(pvec2.predicate, weedProbSim));

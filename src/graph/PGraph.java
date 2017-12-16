@@ -728,7 +728,7 @@ public class PGraph {
 			}
 
 			int lastDotIdx = pgraph.fname.lastIndexOf('.');
-			String postFix = "_graphsPlain2.txt";// TODO: be careful
+			String postFix = "_graphsPlain.txt";// TODO: be careful
 
 			if (!checkFrgVio) {
 				postFix = "_graphsNoFrg2.txt";

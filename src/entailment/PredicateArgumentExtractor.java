@@ -112,7 +112,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-		// System.out.println(mainStr);
+		 System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {

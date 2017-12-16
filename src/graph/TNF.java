@@ -174,7 +174,7 @@ public class TNF {
 
 		}
 		
-//		updateSCC();
+		updateSCC();
 
 	}
 

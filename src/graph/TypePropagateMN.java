@@ -27,9 +27,9 @@ public class TypePropagateMN {
 	ArrayList<PGraph> pGraphs;
 	// public final static float edgeThreshold = -1;// edgeThreshold
 	static int numThreads = 30;
-	static int numIters = 3;
-	public static double lmbda = .001;// lmbda for L1 regularization
-	static final String tPropSuffix = "_tProp3_.001.txt";
+	static int numIters = 2;
+	public static double lmbda = 0;// lmbda for L1 regularization
+	static final String tPropSuffix = "_tProp_u.txt";
 	Map<String, Integer> graphToNumEdges;
 	String compatiblesPath = "../../python/gfiles/ent/compatibles_all.txt";
 	static Map<String, Double> compatibles;
@@ -93,9 +93,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			// if (gc == 100) {
-			// break;
-			// }
+//			if (gc == 100) {
+//				break;
+//			}
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -129,6 +129,9 @@ public class TypePropagateMN {
 	}
 
 	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
+		if (1==1) {
+			return 1;//TODO: remove this. It's for sanity check!
+		}
 		String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
 		if (t1.equals(tp1) && t2.equals(tp2)) {
 			return 1;

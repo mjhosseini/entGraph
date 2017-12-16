@@ -87,7 +87,7 @@ public class Util {
 	static HashMap<String, String[]> predToLemma = new HashMap<>();;
 
 	static HashSet<String> modals;
-	static HashSet<String> prepositions;//I need a predefined list when extending the predArg extraction
+	static HashSet<String> prepositions;// I need a predefined list when extending the predArg extraction
 	static Logger logger;
 
 	static {
@@ -132,7 +132,7 @@ public class Util {
 		for (String s : modalsList) {
 			modals.add(s);
 		}
-		
+
 		try {
 			Scanner sc = new Scanner(new File("prepositions.txt"));
 			prepositions = new HashSet<>();
@@ -143,7 +143,6 @@ public class Util {
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		}
-		
 
 		try {
 			biuNormalizer = new BiuNormalizer(new File("lib_data/biu_string_rules.txt"));
@@ -305,19 +304,19 @@ public class Util {
 	// (visited.As.2,visited.during.2) => [(visit.as.2,visit.during.2),False]
 	// the second arg shows whether the name has been reversed
 	public static String[] getPredicateLemma(String pred, boolean isCCG) {
-		
+
 		String[] ret = new String[2];
 		if (!EntailGraphFactoryAggregator.lemmatizePredicate) {
 			ret[0] = pred;
 			ret[1] = "false";
 			return ret;
 		}
-		
+
 		String pred0 = pred;
 		if (predToLemma.containsKey(pred)) {
 			return predToLemma.get(pred);
 		}
-		
+
 		if (!isCCG) {
 			pred = pred.replace("_", " ");
 			try {
@@ -427,12 +426,11 @@ public class Util {
 			String lemma;
 			if (EntailGraphFactoryAggregator.lemmatizePredWords) {
 				lemma = getLemma(part);
-			}
-			else {
+			} else {
 				lemma = part;
 			}
 			if (ii < parts.length - 1) {
-				ret.append( lemma + ".");
+				ret.append(lemma + ".");
 			} else {
 				ret.append(lemma);
 			}
@@ -823,7 +821,7 @@ public class Util {
 
 			// System.out.println(arg+" "+type);
 			return type;
-		} else{
+		} else {
 			String type;
 			if (isEntity) {
 				type = entToType.get(arg);
@@ -841,7 +839,7 @@ public class Util {
 
 			return type;
 		}
-//		return null;
+		// return null;
 
 	}
 
@@ -869,7 +867,7 @@ public class Util {
 			String[] ss = line.split("\t");
 			boolean onlyNE = shouldBeONLYNE(ss[1]);
 			String ent = simpleNormalize(ss[1]);
-			// ent = StringUtils.stripAccents(ent);//Changed on 6 OCT
+			ent = StringUtils.stripAccents(ent);// Changed on 6 OCT// Changed back on 15 Dec
 			String type = ss[2];
 			if (type.startsWith("/")) {
 				type = type.substring(1);
@@ -1845,7 +1843,7 @@ public class Util {
 		// }
 		// System.out.println(isGeneric("los angeles", allPOSTags));
 		//
-//		convertToPArgFormat(args);
+		// convertToPArgFormat(args);
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);
