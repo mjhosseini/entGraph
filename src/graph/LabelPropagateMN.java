@@ -124,7 +124,7 @@ public class LabelPropagateMN implements Runnable {
 					}
 				}
 			}
-			pgraph.g0 = null;
+//			pgraph.g0 = null;//TODO: make this null? need it for distance
 			System.out.println("all prop edges: " + TypePropagateMN.allPropEdges);
 		}
 		System.out.println("thread Idx +" + threadIdx + " done");
@@ -300,6 +300,15 @@ public class LabelPropagateMN implements Runnable {
 								// System.out.println(curIds.get(p) + " " + curIds.get(q) + " ");
 							}
 							gMN.setEdgeWeight(e, w);
+							
+							double w0 = 0;
+							if (pgraph.g0.containsEdge(p, q)){
+								DefaultWeightedEdge e0 = pgraph.g0.getEdge(p, q);
+								w0 = pgraph.g0.getEdgeWeight(e0);
+							}
+							
+							TypePropagateMN.objChange += Math.pow(w-w0, 2);
+							
 						}
 
 						//

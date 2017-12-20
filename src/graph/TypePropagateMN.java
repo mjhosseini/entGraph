@@ -27,14 +27,16 @@ public class TypePropagateMN {
 	ArrayList<PGraph> pGraphs;
 	// public final static float edgeThreshold = -1;// edgeThreshold
 	static int numThreads = 30;
-	static int numIters = 2;
-	public static double lmbda = 0;// lmbda for L1 regularization
-	static final String tPropSuffix = "_tProp_u.txt";
+	static int numIters = 4;
+	public static double lmbda = .001;// lmbda for L1 regularization
+	public static double smoothParam = 20.0;
+	static final String tPropSuffix = "_tProp_sm20_i4.txt";
 	Map<String, Integer> graphToNumEdges;
 	String compatiblesPath = "../../python/gfiles/ent/compatibles_all.txt";
 	static Map<String, Double> compatibles;
 	static Map<String, Set<Integer>> rawPred2PGraphs;
 	static int allPropEdges = 0;
+	static double objChange = 0;
 
 	public TypePropagateMN(String root) {
 		PGraph.emb = false;
@@ -129,9 +131,7 @@ public class TypePropagateMN {
 	}
 
 	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
-		if (1==1) {
-			return 1;//TODO: remove this. It's for sanity check!
-		}
+		
 		String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
 		if (t1.equals(tp1) && t2.equals(tp2)) {
 			return 1;
@@ -140,7 +140,7 @@ public class TypePropagateMN {
 			// System.out.println("compscore: " + comb + " " + ret);
 			return ret;
 		} else {
-			return .2;
+			return 1.0/smoothParam;
 		}
 	}
 
@@ -153,7 +153,7 @@ public class TypePropagateMN {
 			line = line.replace("_2", "");
 
 			String[] ss = line.split(" ");
-			double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) + 5);
+			double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) + smoothParam);
 			System.out.println("compatibles: " + ss[0] + " " + prob);
 			compatibles.put(ss[0], prob);
 		}
@@ -164,7 +164,7 @@ public class TypePropagateMN {
 	void MNPropagateSims() {
 
 		for (int iter = 0; iter < numIters; iter++) {
-
+			objChange = 0;
 			for (PGraph pgraph : pGraphs) {
 
 				// initialize gMN (next g) based on g0 (cur g)
@@ -207,7 +207,7 @@ public class TypePropagateMN {
 					pgraph.g0 = pgraph.gMN;
 				}
 			}
-
+			System.out.println("obj change: "+objChange);
 		}
 
 		// now, let's write the results
@@ -216,7 +216,7 @@ public class TypePropagateMN {
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-
+		
 	}
 
 	// void writeEmbeddingResults(PGraph pgraph,

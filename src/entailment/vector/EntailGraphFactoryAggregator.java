@@ -43,7 +43,7 @@ public class EntailGraphFactoryAggregator {
 	public static boolean isTyped = true;
 	public static boolean figerTypes = true;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
-	public static boolean lemmatizePredWords = true;//if it has been already lemmatized when rel extraction
+	public static boolean lemmatizePredWords = false;//if it has been already lemmatized in rel extraction
 	public static final boolean lemmatizePredicate = true;
 	public static final int smoothParam = 0;// 0 means no smoothing
 	static final int minArgPairForPred = 3;
@@ -51,11 +51,9 @@ public class EntailGraphFactoryAggregator {
 											// argpair
 	static final int minPredForArg = -1;// min num of unique predicates for
 
-	static final String relAddress = "news_gen7_aida.json";
-	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_h";
-	static final int numThreads = 15;
-	
-	
+	static final String relAddress = "news_gen8_aida.json";
+	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_x";
+	static final int numThreads = 1;
 	
 	static int allNonZero = 0;
 	static int allEdgeCounts = 0;
@@ -66,7 +64,8 @@ public class EntailGraphFactoryAggregator {
 			String root = "data/ent/";
 			String[] dsPaths;
 			if (isCCG) {
-				dsPaths = new String[] { root + "train1_rels.txt", root + "dev1_rels.txt", root + "test1_rels.txt" };
+//				dsPaths = new String[] { root + "train1_rels.txt", root + "dev1_rels.txt", root + "test1_rels.txt" };
+				dsPaths = new String[] { root + "train_new_rels_l5.txt", root + "dev_new_rels_l5.txt", root + "test_new_rels_l5.txt" };
 			} else {
 				dsPaths = new String[] { root + "train1_rels_oie.txt", root + "dev1_rels_oie.txt",
 						root + "test1_rels_oie.txt" };

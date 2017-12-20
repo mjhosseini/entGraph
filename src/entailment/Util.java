@@ -151,13 +151,13 @@ public class Util {
 		}
 	}
 
-	static String normalize(String s) {
-		String ret = StringUtils.normalizeSpace(s);
-		ret = StringUtils.stripAccents(ret);
-		ret = Normalizer.normalize(ret, Normalizer.Form.NFD);
-		ret = ret.replaceAll("[^\\x00-\\x7F]", "");
-		return ret;
-	}
+//	static String normalize1(String s) {
+//		String ret = StringUtils.normalizeSpace(s);
+//		ret = StringUtils.stripAccents(ret);
+//		ret = Normalizer.normalize(ret, Normalizer.Form.NFD);
+//		ret = ret.replaceAll("[^\\x00-\\x7F]", "");
+//		return ret;
+//	}
 
 	// To parse results of stanford parser...
 	static void convertToPArgFormat(String[] args) throws IOException {
@@ -867,7 +867,7 @@ public class Util {
 			String[] ss = line.split("\t");
 			boolean onlyNE = shouldBeONLYNE(ss[1]);
 			String ent = simpleNormalize(ss[1]);
-			ent = StringUtils.stripAccents(ent);// Changed on 6 OCT// Changed back on 15 Dec
+//			ent = StringUtils.stripAccents(ent);// Changed on 6 OCT// Changed back on 15 Dec
 			String type = ss[2];
 			if (type.startsWith("/")) {
 				type = type.substring(1);

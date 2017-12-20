@@ -1,9 +1,13 @@
 package entailment.vector;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,19 +37,19 @@ public class EntailGraphFactory implements Runnable {
 	HashSet<String> similarityFileTypes = new HashSet<>();
 
 	// TODO: remove
-	// static PrintStream typedOp;
+	static PrintStream typedOp;
 	static ConcurrentHashMap<String, Integer> allPredCounts = new ConcurrentHashMap<>();
 	static ConcurrentHashMap<String, String> predToDocument = new ConcurrentHashMap<>();
 
-	// static {
-	// try {
-	// typedOp = new PrintStream(new File("typedOP.txt"), "UTF-8");
-	// } catch (FileNotFoundException e) {
-	// e.printStackTrace();
-	// } catch (UnsupportedEncodingException e) {
-	// e.printStackTrace();
-	// }
-	// }
+	static {
+		try {
+			typedOp = new PrintStream(new File("typedOP.txt"), "UTF-8");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+	}
 
 	// For knowing the ordering: type1, type2 => type1+type2. type2, type1 =>
 	// type1 + type2
@@ -117,9 +121,9 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
-//			if (lineNumbers==100000){
-//				break;
-//			}
+			// if (lineNumbers==100000){
+			// break;
+			// }
 			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
 				continue;
 			}
@@ -130,7 +134,7 @@ public class EntailGraphFactory implements Runnable {
 				if (!EntailGraphFactoryAggregator.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 					String mainLine = jObj.get("s").getAsString();
-					// typedOp.println("line: " + mainLine);
+					typedOp.println("line: " + mainLine);
 					JsonArray jar = jObj.get("rels").getAsJsonArray();
 					for (int i = 0; i < jar.size(); i++) {
 						JsonObject relObj = jar.get(i).getAsJsonObject();
@@ -212,13 +216,12 @@ public class EntailGraphFactory implements Runnable {
 					// sharedTime += (System.currentTimeMillis() - t0);
 					// }
 					/*
-					 * !acceptableTypes.contains(type1) &&
-					 * !acceptableTypes.contains(type2) &&
+					 * !acceptableTypes.contains(type1) && !acceptableTypes.contains(type2) &&
 					 * 
 					 * 
 					 */
-					if (EntailGraphFactoryAggregator.typeScheme!=TypeScheme.LDA &&
-							!acceptableTypes.contains(type1 + "#" + type2)
+					if (EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
+							&& !acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
 						continue;
 					}
@@ -272,8 +275,7 @@ public class EntailGraphFactory implements Runnable {
 
 					// Now we have pred, arg1 and arg2 and type1 and type2
 
-					// typedOp.println(pred + "#" + type1 + "#" + type2 + "::" +
-					// arg1 + "::" + arg2);
+					typedOp.println(pred + "#" + type1 + "#" + type2 + "::" + arg1 + "::" + arg2);
 					if (allPredCounts.containsKey(pred)) {
 						allPredCounts.put(pred, allPredCounts.get(pred) + 1);
 					} else {
@@ -283,62 +285,60 @@ public class EntailGraphFactory implements Runnable {
 					// Added for LDA types
 					if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
 						List<float[]> types = DistrTyping.getType(pred, arg1, arg2);
-//						System.err.println(pred + "," + arg1 + "," + arg2);
-//						System.err.println("types:");
-						ArrayList<Integer> types1 = new ArrayList<>();//only the non-zero ones
-						ArrayList<Integer> types2 = new ArrayList<>();//only the non-zero ones
+						// System.err.println(pred + "," + arg1 + "," + arg2);
+						// System.err.println("types:");
+						ArrayList<Integer> types1 = new ArrayList<>();// only the non-zero ones
+						ArrayList<Integer> types2 = new ArrayList<>();// only the non-zero ones
 						for (int k = 0; k < types.get(0).length; k++) {
 							if (types.get(0)[k] != 0) {
 								types1.add(k);
-//								System.err.print(k + ":" + types.get(0)[k] + " ");
+								// System.err.print(k + ":" + types.get(0)[k] + " ");
 							}
 						}
-//						System.err.println();
+						// System.err.println();
 						for (int k = 0; k < types.get(1).length; k++) {
 							if (types.get(1)[k] != 0) {
 								types2.add(k);
-//								System.err.print(k + ":" + types.get(1)[k] + " ");
+								// System.err.print(k + ":" + types.get(1)[k] + " ");
 							}
 						}
-//						System.err.println();
-						
-						//Now, find all the likely type-pairs
-						for (int t1:types1){
-							for (int t2:types2){
+						// System.err.println();
+
+						// Now, find all the likely type-pairs
+						for (int t1 : types1) {
+							for (int t2 : types2) {
 								float prob = types.get(0)[t1] * types.get(1)[t2];
-								if (prob<.1){
+								if (prob < .1) {
 									continue;
 								}
-								type1 = "type"+t1;
-								type2 = "type"+t2;
-//								System.err.println("adding");
-								
+								type1 = "type" + t1;
+								type2 = "type" + t2;
+								// System.err.println("adding");
+
 								if (!acceptableTypes.contains(type1 + "#" + type2)
 										&& !acceptableTypes.contains(type2 + "#" + type1)) {
 									continue;
 								}
-								
-								
-								addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
-										prob, false, false);
+
+								addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, prob,
+										false, false);
 								if (type1.equals(type2)) {
 									// the main one! (arg1-arg2)
 									// String featName = arg1 + "#" + arg2;
 									// String thisType = type1 + "#" + type2;
-									addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, prob,
-											true, false);
+									addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
+											prob, true, false);
 								}
 							}
 						}
-						
-						
+
 					} else {
 						// the main one! (arg1-arg2)
 						// String featName = arg1 + "#" + arg2;
 						// String thisType = type1 + "#" + type2;
-						//boolean rev = 
-						addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
-								count, false, false);
+						// boolean rev =
+						addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, count, false,
+								false);
 
 						// F_X mixed
 						// featName = arg1;
@@ -468,7 +468,7 @@ public class EntailGraphFactory implements Runnable {
 				System.err.println("exception for: " + line);
 				e.printStackTrace();
 			}
-			// typedOp.println();
+			typedOp.println();
 		}
 
 		System.err.println("allNNZ: " + EntailGraphFactoryAggregator.allNonZero);

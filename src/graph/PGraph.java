@@ -26,7 +26,7 @@ public class PGraph {
 	public final static boolean shouldWrite = true;
 	public static boolean emb = false;
 	public static boolean weightEdgeSimilarities = true;
-	public static boolean formBinaryGraph = true;
+	public static boolean formBinaryGraph = false;
 	public static boolean transitive = false;
 	public final static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
@@ -945,7 +945,4 @@ public class PGraph {
 		}
 		return true;
 	}
-	
-	
-	
 }

@@ -33,7 +33,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		}
 	}
 
-	public static final boolean lemmatizePred = false;// eaten.might.1 => eat.might.1
+	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
 
 	String line;
 	public static CcgParseToUngroundedGraphs parser;
@@ -112,7 +112,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-		 System.out.println(mainStr);
+		System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {
@@ -688,26 +688,26 @@ public class PredicateArgumentExtractor implements Runnable {
 			String arg2 = "";
 			int thisArg2Index = -1;
 			String[] lr = getLeftRightPred(edge2);
-			// boolean shouldAdd = true;
+			boolean shouldAdd = true;
 			if (edge2.getLeft().getWordPosition() == arg2Index) {
 				thisRightPred += lr[1];
-				// try {
-				// if (Util.prepositions.contains(lr[1].split("\\.")[0])) {
-				// shouldAdd = false;
-				// }
-				// } catch (Exception e) {
-				// }
+				try {
+					if (Util.prepositions.contains(lr[1].split("\\.")[0])) {
+						shouldAdd = false;
+					}
+				} catch (Exception e) {
+				}
 
 				arg2 = edge2.getRight().getLemma();
 				thisArg2Index = edge2.getRight().getWordPosition();
 			} else if (edge2.getRight().getWordPosition() == arg2Index) {
 				thisRightPred += lr[0];
-				// try {
-				// if (Util.prepositions.contains(lr[0].split("\\.")[0])) {
-				// shouldAdd = false;
-				// }
-				// } catch (Exception e) {
-				// }
+				try {
+					if (Util.prepositions.contains(lr[0].split("\\.")[0])) {
+						shouldAdd = false;
+					}
+				} catch (Exception e) {
+				}
 
 				arg2 = edge2.getLeft().getLemma();
 				thisArg2Index = edge2.getLeft().getWordPosition();
@@ -734,14 +734,14 @@ public class PredicateArgumentExtractor implements Runnable {
 					eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
 			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 			// false);
-			// if (shouldAdd) {
-			relInfos.add(relInfo0);
-			// System.out.println("added relInfo twohop np: "+relInfo0.mainStr);
-			// System.out.println(edge2.getMediator().getLemma()+"
-			// "+edge2.getMediator().getPos()+" "+lr[0].equals(lr[1])+" "+lr[0]+" "+lr[1]);
-			// } else {
-			// // System.out.println("not adding: "+relInfo0.mainStr);
-			// }
+			if (shouldAdd) {
+				relInfos.add(relInfo0);
+				System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
+				System.out.println(edge2.getMediator().getLemma() + " " + edge2.getMediator().getPos() + " "
+						+ lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+			} else {
+				// System.out.println("not adding: "+relInfo0.mainStr);
+			}
 
 			if (!modifierStr.equals("")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);

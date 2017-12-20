@@ -499,24 +499,30 @@ public class Scripts {
 		Scanner sc2 = new Scanner(new File(s2));
 		Set<String> allStrs = new HashSet<>();
 
-		int lNum = 0;
-		while (sc.hasNext()) {
+		
+		while (sc.hasNext()) {//write all the target rels
 			String line = sc.nextLine();
 			allStrs.add(line.split(" ")[0]);
 			System.out.println(line);
-			lNum++;
-			if (lNum == 40000) {
-				break;
-			}
+			
 		}
 
-		while (sc2.hasNext()) {
+		int lNum = 0;
+		while (sc2.hasNext()) {//write everything from graphs that are not already printed
 			String line = sc2.nextLine();
+			line = line.split(" ")[0];
 			if (!allStrs.contains(line)) {
 				System.out.println(line);
 			}
+			
+			lNum++;
+			if (lNum == 20000) {
+				break;
+			}
+			
 			allStrs.add(line);
 		}
+		
 	}
 
 	static void normalizeLDAWeights() throws IOException {
@@ -597,7 +603,7 @@ public class Scripts {
 		String[] opaths = new String[] { "train_snli.json", "dev_snli.json", "test_snli.json" };
 		for (int i = 0; i < paths.length; i++) {
 			try {
-				makeSNLIFormatJson(root+paths[i]+".txt", root+opaths[i]+".txt");
+				makeSNLIFormatJson(root + paths[i] + ".txt", root + opaths[i] + ".txt");
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -615,7 +621,7 @@ public class Scripts {
 			String[] ss = line.split("\t");
 			jo.addProperty("sentence1", ss[1]);
 			jo.addProperty("sentence2", ss[0]);
-			String label = ss[2].equals("True")?"entailment":"contradiction";
+			String label = ss[2].equals("True") ? "entailment" : "contradiction";
 			jo.addProperty("gold_label", label);
 			op.println(jo);
 		}
@@ -635,11 +641,11 @@ public class Scripts {
 		// testEntTypes();
 		// trueCase();
 
-		// getAllRemainedPredicates("../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/");
+		// getAllRemainedPredicates("../../python/gfiles/typedEntGrDir_aida_figer_3_3_c/");
 		// formLDAInput("../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/");
-		// String s1 = "all_graphs_preds_counts.txt";
-		// String s2 = "target_rels_CCG.txt";
-		// getUnion(s1, s2);
+		String s1 = "target_rels_CCG.txt";
+		String s2 = "all_CCG_rem.txt";
+		getUnion(s1, s2);
 
 		// getSubCCG();
 		// combineCCG3WTargetRels();
@@ -647,7 +653,7 @@ public class Scripts {
 
 		// postProcess();
 		// normalizeLDAWeights();
-		makeSNLIFormatJsonAll();
+		// makeSNLIFormatJsonAll();
 	}
 
 }
