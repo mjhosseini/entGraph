@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -67,22 +68,12 @@ public class Util {
 	static String defaultGenTypesFName = "genTypes.txt";
 	static String defaultEntToWikiFName = "entToWiki.txt";
 	static String defaultEntToFigerType = "freebase_types/entity2Types.txt";
+	static Map<String, String> stan2Figer;
 	public static Map<String, String> entToType = null;
 	public static Map<String, String> genToType = null;
-	public static Map<String, String> entToWiki = null;
+	// public static Map<String, String> entToWiki = null;
 	private static Map<String, String> entToFigerType = null;
 	private static Map<String, Boolean> entToFigerONLYNE = null;
-
-	public static Map<String, String> getEntToFigerType() {
-		if (entToFigerType == null) {
-			try {
-				loadFigerTypes(defaultEntToFigerType);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return entToFigerType;
-	}
 
 	static HashMap<String, String[]> predToLemma = new HashMap<>();;
 
@@ -91,12 +82,23 @@ public class Util {
 	static Logger logger;
 
 	static {
-		loadEntGenTypes(defaultEntTypesFName, defaultGenTypesFName);
-		try {
-			loadEntToWiki(0);
-		} catch (IOException e) {
-			e.printStackTrace();
+
+		stan2Figer = new HashMap<>();
+		String[] stans = new String[] { "location", "organization", "date", "number", "person", "misc", "time",
+				"ordinal", "o" };
+		String[] figers = new String[] { "location", "organization", "time", "thing", "person", "thing", "time",
+				"thing", "thing" };
+
+		for (int i = 0; i < stans.length; i++) {
+			stan2Figer.put(stans[i], figers[i]);
 		}
+
+		loadEntGenTypes(defaultEntTypesFName, defaultGenTypesFName);
+		// try {
+		// loadEntToWiki(0);
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
 		// creates a StanfordCoreNLP object, with POS tagging, lemmatization,
 		// NER, parsing, and coreference resolution
 		Properties props = new Properties();
@@ -151,128 +153,141 @@ public class Util {
 		}
 	}
 
-//	static String normalize1(String s) {
-//		String ret = StringUtils.normalizeSpace(s);
-//		ret = StringUtils.stripAccents(ret);
-//		ret = Normalizer.normalize(ret, Normalizer.Form.NFD);
-//		ret = ret.replaceAll("[^\\x00-\\x7F]", "");
-//		return ret;
-//	}
-
-	// To parse results of stanford parser...
-	static void convertToPArgFormat(String[] args) throws IOException {
-		String fname;
-		boolean shouldLink;
-		if (args != null && args.length > 0) {
-			fname = args[0];
-			shouldLink = Boolean.parseBoolean(args[1]);
-		} else {
-			fname = "stan.txt";
-			shouldLink = false;
-		}
-
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fname)));
-		JsonParser jsonParser = new JsonParser();
-		String line;
-		while ((line = br.readLine()) != null) {
-			if (line.equals("")) {
-				continue;
-			}
+	public static Map<String, String> getEntToFigerType() {
+		if (entToFigerType == null) {
 			try {
-				JsonObject jo = jsonParser.parse(line).getAsJsonObject();
-				int i = 0;
-				String docS = "";
-				String articleId = jo.get("articleId").getAsString();
-				String date = jo.get("date").getAsString();
-
-				JsonObject jObj = new JsonObject();
-
-				JsonArray rels = new JsonArray();
-
-				ArrayList<String> curPrArgs = new ArrayList<>();
-
-				while (jo.has("" + i)) {
-					JsonArray jai = jo.get("" + i).getAsJsonArray();
-					String s = jai.get(0).getAsJsonObject().get("s").toString();
-
-					// I must do POS tagging as well for GorE
-
-					s = s.substring(1, s.length() - 1);
-					docS += s + " ";
-					// System.out.println("#line: " + s);
-					HashMap<String, String> posTags = new HashMap<>();
-					if (shouldLink) {
-						posTags = getAllPOSTags(s);
-					}
-					// for (String t:posTags.keySet()){
-					// System.out.println(t+" "+posTags.get(t));
-					// }
-
-					for (int j = 1; j < jai.size(); j++) {
-						String r = jai.get(j).getAsJsonObject().get("r").toString();
-						r = r.substring(2, r.length() - 2);
-
-						String[] parts = r.split(",");
-						boolean isGen[] = new boolean[2];
-
-						for (int k = 0; k < parts.length; k++) {
-							String p = parts[k].trim();
-							p = simpleNormalize(p);
-
-							if (k == 0) {
-								isGen[0] = isGeneric(p, posTags);
-								if (shouldLink && !isGen[0]) {
-									p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
-								}
-							} else if (k == 2) {
-								isGen[1] = isGeneric(p, posTags);
-								if (shouldLink && !isGen[1]) {
-									p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
-								}
-							}
-
-							parts[k] = p;
-						}
-
-						String GorE = (isGen[0] ? "G" : "E") + (isGen[1] ? "G" : "E");
-
-						parts[1] = parts[1].replace(" ", "_");
-
-						String prArg = "(" + parts[1] + "::" + parts[0] + "::" + parts[2] + "::" + GorE + ")";
-						curPrArgs.add(prArg);
-
-						// System.out.println(rs);
-					}
-					// System.out.println();
-					i++;
-				}
-				docS = docS.trim();
-				jObj.addProperty("s", docS);
-				jObj.addProperty("date", date);
-				jObj.addProperty("articleId", articleId);
-				// jObj.addProperty("lineId", lineId);
-
-				for (int j = 0; j < curPrArgs.size(); j++) {
-					JsonObject rel = new JsonObject();
-					rel.addProperty("r", curPrArgs.get(j));
-					rels.add(rel);
-				}
-				jObj.add("rels", rels);
-
-				System.out.println(jObj);
-
-			} catch (Exception e) {
+				loadFigerTypes(defaultEntToFigerType);
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
-			// JsonArray ja = jsonParser.parse(line).getAsJsonArray();
-			// for (int i=0; i<ja.size(); i++){
-			// System.out.println(ja.get(i));
-			// }
-
 		}
-		br.close();
+		return entToFigerType;
 	}
+
+	// static String normalize1(String s) {
+	// String ret = StringUtils.normalizeSpace(s);
+	// ret = StringUtils.stripAccents(ret);
+	// ret = Normalizer.normalize(ret, Normalizer.Form.NFD);
+	// ret = ret.replaceAll("[^\\x00-\\x7F]", "");
+	// return ret;
+	// }
+
+	// // To parse results of stanford parser...
+	// static void convertToPArgFormat(String[] args) throws IOException {
+	// String fname;
+	// boolean shouldLink;
+	// if (args != null && args.length > 0) {
+	// fname = args[0];
+	// shouldLink = Boolean.parseBoolean(args[1]);
+	// } else {
+	// fname = "stan.txt";
+	// shouldLink = false;
+	// }
+	//
+	// BufferedReader br = new BufferedReader(new InputStreamReader(new
+	// FileInputStream(fname)));
+	// JsonParser jsonParser = new JsonParser();
+	// String line;
+	// while ((line = br.readLine()) != null) {
+	// if (line.equals("")) {
+	// continue;
+	// }
+	// try {
+	// JsonObject jo = jsonParser.parse(line).getAsJsonObject();
+	// int i = 0;
+	// String docS = "";
+	// String articleId = jo.get("articleId").getAsString();
+	// String date = jo.get("date").getAsString();
+	//
+	// JsonObject jObj = new JsonObject();
+	//
+	// JsonArray rels = new JsonArray();
+	//
+	// ArrayList<String> curPrArgs = new ArrayList<>();
+	//
+	// while (jo.has("" + i)) {
+	// JsonArray jai = jo.get("" + i).getAsJsonArray();
+	// String s = jai.get(0).getAsJsonObject().get("s").toString();
+	//
+	// // I must do POS tagging as well for GorE
+	//
+	// s = s.substring(1, s.length() - 1);
+	// docS += s + " ";
+	// // System.out.println("#line: " + s);
+	// HashMap<String, String> posTags = new HashMap<>();
+	// if (shouldLink) {
+	// posTags = getAllPOSTags(s);
+	// }
+	// // for (String t:posTags.keySet()){
+	// // System.out.println(t+" "+posTags.get(t));
+	// // }
+	//
+	// for (int j = 1; j < jai.size(); j++) {
+	// String r = jai.get(j).getAsJsonObject().get("r").toString();
+	// r = r.substring(2, r.length() - 2);
+	//
+	// String[] parts = r.split(",");
+	// boolean isGen[] = new boolean[2];
+	//
+	// for (int k = 0; k < parts.length; k++) {
+	// String p = parts[k].trim();
+	// p = simpleNormalize(p);
+	//
+	// if (k == 0) {
+	// isGen[0] = isGeneric(p, posTags);
+	// if (shouldLink && !isGen[0]) {
+	// p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
+	// }
+	// } else if (k == 2) {
+	// isGen[1] = isGeneric(p, posTags);
+	// if (shouldLink && !isGen[1]) {
+	// p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
+	// }
+	// }
+	//
+	// parts[k] = p;
+	// }
+	//
+	// String GorE = (isGen[0] ? "G" : "E") + (isGen[1] ? "G" : "E");
+	//
+	// parts[1] = parts[1].replace(" ", "_");
+	//
+	// String prArg = "(" + parts[1] + "::" + parts[0] + "::" + parts[2] + "::" +
+	// GorE + ")";
+	// curPrArgs.add(prArg);
+	//
+	// // System.out.println(rs);
+	// }
+	// // System.out.println();
+	// i++;
+	// }
+	// docS = docS.trim();
+	// jObj.addProperty("s", docS);
+	// jObj.addProperty("date", date);
+	// jObj.addProperty("articleId", articleId);
+	// // jObj.addProperty("lineId", lineId);
+	//
+	// for (int j = 0; j < curPrArgs.size(); j++) {
+	// JsonObject rel = new JsonObject();
+	// rel.addProperty("r", curPrArgs.get(j));
+	// rels.add(rel);
+	// }
+	// jObj.add("rels", rels);
+	//
+	// System.out.println(jObj);
+	//
+	// } catch (Exception e) {
+	// e.printStackTrace();
+	// }
+	//
+	// // JsonArray ja = jsonParser.parse(line).getAsJsonArray();
+	// // for (int i=0; i<ja.size(); i++){
+	// // System.out.println(ja.get(i));
+	// // }
+	//
+	// }
+	// br.close();
+	// }
 
 	public static String normalizeArg(String arg) {
 
@@ -686,6 +701,52 @@ public class Util {
 		}
 	}
 
+	public static Map<String, String> getSimpleNERTypeSent(String text) {
+
+		Map<String, String> tokenToType = new HashMap<>();
+
+		// special case:
+		String[] shortMonths = "jan feb mar apr may jun jul aug sep oct nov dec".split(" ");
+		HashSet<String> shortMonthsSet = new HashSet<String>();
+		for (String s : shortMonths) {
+			shortMonthsSet.add(s);
+		}
+
+		// create an empty Annotation just with the given text
+		Annotation document = new Annotation(text);
+
+		// run all Annotators on this text
+		stanPipeline.annotate(document);
+
+		// Iterate over all of the sentences found
+		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+		for (CoreMap sentence : sentences) {
+			// Iterate over all tokens in a sentence
+			for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
+				// Retrieve and add the lemma for each word into the list of
+				// lemmas
+				String currentNEType = token.get(NamedEntityTagAnnotation.class).toLowerCase();
+				if (stan2Figer.containsKey(currentNEType)) {
+					currentNEType = stan2Figer.get(currentNEType);
+				} else {
+					currentNEType = "thing";
+				}
+				String thisToken = simpleNormalize(token.originalText());
+				if (currentNEType.equals("thing")) {
+					if (shortMonthsSet.contains(thisToken) || (thisToken.endsWith(".")
+							&& shortMonthsSet.contains(thisToken.substring(0, thisToken.length() - 1)))) {
+						currentNEType = "time";
+					}
+				}
+				System.out.println(token + " " + currentNEType);
+				tokenToType.put(thisToken, currentNEType);
+				// ret += token.get(LemmaAnnotation.class);
+			}
+		}
+
+		return tokenToType;
+	}
+
 	public static String getSimpleNERType(String text) {
 
 		// special case:
@@ -722,7 +783,8 @@ public class Util {
 				// Retrieve and add the lemma for each word into the list of
 				// lemmas
 				String currentNEType = token.get(NamedEntityTagAnnotation.class);
-				// System.out.println(token+" "+currentNEType);
+				// allTypes.add(currentNEType);
+				System.out.println(token + " " + currentNEType);
 				if (prevNEType.equals("O") && !prevNEType.equals(currentNEType)) {
 					ret = currentNEType + " ";
 				}
@@ -867,7 +929,8 @@ public class Util {
 			String[] ss = line.split("\t");
 			boolean onlyNE = shouldBeONLYNE(ss[1]);
 			String ent = simpleNormalize(ss[1]);
-//			ent = StringUtils.stripAccents(ent);// Changed on 6 OCT// Changed back on 15 Dec
+			// ent = StringUtils.stripAccents(ent);// Changed on 6 OCT// Changed back on 15
+			// Dec
 			String type = ss[2];
 			if (type.startsWith("/")) {
 				type = type.substring(1);
@@ -981,59 +1044,61 @@ public class Util {
 		return artIdToEntToWiki;
 	}
 
-	public static Map<String, String> loadEntToWiki(int cutoff) throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(defaultEntToWikiFName)));
-		String line;
-		entToWiki = new HashMap<String, String>();
-
-		// PrintStream op = new PrintStream(new File("wikiEnts.txt"));
-		ArrayList<SimpleSpot> spots = new ArrayList<SimpleSpot>();
-		HashMap<String, Integer> s2Count = new HashMap<String, Integer>();
-		HashMap<String, Integer> ent2Count = new HashMap<String, Integer>();
-
-		while ((line = br.readLine()) != null) {
-			try {
-				StringTokenizer st = new StringTokenizer(line, "::");
-				String ent = st.nextToken();
-
-				ent = simpleNormalize(ent);
-
-				int count = Integer.parseInt(st.nextToken());
-				String wiki = st.nextToken();
-
-				// in case normalization leads to the same thing, we wanna have
-				// sth that has more count!
-				if (entToWiki.containsKey(ent) && count <= ent2Count.get(ent)) {
-					continue;// we don't wanna replace something good!
-				}
-				if (count >= cutoff) {
-					entToWiki.put(ent, wiki);
-				}
-
-				ent2Count.put(ent, count);
-
-				if (!s2Count.containsKey(wiki)) {
-					s2Count.put(wiki, 0);
-				}
-				s2Count.replace(wiki, s2Count.get(wiki) + count);
-			} catch (Exception e) {
-
-			}
-		}
-		br.close();
-		System.err.println("entToWiki size: " + entToWiki.size());
-		for (String s : s2Count.keySet()) {
-			spots.add(new SimpleSpot(s, s2Count.get(s)));
-		}
-		Collections.sort(spots, Collections.reverseOrder());
-		for (SimpleSpot s : spots) {
-			if (s.count == 1) {
-				break;
-			}
-			// op.println(s.spot + "::" + s.count);
-		}
-		return entToWiki;
-	}
+	// public static Map<String, String> loadEntToWiki(int cutoff) throws
+	// IOException {
+	// BufferedReader br = new BufferedReader(new InputStreamReader(new
+	// FileInputStream(defaultEntToWikiFName)));
+	// String line;
+	// entToWiki = new HashMap<String, String>();
+	//
+	// // PrintStream op = new PrintStream(new File("wikiEnts.txt"));
+	// ArrayList<SimpleSpot> spots = new ArrayList<SimpleSpot>();
+	// HashMap<String, Integer> s2Count = new HashMap<String, Integer>();
+	// HashMap<String, Integer> ent2Count = new HashMap<String, Integer>();
+	//
+	// while ((line = br.readLine()) != null) {
+	// try {
+	// StringTokenizer st = new StringTokenizer(line, "::");
+	// String ent = st.nextToken();
+	//
+	// ent = simpleNormalize(ent);
+	//
+	// int count = Integer.parseInt(st.nextToken());
+	// String wiki = st.nextToken();
+	//
+	// // in case normalization leads to the same thing, we wanna have
+	// // sth that has more count!
+	// if (entToWiki.containsKey(ent) && count <= ent2Count.get(ent)) {
+	// continue;// we don't wanna replace something good!
+	// }
+	// if (count >= cutoff) {
+	// entToWiki.put(ent, wiki);
+	// }
+	//
+	// ent2Count.put(ent, count);
+	//
+	// if (!s2Count.containsKey(wiki)) {
+	// s2Count.put(wiki, 0);
+	// }
+	// s2Count.replace(wiki, s2Count.get(wiki) + count);
+	// } catch (Exception e) {
+	//
+	// }
+	// }
+	// br.close();
+	// System.err.println("entToWiki size: " + entToWiki.size());
+	// for (String s : s2Count.keySet()) {
+	// spots.add(new SimpleSpot(s, s2Count.get(s)));
+	// }
+	// Collections.sort(spots, Collections.reverseOrder());
+	// for (SimpleSpot s : spots) {
+	// if (s.count == 1) {
+	// break;
+	// }
+	// // op.println(s.spot + "::" + s.count);
+	// }
+	// return entToWiki;
+	// }
 
 	// args: fileName, shouldLink, useContext (aidalight), num to have in
 	// memory. Note: you have optimize this for larger corpus!
@@ -1052,8 +1117,8 @@ public class Util {
 		System.err.println("useNamedEntities: " + shouldLink);
 		int maxLines = Integer.parseInt(args[3]);
 
-		Map<String, String> entToWiki = loadEntToWiki(0);
-		System.err.println("testing " + entToWiki.get("mike smith"));
+		// Map<String, String> entToWiki = loadEntToWiki(0);
+		// System.err.println("testing " + entToWiki.get("mike smith"));
 
 		String line;
 		int lineNumbers = 0;
@@ -1137,7 +1202,7 @@ public class Util {
 								if (shouldLink) {
 									if (!isGens[0]) {
 										if (!useContext) {
-											arg1 = entToWiki.containsKey(arg1) ? entToWiki.get(arg1) : arg1;
+											// arg1 = entToWiki.containsKey(arg1) ? entToWiki.get(arg1) : arg1;
 										} else {
 											if (artIdToEntToWiki.containsKey(articleId)) {
 												HashMap<String, String> e2w = artIdToEntToWiki.get(articleId);
@@ -1147,7 +1212,7 @@ public class Util {
 									}
 									if (!isGens[1]) {
 										if (!useContext) {
-											arg2 = entToWiki.containsKey(arg2) ? entToWiki.get(arg2) : arg2;
+											// arg2 = entToWiki.containsKey(arg2) ? entToWiki.get(arg2) : arg2;
 										} else {
 											if (artIdToEntToWiki.containsKey(articleId)) {
 												HashMap<String, String> e2w = artIdToEntToWiki.get(articleId);
@@ -1703,7 +1768,9 @@ public class Util {
 
 	// Obama: [Barack_Obama,Person]
 	// morning: [morning,time_...]
-	public static String linkAndType(String arg, boolean isEntity, boolean backup) {
+	// stanType is already converted to Figer type
+	public static String linkAndType(String arg, boolean isEntity, boolean backup,
+			Map<String, String> tokenToStanType) {
 
 		String mainArg = arg;
 		String type;
@@ -1713,16 +1780,32 @@ public class Util {
 		if (isEntity) {
 			arg = simpleNormalize(arg);
 
-			String wiki = entToWiki.get(arg);
-			if (wiki == null && EntailGraphFactoryAggregator.figerTypes) {
-				wiki = arg;
-			}
+			// String wiki = entToWiki.get(arg);//Changed on 20 Dec
+			// if (wiki == null && EntailGraphFactoryAggregator.figerTypes) {
+			// wiki = arg;
+			// }
+
+			// Dec 20, 2017: decided not to lookup ent=>wiki. Instead use stan NER for
+			// person, loc, etc
+			String wiki = arg;
 
 			if (wiki != null) {
 				wiki = simpleNormalize(wiki);
 				type = getType(wiki, true);
 			} else {
 				type = "thing";
+			}
+
+			if (type.equals("thing")) {
+				String[] ss = wiki.split(" ");
+				for (String s : ss) {
+					String typeCand = tokenToStanType.get(s);
+					if (typeCand != null && !typeCand.equals("thing")) {
+						type = typeCand;
+						break;
+					}
+				}
+
 			}
 
 			///
@@ -1759,7 +1842,8 @@ public class Util {
 			if (backup && type.equals("thing")) {
 				String NEarg = simpleNormalize(arg);
 
-				String wiki = entToWiki.get(NEarg);
+				// String wiki = entToWiki.get(NEarg);
+				String wiki = NEarg;
 
 				if (wiki != null) {
 					wiki = simpleNormalize(wiki);
@@ -1831,7 +1915,35 @@ public class Util {
 		}
 	}
 
+	static void testNERStan() throws FileNotFoundException {
+
+		Scanner sc2 = new Scanner(new File("freebase_types/types.map"));
+		Set<String> figers = new HashSet<>();
+		while (sc2.hasNext()) {
+			String line = sc2.nextLine();
+			figers.add(line.split("\t")[1].split("/")[1]);
+		}
+		for (String s : figers) {
+			System.out.println(s);
+		}
+
+		Scanner sc = new Scanner(new File("data/ent/all.txt"));
+		while (sc.hasNextLine()) {
+			String line = sc.nextLine();
+			System.out.println(line);
+			getSimpleNERTypeSent(line.split("\t")[0]);
+			getSimpleNERTypeSent(line.split("\t")[1]);
+			System.out.println();
+		}
+	}
+
 	public static void main(String[] args) throws ParseException, IOException {
+
+		getSimpleNERType("kansas jayhawks won the game.");
+		getSimpleNERType("prime minister stephen harper");
+		
+		// testNERStan();
+
 		// String[] ss = "2013-02-07".split("$");
 		// System.out.println(ss.length);
 		// System.out.println("here");
@@ -1851,7 +1963,7 @@ public class Util {
 		// System.out.println(1d);
 		// readJSONSimple();
 		// convertReleaseToRawJson();
-		convertPredArgsToJson(args);
+		// convertPredArgsToJson(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));
 

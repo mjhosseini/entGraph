@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -522,16 +523,25 @@ public class Processing {
 	static void extractRelationsCCG(String fname) throws IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(root + fname + "_s.txt"));
-		BufferedReader brOrig = new BufferedReader(new FileReader(root + fname + "_s2.txt"));
+		BufferedReader brDelim = new BufferedReader(new FileReader(root + fname + "_s2.txt"));
+		BufferedReader brOrig = new BufferedReader(new FileReader(root + fname + ".txt"));
+		
 
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l6.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l7.txt"));
 		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA"+DistrTyping.numTopics+"rels_l.txt"));
 
 		while ((line = br.readLine()) != null) {
-			line2 = brOrig.readLine();
+			line2 = brDelim.readLine();
 			String[] ss = line.split("\t");
+			
+			String lineOrig = brOrig.readLine();
+			String[] ssOrig = lineOrig.split("\t");
+			
+			Map<String, String> tokenToType1 = Util.getSimpleNERTypeSent(ssOrig[0]);
+			Map<String, String> tokenToType2 = Util.getSimpleNERTypeSent(ssOrig[1]);
+			
 			String rel1 = "", rel2 = "";
 			String[] ss2 = line2.split("\t");
 			String[] rel1Args = new String[] { ss2[0].split(",")[0].trim().toLowerCase(),
@@ -565,9 +575,9 @@ public class Processing {
 
 				// no backup for figerTypes
 				String lt1 = Util.linkAndType(rel1ss[1], rel1ss[4].charAt(0) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes);
+						!EntailGraphFactoryAggregator.figerTypes,tokenToType1);
 				String lt2 = Util.linkAndType(rel1ss[2], rel1ss[4].charAt(1) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes);
+						!EntailGraphFactoryAggregator.figerTypes,tokenToType1);
 
 				System.out.println(line + " " + lt1 + " " + lt2);
 
@@ -589,9 +599,9 @@ public class Processing {
 				rel2ss[0] = lemmas[0];
 
 				String lt1 = Util.linkAndType(rel2ss[1], rel2ss[4].charAt(0) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes);
+						!EntailGraphFactoryAggregator.figerTypes, tokenToType2);
 				String lt2 = Util.linkAndType(rel2ss[2], rel2ss[4].charAt(1) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes);
+						!EntailGraphFactoryAggregator.figerTypes, tokenToType2);
 
 				System.out.println(line + " " + lt1 + " " + lt2);
 
@@ -614,7 +624,7 @@ public class Processing {
 		}
 		br.close();
 		op.close();
-		brOrig.close();
+		brDelim.close();
 		opLDA.close();
 
 	}
@@ -733,15 +743,24 @@ public class Processing {
 		// Scanner scCCG = new Scanner(new File(CCGRelPath));
 		Scanner scOrig = new Scanner(new File(origPath));
 		String oPath = relPath.split("\\.")[0] + "_oie.txt";
+		Scanner br1 = new Scanner(new File(relPath.split("\\.")[0] + "_s.txt"));
 		PrintStream op = new PrintStream(new File(oPath));
 
 		while (scOrig.hasNextLine()) {
 			// String line = scCCG.nextLine();
 			String lineOrig = scOrig.nextLine();
 			System.out.println(lineOrig);
+			
+			
+			
+			
 			String[] parts = lineOrig.split("\t");
 			String[] rel1Parts = parts[0].split(",");
 			String[] rel2Parts = parts[1].split(",");
+			
+			Map<String, String> tokenToType1 = Util.getSimpleNERTypeSent(parts[0]);
+			Map<String, String> tokenToType2 = Util.getSimpleNERTypeSent(parts[1]);
+			
 
 			String rel1Str;
 			if (rel1Parts.length > 1) {
@@ -753,13 +772,13 @@ public class Processing {
 				String arg2 = rel1Parts[2];
 				boolean isEnt2 = !Util.isGeneric(arg2, Util.getAllPOSTags(arg2));
 
-				String lt1 = Util.linkAndType(arg1, isEnt1, true);
+				String lt1 = Util.linkAndType(arg1, isEnt1, true, tokenToType1);
 				if (lt1.endsWith("thing")) {
-					lt1 = Util.linkAndType(arg1.split(" ")[arg1.split(" ").length - 1], isEnt1, true);
+					lt1 = Util.linkAndType(arg1.split(" ")[arg1.split(" ").length - 1], isEnt1, true, tokenToType1);
 				}
-				String lt2 = Util.linkAndType(arg2, isEnt2, true);
+				String lt2 = Util.linkAndType(arg2, isEnt2, true,tokenToType1);
 				if (lt2.endsWith("thing")) {
-					lt2 = Util.linkAndType(arg2.split(" ")[arg2.split(" ").length - 1], isEnt2, true);
+					lt2 = Util.linkAndType(arg2.split(" ")[arg2.split(" ").length - 1], isEnt2, true, tokenToType1);
 				}
 
 				rel1Str = rel1 + " " + lt1 + " " + lt2;
@@ -777,13 +796,13 @@ public class Processing {
 				String arg2 = rel2Parts[2];
 				boolean isEnt2 = !Util.isGeneric(arg2, Util.getAllPOSTags(arg2));
 
-				String lt1 = Util.linkAndType(arg1, isEnt1, true);
+				String lt1 = Util.linkAndType(arg1, isEnt1, true, tokenToType2);
 				if (lt1.endsWith("thing")) {
-					lt1 = Util.linkAndType(arg1.split(" ")[arg1.split(" ").length - 1], isEnt1, true);
+					lt1 = Util.linkAndType(arg1.split(" ")[arg1.split(" ").length - 1], isEnt1, true, tokenToType2);
 				}
-				String lt2 = Util.linkAndType(arg2, isEnt2, true);
+				String lt2 = Util.linkAndType(arg2, isEnt2, true, tokenToType2);
 				if (lt2.endsWith("thing")) {
-					lt2 = Util.linkAndType(arg2.split(" ")[arg2.split(" ").length - 1], isEnt2, true);
+					lt2 = Util.linkAndType(arg2.split(" ")[arg2.split(" ").length - 1], isEnt2, true, tokenToType2);
 				}
 
 				rel2Str = rel2 + " " + lt1 + " " + lt2;

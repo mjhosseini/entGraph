@@ -499,30 +499,29 @@ public class Scripts {
 		Scanner sc2 = new Scanner(new File(s2));
 		Set<String> allStrs = new HashSet<>();
 
-		
-		while (sc.hasNext()) {//write all the target rels
+		while (sc.hasNext()) {// write all the target rels
 			String line = sc.nextLine();
 			allStrs.add(line.split(" ")[0]);
 			System.out.println(line);
-			
+
 		}
 
 		int lNum = 0;
-		while (sc2.hasNext()) {//write everything from graphs that are not already printed
+		while (sc2.hasNext()) {// write everything from graphs that are not already printed
 			String line = sc2.nextLine();
 			line = line.split(" ")[0];
 			if (!allStrs.contains(line)) {
 				System.out.println(line);
 			}
-			
+
 			lNum++;
 			if (lNum == 20000) {
 				break;
 			}
-			
+
 			allStrs.add(line);
 		}
-		
+
 	}
 
 	static void normalizeLDAWeights() throws IOException {
@@ -637,15 +636,15 @@ public class Scripts {
 		// makeUniqueDS("data/ent/all_new.txt");
 		// swapDS("data/ent/all_new_dir.txt");
 		// swapDS("data/ent/all_new.txt");
-		// makeEntTypes();
+		makeEntTypes();
 		// testEntTypes();
 		// trueCase();
 
 		// getAllRemainedPredicates("../../python/gfiles/typedEntGrDir_aida_figer_3_3_c/");
 		// formLDAInput("../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/");
-		String s1 = "target_rels_CCG.txt";
-		String s2 = "all_CCG_rem.txt";
-		getUnion(s1, s2);
+		// String s1 = "target_rels_CCG.txt";
+		// String s2 = "all_CCG_rem.txt";
+		// getUnion(s1, s2);
 
 		// getSubCCG();
 		// combineCCG3WTargetRels();

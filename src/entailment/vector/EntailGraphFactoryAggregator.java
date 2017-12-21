@@ -52,8 +52,8 @@ public class EntailGraphFactoryAggregator {
 	static final int minPredForArg = -1;// min num of unique predicates for
 
 	static final String relAddress = "news_gen8_aida.json";
-	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_x";
-	static final int numThreads = 1;
+	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_e";
+	static final int numThreads = 15;
 	
 	static int allNonZero = 0;
 	static int allEdgeCounts = 0;
