@@ -1121,7 +1121,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
-		String s = "Ben visited London on Monday.";
+		String s = "Barack Obama is not against all wars.";
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);

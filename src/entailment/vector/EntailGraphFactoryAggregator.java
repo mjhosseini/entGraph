@@ -47,6 +47,7 @@ public class EntailGraphFactoryAggregator {
 														// false.
 
 	public static final boolean lemmatizePredicate = true;
+	public static final boolean backupToStanNER = false;//You can make this true, but it will take some good time to run!
 	public static final int smoothParam = 0;// 0 means no smoothing
 	static final int minArgPairForPred = 3;
 	static final int minPredForArgPair = 3;// min num of unique predicates for
