@@ -9,9 +9,11 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.JsonArray;
@@ -40,9 +42,17 @@ public class EntailGraphFactory implements Runnable {
 	static PrintStream typedOp;
 	static ConcurrentHashMap<String, Integer> allPredCounts = new ConcurrentHashMap<>();
 	static ConcurrentHashMap<String, String> predToDocument = new ConcurrentHashMap<>();
+	static ConcurrentHashMap<Integer, Map<String, String>> lineIdToStanTypes = new ConcurrentHashMap<>();
+	static List<Integer> lineIdSeen = Collections.synchronizedList(new ArrayList<>());// assuming we don't have more than 20m lines. NS has 11m lines
+	
 
 	static {
 		try {
+			
+			for (int i=0; i<20000000; i++) {
+				lineIdSeen.add(0);
+			}
+			
 			typedOp = new PrintStream(new File("typedOP.txt"), "UTF-8");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -57,7 +67,7 @@ public class EntailGraphFactory implements Runnable {
 	String typedEntGrDir;
 	HashSet<String> acceptableTypes = new HashSet<>();
 	static HashSet<String> acceptablePredPairs = new HashSet<>();
-	static boolean entGenTypesLoaded = false;
+//	static boolean entGenTypesLoaded = false;
 
 	int threadNum;
 
@@ -74,10 +84,10 @@ public class EntailGraphFactory implements Runnable {
 		this.entTypesFName = entTypesFName;
 		this.typedEntGrDir = typedEntGrDir;
 
-		if (!entGenTypesLoaded) {
-			Util.loadEntGenTypes(entTypesFName, genTypesFName);
-			entGenTypesLoaded = true;
-		}
+//		if (!entGenTypesLoaded) {
+//			Util.loadEntGenTypes(entTypesFName, genTypesFName);
+//			entGenTypesLoaded = true;
+//		}
 
 	}
 
@@ -128,11 +138,16 @@ public class EntailGraphFactory implements Runnable {
 				continue;
 			}
 			try {
-
+				int lineId = -1;
 				ArrayList<String> relStrs = new ArrayList<>();
 				ArrayList<Integer> counts = new ArrayList<>();
 				if (!EntailGraphFactoryAggregator.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
+					lineId = jObj.get("lineId").getAsInt();
+					lineIdSeen.set(lineId, lineIdSeen.get(lineId)+1);
+					if (lineIdSeen.get(lineId) == EntailGraphFactoryAggregator.numThreads) {
+						lineIdToStanTypes.remove(lineId);
+					}
 					String mainLine = jObj.get("s").getAsString();
 					typedOp.println("line: " + mainLine);
 					JsonArray jar = jObj.get("rels").getAsJsonArray();
@@ -147,6 +162,13 @@ public class EntailGraphFactory implements Runnable {
 					String relStr = "(" + ss[2] + "::" + ss[0] + "::" + ss[1] + "::EE)";
 					relStrs.add(relStr);
 					counts.add(Integer.parseInt(ss[3]));
+				}
+
+				// let's see if we have NER ed the line, otherwise, do it
+				if (EntailGraphFactoryAggregator.figerTypes && lineIdSeen.get(lineId)==1) {
+					System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
+					Map<String, String> tokenToType = Util.getSimpleNERTypeSent(line);
+					lineIdToStanTypes.put(lineId, tokenToType);
 				}
 
 				// t0 = 0;
@@ -196,15 +218,15 @@ public class EntailGraphFactory implements Runnable {
 						// back
 						// in future!
 						try {
-							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E');
-							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E');
+							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
+							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
 						} catch (Exception e) {
 							System.out.println("t exception for: " + line);
 						}
 					} else {
 						try {
-							type1 = Util.getType(parts[1], true);
-							type2 = Util.getType(parts[2], true);
+							type1 = Util.getType(parts[1], true, null);
+							type2 = Util.getType(parts[2], true, null);
 						} catch (Exception e) {
 							System.out.println("t exception for: " + line);
 						}

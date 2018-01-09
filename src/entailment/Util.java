@@ -69,8 +69,8 @@ public class Util {
 	static String defaultEntToWikiFName = "entToWiki.txt";
 	static String defaultEntToFigerType = "freebase_types/entity2Types.txt";
 	static Map<String, String> stan2Figer;
-	public static Map<String, String> entToType = null;
-	public static Map<String, String> genToType = null;
+//	public static Map<String, String> entToType = null;
+//	public static Map<String, String> genToType = null;
 	// public static Map<String, String> entToWiki = null;
 	private static Map<String, String> entToFigerType = null;
 	private static Map<String, Boolean> entToFigerONLYNE = null;
@@ -93,7 +93,7 @@ public class Util {
 			stan2Figer.put(stans[i], figers[i]);
 		}
 
-		loadEntGenTypes(defaultEntTypesFName, defaultGenTypesFName);
+//		loadEntGenTypes(defaultEntTypesFName, defaultGenTypesFName);
 		// try {
 		// loadEntToWiki(0);
 		// } catch (IOException e) {
@@ -738,7 +738,7 @@ public class Util {
 						currentNEType = "time";
 					}
 				}
-				System.out.println(token + " " + currentNEType);
+//				System.out.println(token + " " + currentNEType);
 				tokenToType.put(thisToken, currentNEType);
 				// ret += token.get(LemmaAnnotation.class);
 			}
@@ -859,7 +859,7 @@ public class Util {
 	// backup: should we check genTypes if no entTypes? Mainly good for not
 	// well-formed sentences!
 	// arg must be simple-normalized
-	public static String getType(String arg, boolean isEntity) {
+	public static String getType(String arg, boolean isEntity, Map<String,String> tokenToType) {
 		if (!EntailGraphFactoryAggregator.isTyped) {
 			return "thing";
 		}
@@ -880,25 +880,39 @@ public class Util {
 			if (!isEntity && entToFigerONLYNE.containsKey(arg) && entToFigerONLYNE.get(arg) == true) {
 				type = "thing";
 			}
+			
+			if (tokenToType!=null && type.equals("thing")) {
+				String[] ss = arg.split(" ");
+				for (String s : ss) {
+					String typeCand = tokenToType.get(s);
+					if (typeCand != null && !typeCand.equals("thing")) {
+						type = typeCand;
+						System.out.println("backed up to stan: "+type+" "+arg);
+//						break;
+					}
+				}
+
+			}
 
 			// System.out.println(arg+" "+type);
 			return type;
-		} else {
-			String type;
+		} else {//This must not be used!
+			String type = null;
 			if (isEntity) {
-				type = entToType.get(arg);
+//				type = entToType.get(arg);
 				if (type == null || type.equals("none")) {
 					// System.err.println("no type for " + arg1);
 					type = "thing";
 				}
 			} else {
-				type = genToType.get(arg);
+//				type = genToType.get(arg);
 				if (type == null) {
 					// System.err.println("no type for " + arg1);
 					type = "thing";
 				}
 			}
-
+			System.err.println("always use figer!");
+			System.exit(0);
 			return type;
 		}
 		// return null;
@@ -966,21 +980,21 @@ public class Util {
 		entToFigerType = ret;
 	}
 
-	public static void loadEntGenTypes(String entTypesFName, String genTypesFName) {
-		try {
-			entToType = new HashMap<String, String>();// I do this so that other
-														// threads don't touch
-														// this!
-			entToType = loadEntTypes(entTypesFName, true);
-			genToType = new HashMap<>();
-			genToType = loadEntTypes(genTypesFName, false);
-
-			// entToFigerType = loadFigerTypes(defaultEntToFigerType);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+//	public static void loadEntGenTypes(String entTypesFName, String genTypesFName) {
+//		try {
+//			entToType = new HashMap<String, String>();// I do this so that other
+//														// threads don't touch
+//														// this!
+//			entToType = loadEntTypes(entTypesFName, true);
+//			genToType = new HashMap<>();
+//			genToType = loadEntTypes(genTypesFName, false);
+//
+//			// entToFigerType = loadFigerTypes(defaultEntToFigerType);
+//
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
 
 	public static Map<String, String> loadEntTypes(String entTypesFName, boolean forEnts) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(entTypesFName));
@@ -1791,21 +1805,9 @@ public class Util {
 
 			if (wiki != null) {
 				wiki = simpleNormalize(wiki);
-				type = getType(wiki, true);
+				type = getType(wiki, true, tokenToStanType);
 			} else {
 				type = "thing";
-			}
-
-			if (type.equals("thing")) {
-				String[] ss = wiki.split(" ");
-				for (String s : ss) {
-					String typeCand = tokenToStanType.get(s);
-					if (typeCand != null && !typeCand.equals("thing")) {
-						type = typeCand;
-						break;
-					}
-				}
-
 			}
 
 			///
@@ -1819,7 +1821,7 @@ public class Util {
 				} else {
 					// Now, we have to back up to genTypes
 					arg = getLemma(arg);
-					String genType = getType(arg, false);
+					String genType = getType(arg, false, null);
 					System.out.println("backing up to genTypes: " + mainArg + " " + arg + ": " + genType);
 					type = genType;
 					if (genType.equals("thing")) {
@@ -1831,10 +1833,10 @@ public class Util {
 			if (EntailGraphFactoryAggregator.figerTypes) {
 				arg = simpleNormalize(arg);
 			}
-			type = getType(arg, false);
+			type = getType(arg, false, tokenToStanType);
 			if (type.equals("thing")) {
 				arg = simpleNormalize(arg);
-				type = getType(getLemma(arg), false);
+				type = getType(getLemma(arg), false, tokenToStanType);
 				System.out.println("try lemma for: " + arg + " " + getLemma(arg) + " " + type);
 			}
 
@@ -1847,7 +1849,7 @@ public class Util {
 
 				if (wiki != null) {
 					wiki = simpleNormalize(wiki);
-					type = getType(wiki, true);
+					type = getType(wiki, true, tokenToStanType);
 				} else {
 					type = "thing";
 				}

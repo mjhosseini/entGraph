@@ -1,14 +1,15 @@
 package graph;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -22,19 +23,27 @@ import java.util.concurrent.TimeUnit;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import edu.stanford.nlp.util.CollectionUtils;
+import sun.net.www.content.text.plain;
+
 public class TypePropagateMN {
 	ThreadPoolExecutor threadPool;
 	ArrayList<PGraph> pGraphs;
 	// public final static float edgeThreshold = -1;// edgeThreshold
-	static int numThreads = 30;
-	static int numIters = 4;
+	static int numThreads = 60;
+	static int numIters = 5;
 	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double smoothParam = 20.0;
-	static final String tPropSuffix = "_tProp_sm20_i4.txt";
+	public static double smoothParam = 5.0;
+	static final String tPropSuffix = "_tProp_i5_predBased.txt";
+	static final boolean predBasedPropagation = true;
+	static final boolean sizeBasedPropagation = false;
+
 	Map<String, Integer> graphToNumEdges;
 	String compatiblesPath = "../../python/gfiles/ent/compatibles_all.txt";
 	static Map<String, Double> compatibles;
+	static Map<String, Integer> predToOcc;// ex: (visit.1,visit.2)#person#location => 10344
 	static Map<String, Set<Integer>> rawPred2PGraphs;
+	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric)
 	static int allPropEdges = 0;
 	static double objChange = 0;
 
@@ -42,6 +51,9 @@ public class TypePropagateMN {
 		PGraph.emb = false;
 		PGraph.suffix = "_sim.txt";
 		PGraph.formBinaryGraph = false;
+		if (sizeBasedPropagation) {
+			setPredToOcc(root);
+		}
 		// PGraph.edgeThreshold = edgeThreshold;
 		try {
 			readCompatibles();
@@ -56,6 +68,58 @@ public class TypePropagateMN {
 
 		MNPropagateSims();
 
+	}
+
+	static void setPredToOcc(String root) {
+		predToOcc = new HashMap<>();
+
+		File folder = new File(root);
+		File[] files = folder.listFiles();
+		Arrays.sort(files);
+
+		for (File f : files) {
+
+			String fname = f.getName();
+
+			if (fname.contains("_sim") || fname.contains("_tProp") || fname.contains("_emb")) {
+				continue;
+			}
+
+			System.out.println("occ f name: " + fname);
+
+			try {
+				readOccFile(predToOcc, root + fname);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	static void readOccFile(Map<String, Integer> predToOcc, String fname) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(fname));
+		String line = null;
+		String currentPred = null;
+		int currOcc = 0;
+		while ((line = br.readLine()) != null) {
+			if (line.equals("")) {
+				continue;
+			} else if (line.startsWith("predicate:")) {
+				if (currentPred != null) {
+					// System.out.println("pred: "+currentPred+" "+currOcc);
+					predToOcc.put(currentPred, currOcc);
+				}
+				currentPred = line.substring(11);
+				currOcc = 0;
+			} else if (line.startsWith("inv idx")) {
+				predToOcc.put(currentPred, currOcc);
+				break;
+			} else {
+				int colIdx = line.lastIndexOf(":");
+				int occ = (int) Float.parseFloat(line.substring(colIdx + 2));
+				currOcc += occ;
+			}
+		}
+		br.close();
 	}
 
 	static void memStat() {
@@ -95,9 +159,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-//			if (gc == 100) {
-//				break;
-//			}
+			// if (gc == 100) {
+			// break;
+			// }
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -131,7 +195,7 @@ public class TypePropagateMN {
 	}
 
 	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
-		
+
 		String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
 		if (t1.equals(tp1) && t2.equals(tp2)) {
 			return 1;
@@ -140,8 +204,154 @@ public class TypePropagateMN {
 			// System.out.println("compscore: " + comb + " " + ret);
 			return ret;
 		} else {
-			return 1.0/smoothParam;
+			return 1.0 / smoothParam;
 		}
+	}
+
+	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
+	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
+	static double getCompatibleScorePredBased(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r, String rawPred_rp,
+			String pred_r, String pred_rp, String pred_p, String pred_q, String t1_plain, String t2_plain,
+			boolean aligned, String tp1_plain, String tp2_plain) {
+
+		if (t1_plain.equals(tp1_plain) && t2_plain.equals(tp2_plain)) {
+			return 1;
+		} else if (!pgraph_neigh.pred2node.containsKey(pred_q) || !pgraph_neigh.pred2node.containsKey(pred_p)) {
+			return 0;
+		}
+
+		// outgoing
+		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
+		String key1p = rawPred_r + "#" + tp1_plain + "#" + tp2_plain + "#" + t1_plain + "#" + t2_plain + "#";// because
+																												// it's
+																												// symmetric
+																												// for
+																												// g1,//
+																												// g2 or
+																												// g2,
+																												// g1!
+
+		// incoming
+		String key2 = aligned ? ("#" + rawPred_rp + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain)
+				: ("#" + rawPred_rp + "#" + t2_plain + "#" + t1_plain + "#" + tp2_plain + "#" + tp1_plain);
+		String key2p = aligned
+				? ("#" + rawPred_rp + "#" + tp1_plain + "#" + tp2_plain + "#" + t1_plain + "#" + t2_plain)
+				: ("#" + rawPred_rp + "#" + tp2_plain + "#" + tp1_plain + "#" + t2_plain + "#" + t1_plain);
+
+		double score1, score2;
+		if (predTypeCompatibility.containsKey(key1)) {
+			score1 = predTypeCompatibility.get(key1);
+			// System.out.println("hash key1: " + key1 + " " + score1);
+		} else {
+
+			// what are the outgoing edges of pred_r in pgraph?
+			int r = pgraph.pred2node.get(pred_r).idx;
+			Set<DefaultWeightedEdge> outE_r = pgraph.g0.outgoingEdgesOf(r);
+
+			// What are the outgoing edges of pred_p in pgraph_neigh.
+			int p = pgraph_neigh.pred2node.get(pred_p).idx;
+			Set<DefaultWeightedEdge> outE_p = pgraph_neigh.g0.outgoingEdgesOf(p);
+
+			// Now, intersection of these edges!
+			Set<String> intersection = new HashSet<>();
+			Set<String> out_r = new HashSet<>();
+			Set<String> out_p = new HashSet<>();
+
+			String[] ss_r = pred_r.split("#");
+			String[] ss_p = pred_p.split("#");
+
+			for (DefaultWeightedEdge e : outE_r) {
+				int idx = pgraph.g0.getEdgeTarget(e);
+				String id = pgraph.nodes.get(idx).id;
+				String[] ss = id.split("#");
+
+				// is r aligned with this guy? (one of its many outgoing edges)
+				boolean a = ss_r[1].equals(ss[1]);
+				out_r.add(ss[0] + "#" + a);
+			}
+
+			for (DefaultWeightedEdge e : outE_p) {
+
+				int idx = pgraph_neigh.g0.getEdgeTarget(e);
+				String id = pgraph_neigh.nodes.get(idx).id;
+				String[] ss = id.split("#");
+
+				// is p aligned with this guy? (one of its many outgoing edges)
+				boolean a = ss_p[1].equals(ss[1]);
+
+				out_p.add(ss[0] + "#" + a);
+			}
+
+			intersection = CollectionUtils.intersection(out_r, out_p);
+			score1 = (((double) intersection.size() + 1)
+					/ (-intersection.size() + out_r.size() + out_p.size() + smoothParam));
+
+			predTypeCompatibility.put(key1, score1);
+			predTypeCompatibility.put(key1p, score1);
+			System.out.println("key1: " + key1 + " " + score1);
+			// System.out.println("p key1: " + key1p + " " + score1);
+		}
+
+		if (predTypeCompatibility.containsKey(key2)) {
+			score2 = predTypeCompatibility.get(key2);
+			// System.out.println("hash key2: " + key2 + " " + score2);
+		} else {
+
+			// what are the incoming edges of pred_rp in pgraph?
+			int rp = pgraph.pred2node.get(pred_rp).idx;
+			Set<DefaultWeightedEdge> inE_rp = pgraph.g0.incomingEdgesOf(rp);
+
+			// What are the incoming edges of pred_q in pgraph_neigh. pgraph_neigh might not
+			// have it!
+			int q = pgraph_neigh.pred2node.get(pred_q).idx;
+			Set<DefaultWeightedEdge> inE_q = pgraph_neigh.g0.incomingEdgesOf(q);
+
+			// Now, intersection of these edges!
+			Set<String> intersection = new HashSet<>();
+			Set<String> in_rp = new HashSet<>();
+			Set<String> in_q = new HashSet<>();
+
+			String[] ss_rp = pred_rp.split("#");
+			String[] ss_q = pred_q.split("#");
+
+			for (DefaultWeightedEdge e : inE_rp) {
+				int idx = pgraph.g0.getEdgeSource(e);
+				String id = pgraph.nodes.get(idx).id;
+				String[] ss = id.split("#");
+
+				// is r aligned with this guy? (one of its many outgoing edges)
+				boolean a = ss_rp[1].equals(ss[1]);
+				in_rp.add(ss[0] + "#" + a);
+			}
+
+			for (DefaultWeightedEdge e : inE_q) {
+				int idx = pgraph_neigh.g0.getEdgeSource(e);
+				String id = pgraph_neigh.nodes.get(idx).id;
+				String[] ss = id.split("#");
+
+				// is r aligned with this guy? (one of its many outgoing edges)
+				boolean a = ss_q[1].equals(ss[1]);
+				in_q.add(ss[0] + "#" + a);
+			}
+
+			intersection = CollectionUtils.intersection(in_rp, in_q);
+			score2 = ((double) intersection.size() + 1)
+					/ (-intersection.size() + in_rp.size() + in_q.size() + smoothParam);
+
+			// System.out.println("key2: " + key2 + " " + score2);
+			// System.out.println("p key2: " + key2 + " " + score2);
+
+			predTypeCompatibility.put(key2, score2);
+			predTypeCompatibility.put(key2p, score2);
+		}
+
+		// System.out.println(
+		// "comp score: " + pred_r + "=>" + pred_rp + " " + pred_p + "=>" + pred_q + " "
+		// + (score1 * score2));
+
+		// return score1 * score2;
+		return score1;
+
 	}
 
 	void readCompatibles() throws FileNotFoundException {
@@ -165,8 +375,9 @@ public class TypePropagateMN {
 
 		for (int iter = 0; iter < numIters; iter++) {
 			objChange = 0;
-			for (PGraph pgraph : pGraphs) {
+			predTypeCompatibility = Collections.synchronizedMap(new HashMap<>());
 
+			for (PGraph pgraph : pGraphs) {
 				// initialize gMN (next g) based on g0 (cur g)
 				int N = pgraph.g0.vertexSet().size();
 				pgraph.gMN = new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
@@ -175,6 +386,7 @@ public class TypePropagateMN {
 					DefaultWeightedEdge ee = pgraph.gMN.addEdge(i, i);
 					pgraph.gMN.setEdgeWeight(ee, 1);
 				}
+				pgraph.edgeToMNWeight = new ConcurrentHashMap<>();
 
 				// maybe for performance?
 				// for (Edge e : sortedEdges) {
@@ -207,7 +419,7 @@ public class TypePropagateMN {
 					pgraph.g0 = pgraph.gMN;
 				}
 			}
-			System.out.println("obj change: "+objChange);
+			System.out.println("obj change: " + objChange);
 		}
 
 		// now, let's write the results
@@ -216,7 +428,7 @@ public class TypePropagateMN {
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-		
+
 	}
 
 	// void writeEmbeddingResults(PGraph pgraph,

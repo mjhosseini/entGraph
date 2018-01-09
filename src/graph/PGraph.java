@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,9 +33,9 @@ public class PGraph {
 	public static float relMinSim = -1f;// -1 if don't want to
 	public static String suffix = "_sim.txt";
 	static final String embSuffix = "_embsims22.txt";
-	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
+	static final String fpath = "../../python/gfiles/ent/ccg6.sim";
 	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
-	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
+	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
 
 	// static final String root =
 	// "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
@@ -58,7 +59,7 @@ public class PGraph {
 	ArrayList<Edge> sortedEdges;
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
-	Map<String,Double> edgeToMNWeight = new ConcurrentHashMap<>();//the weight for MN average. Edge is p+"#"+q
+	Map<String,Double> edgeToMNWeight;
 
 //	static List<SimpleScore> scores = new ArrayList<>();
 
@@ -943,6 +944,9 @@ public class PGraph {
 				return false;
 			}
 		}
+		PriorityQueue<Integer> queue = new PriorityQueue<>(Collections.reverseOrder());
 		return true;
+		
+		
 	}
 }

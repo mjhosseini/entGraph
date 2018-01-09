@@ -223,7 +223,7 @@ public class Scripts {
 		while ((line = br.readLine()) != null) {
 			String s = line.split("::")[0];
 			s = Util.simpleNormalize(s);
-			op.println(s + "::" + Util.getType(s, true));
+			op.println(s + "::" + Util.getType(s, true, null));
 		}
 		br.close();
 		op.close();

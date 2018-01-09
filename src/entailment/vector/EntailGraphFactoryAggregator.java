@@ -35,7 +35,7 @@ public class EntailGraphFactoryAggregator {
 	// for
 	// static final int minPredForArg = 30;// min num of unique predicates for
 	// arg
-	
+
 	public static boolean onlyDSPreds = false;
 	public static boolean rawExtractions = false;// gbooks
 	public static boolean useTimeEx = false;
@@ -43,7 +43,9 @@ public class EntailGraphFactoryAggregator {
 	public static boolean isTyped = true;
 	public static boolean figerTypes = true;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
-	public static boolean lemmatizePredWords = false;//if it has been already lemmatized in rel extraction
+	public static boolean lemmatizePredWords = false;// if it has been already lemmatized in rel extraction. Must be
+														// false.
+
 	public static final boolean lemmatizePredicate = true;
 	public static final int smoothParam = 0;// 0 means no smoothing
 	static final int minArgPairForPred = 3;
@@ -52,9 +54,9 @@ public class EntailGraphFactoryAggregator {
 	static final int minPredForArg = -1;// min num of unique predicates for
 
 	static final String relAddress = "news_gen8_aida.json";
-	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_e";
+	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_f";
 	static final int numThreads = 15;
-	
+
 	static int allNonZero = 0;
 	static int allEdgeCounts = 0;
 
@@ -64,8 +66,10 @@ public class EntailGraphFactoryAggregator {
 			String root = "data/ent/";
 			String[] dsPaths;
 			if (isCCG) {
-//				dsPaths = new String[] { root + "train1_rels.txt", root + "dev1_rels.txt", root + "test1_rels.txt" };
-				dsPaths = new String[] { root + "train_new_rels_l5.txt", root + "dev_new_rels_l5.txt", root + "test_new_rels_l5.txt" };
+				// dsPaths = new String[] { root + "train1_rels.txt", root + "dev1_rels.txt",
+				// root + "test1_rels.txt" };
+				dsPaths = new String[] { root + "train_new_rels_l5.txt", root + "dev_new_rels_l5.txt",
+						root + "test_new_rels_l5.txt" };
 			} else {
 				dsPaths = new String[] { root + "train1_rels_oie.txt", root + "dev1_rels_oie.txt",
 						root + "test1_rels_oie.txt" };
@@ -90,7 +94,7 @@ public class EntailGraphFactoryAggregator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		renewThreadPool();
 	}
 
@@ -119,7 +123,8 @@ public class EntailGraphFactoryAggregator {
 		if (!(new File(typedEntGrDir)).exists()) {
 			(new File(typedEntGrDir)).mkdirs();
 		}
-		Util.loadEntGenTypes(entTypesFName, genTypesFName);
+
+		// Util.loadEntGenTypes(entTypesFName, genTypesFName);
 
 		entGrFacts = new EntailGraphFactory[numThreads];
 		for (int i = 0; i < entGrFacts.length; i++) {
@@ -134,9 +139,9 @@ public class EntailGraphFactoryAggregator {
 				continue;
 			}
 			System.out.println("num of types: " + entGrFact.acceptableTypes.size());
-//			for (String s : entGrFact.acceptableTypes) {
-//				System.out.println(s);
-//			}
+			// for (String s : entGrFact.acceptableTypes) {
+			// System.out.println(s);
+			// }
 			Runnable extractor = entGrFact;
 			entGrFact.runPart = 0;
 			threadPool.execute(extractor);
@@ -212,17 +217,18 @@ public class EntailGraphFactoryAggregator {
 				for (String s : Util.getEntToFigerType().values()) {
 					allTypes.add(s);
 				}
-			} else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.GKG) {
-				for (String s : Util.entToType.values()) {
-					allTypes.add(s);
-				}
-				for (String s : Util.genToType.values()) {
-					allTypes.add(s);
-				}
 			}
-			else if (EntailGraphFactoryAggregator.typeScheme==TypeScheme.LDA){
-				for (int i=0; i<DistrTyping.numTopics; i++){
-					allTypes.add("type"+i);
+			// else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.GKG) {
+			// for (String s : Util.entToType.values()) {
+			// allTypes.add(s);
+			// }
+			// for (String s : Util.genToType.values()) {
+			// allTypes.add(s);
+			// }
+			// }
+			else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
+				for (int i = 0; i < DistrTyping.numTopics; i++) {
+					allTypes.add("type" + i);
 				}
 			}
 		}
@@ -241,7 +247,7 @@ public class EntailGraphFactoryAggregator {
 		for (int i = 0; i < allTypesArr.size(); i++) {
 			// System.out.println("type: " +allTypesArr.get(i) );
 			int r = (int) (Math.random() * numThreads);
-//			entGrFacts[r].acceptableTypes.add(allTypesArr.get(i));
+			// entGrFacts[r].acceptableTypes.add(allTypesArr.get(i));
 
 			for (int j = i; j < allTypesArr.size(); j++) {
 				String t1 = allTypesArr.get(i) + "#" + allTypesArr.get(j);
@@ -318,8 +324,8 @@ public class EntailGraphFactoryAggregator {
 			// fileName = "news_NEs_NEL.json";
 			// fileName = "test2.json";
 			// fileName = "test_time.json";
-			entTypesFName = "entTypes.txt";
-			genTypesFName = "genTypes.txt";
+			// entTypesFName = "entTypes.txt";
+			// genTypesFName = "genTypes.txt";
 			// typedEntGrDir = "typedEntGrDir_untyped_unlinked";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_30_30";
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_20_20";
@@ -329,13 +335,14 @@ public class EntailGraphFactoryAggregator {
 		}
 
 		EntailGraphFactoryAggregator agg = new EntailGraphFactoryAggregator();
-		DistrTyping.loadLDATypes();
-		agg.runAllEntGrFacts(fileName, entTypesFName, genTypesFName, typedEntGrDir);
+		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
+			DistrTyping.loadLDATypes();
+		}
+		agg.runAllEntGrFacts(fileName, "", "", typedEntGrDir);
 
 	}
-	
+
 	public enum TypeScheme {
-	    GKG, FIGER,LDA 
+		GKG, FIGER, LDA
 	}
-
 }

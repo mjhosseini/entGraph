@@ -21,7 +21,6 @@ import entailment.PredicateArgumentExtractor;
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.vector.EntailGraphFactoryAggregator;
-import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 
 public class Processing {
@@ -529,7 +528,7 @@ public class Processing {
 
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l7.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
 		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA"+DistrTyping.numTopics+"rels_l.txt"));
 
 		while ((line = br.readLine()) != null) {
