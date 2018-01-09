@@ -15,7 +15,7 @@ public class Test {
 	
 	static void testTime(){
 		
-		long t = 0;
+		long t = 0; 
 		long t0 = System.currentTimeMillis();
 		int x = 0;
 		for (int i=0; i<100000; i++){
