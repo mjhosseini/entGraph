@@ -125,7 +125,7 @@ public class PredicateVector extends SimplePredicateVector {
 			// "+entGraph.argPairIdxToCount.get(argIdxes.get(i)));
 			// }
 		}
-
+		
 		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
 														// format
 		ArrayList<Float> vals = new ArrayList<>();
@@ -167,7 +167,14 @@ public class PredicateVector extends SimplePredicateVector {
 		for (int argIdx : argIdxes) {
 			String argPairStr = entGraph.argPairs.get(argIdx);
 			int arrIdx = argIdxToArrayIdx.get(argIdx);
-			float count = vals.get(arrIdx);
+			float count;
+			if (EntailGraphFactoryAggregator.writePMIorCount) {
+				count = PMIs.get(arrIdx);
+			}
+			else {
+				count = vals.get(arrIdx);
+			}
+			 
 			ArgPair argPair = new ArgPair(argPairStr, count);
 			thisArgPairs.add(argPair);
 		}

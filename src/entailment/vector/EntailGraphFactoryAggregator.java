@@ -57,6 +57,8 @@ public class EntailGraphFactoryAggregator {
 	static final String relAddress = "news_gen8_aida.json";
 	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_f";
 	static final int numThreads = 15;
+	
+	static final boolean writePMIorCount=false;//false:count, true: PMI
 
 	static int allNonZero = 0;
 	static int allEdgeCounts = 0;

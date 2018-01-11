@@ -31,10 +31,11 @@ public class TypePropagateMN {
 	ArrayList<PGraph> pGraphs;
 	// public final static float edgeThreshold = -1;// edgeThreshold
 	static int numThreads = 60;
-	static int numIters = 5;
+	static int numIters = 4;
 	public static double lmbda = .001;// lmbda for L1 regularization
+	public static double lmbda2 = .2;
 	public static double smoothParam = 5.0;
-	static final String tPropSuffix = "_tProp_i5_predBased.txt";
+	static final String tPropSuffix = "_tProp_i4_predBased_reg.txt";
 	static final boolean predBasedPropagation = true;
 	static final boolean sizeBasedPropagation = false;
 
@@ -159,9 +160,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			// if (gc == 100) {
-			// break;
-			// }
+//			if (gc == 100) {
+//				break;
+//			}
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -210,7 +211,7 @@ public class TypePropagateMN {
 
 	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
 	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
-	static double getCompatibleScorePredBased(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r, String rawPred_rp,
+	static double getCompatibleScorePredBased_p(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r, String rawPred_rp,
 			String pred_r, String pred_rp, String pred_p, String pred_q, String t1_plain, String t2_plain,
 			boolean aligned, String tp1_plain, String tp2_plain) {
 
@@ -350,6 +351,123 @@ public class TypePropagateMN {
 		// + (score1 * score2));
 
 		// return score1 * score2;
+		return score1;
+
+	}
+
+	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
+	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
+	static double getCompatibleScorePredBased(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r, String rawPred_rp,
+			String pred_r, String pred_rp, String pred_p, String pred_q, String t1_plain, String t2_plain,
+			boolean aligned, String tp1_plain, String tp2_plain) {
+
+		if (t1_plain.equals(tp1_plain) && t2_plain.equals(tp2_plain)) {
+			return 1;
+		} else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
+			return 0;
+		}
+
+		// outgoing
+		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
+		String key1p = rawPred_r + "#" + tp1_plain + "#" + tp2_plain + "#" + t1_plain + "#" + t2_plain + "#";// because
+																												// it's
+																												// symmetric
+																												// for
+																												// g1,//
+																												// g2 or
+																												// g2,
+																												// g1!
+
+		double score1;
+		if (predTypeCompatibility.containsKey(key1)) {
+			score1 = predTypeCompatibility.get(key1);
+			// System.out.println("hash key1: " + key1 + " " + score1);
+		} else {
+
+			// what are the outgoing edges of pred_r in pgraph?
+			int r = pgraph.pred2node.get(pred_r).idx;
+			Set<DefaultWeightedEdge> outE_r = pgraph.g0.outgoingEdgesOf(r);
+
+			// What are the outgoing edges of pred_p in pgraph_neigh.
+			int p = pgraph_neigh.pred2node.get(pred_p).idx;
+			Set<DefaultWeightedEdge> outE_p = pgraph_neigh.g0.outgoingEdgesOf(p);
+
+			String[] ss_r = pred_r.split("#");
+			String[] ss_p = pred_p.split("#");
+
+			double sum = 0;
+
+			for (DefaultWeightedEdge e : outE_r) {
+				double w1 = pgraph.g0.getEdgeWeight(e);
+				int idx = pgraph.g0.getEdgeTarget(e);
+				String id = pgraph.nodes.get(idx).id;
+				String[] ss = id.split("#");
+
+				// is r aligned with this guy? (one of its many outgoing edges)
+				boolean a = ss_r[1].equals(ss[1]);
+
+				String cand;
+				if (a) {
+					cand = ss[0] + "#" + ss_p[1] + "#" + ss_p[2];
+				} else {
+					cand = ss[0] + "#" + ss_p[2] + "#" + ss_p[1];
+				}
+
+				// if it doesn't have the cand, it wouldn't appear in the sum
+				if (pgraph_neigh.pred2node.containsKey(cand)) {
+					double w2 = 0;
+					int qIdx2 = pgraph_neigh.pred2node.get(cand).idx;
+					if (pgraph_neigh.g0.containsEdge(p, qIdx2)) {
+						DefaultWeightedEdge ee = pgraph_neigh.g0.getEdge(p, qIdx2);
+						w2 = pgraph_neigh.g0.getEdgeWeight(ee);
+					}
+					sum += Math.pow(w1 - w2, 2);
+//					System.out.println("adding: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1+" "+w2);
+				}
+
+			}
+
+			for (DefaultWeightedEdge e : outE_p) {
+
+				double w1 = pgraph.g0.getEdgeWeight(e);
+				int idx = pgraph_neigh.g0.getEdgeTarget(e);
+				String id = pgraph_neigh.nodes.get(idx).id;
+				String[] ss = id.split("#");
+
+				// is p aligned with this guy? (one of its many outgoing edges)
+				boolean a = ss_p[1].equals(ss[1]);
+
+				String cand;
+				if (a) {
+					cand = ss[0] + "#" + ss_r[1] + "#" + ss_r[2];
+				} else {
+					cand = ss[0] + "#" + ss_r[2] + "#" + ss_r[1];
+				}
+
+				// if it doesn't have the cand, it wouldn't appear in the sum
+				if (pgraph.pred2node.containsKey(cand)) {
+					// double w2 = 0;
+					int qIdx2 = pgraph.pred2node.get(cand).idx;
+					if (!pgraph.g0.containsEdge(r, qIdx2)) {
+						// DefaultWeightedEdge ee = pgraph.g0.getEdge(r,qIdx2);
+						// w2 = pgraph_neigh.g0.getEdgeWeight(ee);
+//						System.out.println("adding2: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1);
+						sum += Math.pow(w1, 2);
+					}
+				}
+
+			}
+
+			score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
+			score1 = Math.max(score1, 0);
+
+			predTypeCompatibility.put(key1, score1);
+			predTypeCompatibility.put(key1p, score1);
+
+			System.out.println("key1: " + key1 + " " + score1);
+			System.out.println("p key1: " + key1p + " " + score1);
+		}
+
 		return score1;
 
 	}
