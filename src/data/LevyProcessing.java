@@ -23,7 +23,7 @@ import entailment.entityLinking.DistrTyping;
 import entailment.vector.EntailGraphFactoryAggregator;
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 
-public class Processing {
+public class LevyProcessing {
 
 	static String root = "data/ent/";
 	static Set<String> allPrevInstances;// instances in the levy set. Useful to
@@ -518,14 +518,14 @@ public class Processing {
 		// System.out.println("lineId: "+fixIdx+" "+typeIdx);
 
 	}
-
+	
 	static void extractRelationsCCG(String fname) throws IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(root + fname + "_s.txt"));
 		BufferedReader brDelim = new BufferedReader(new FileReader(root + fname + "_s2.txt"));
 		BufferedReader brOrig = new BufferedReader(new FileReader(root + fname + ".txt"));
 		
-
+		
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
 		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
@@ -548,8 +548,8 @@ public class Processing {
 			String[] rel2Args = new String[] { ss2[1].split(",")[0].trim().toLowerCase(),
 					ss2[1].split(",")[2].trim().toLowerCase() };
 			try {
-				rel1 = prExt.extractPredArgsStrsForceFinding(ss[0] + ".", rel1Args[0], rel1Args[1]);
-				rel2 = prExt.extractPredArgsStrsForceFinding(ss[1] + ".", rel2Args[0], rel2Args[1]);
+				rel1 = prExt.extractPredArgsStrsForceFinding(ss[0] + ".", rel1Args[0], rel1Args[1],true);
+				rel2 = prExt.extractPredArgsStrsForceFinding(ss[1] + ".", rel2Args[0], rel2Args[1],true);
 			} catch (ArgumentValidationException | InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -953,7 +953,8 @@ public class Processing {
 		// split_preds();
 		// split_chunks_unordered();
 
-		convertDSToRelsCCG();
+//		convertDSToRelsCCG();
+		
 		// formOIEDSAll();
 		// testTime1();
 		// splitBasedOnPrevDS(root + "all_new.txt");

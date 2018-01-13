@@ -33,9 +33,9 @@ public class TypePropagateMN {
 	static int numThreads = 60;
 	static int numIters = 4;
 	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda2 = .2;
+	public static double lmbda2 = 1;
 	public static double smoothParam = 5.0;
-	static final String tPropSuffix = "_tProp_i4_predBased_reg.txt";
+	static final String tPropSuffix = "_tProp_i4_predBased_reg_1.0.txt";
 	static final boolean predBasedPropagation = true;
 	static final boolean sizeBasedPropagation = false;
 

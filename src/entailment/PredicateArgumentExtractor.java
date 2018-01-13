@@ -127,10 +127,10 @@ public class PredicateArgumentExtractor implements Runnable {
 		// }
 	}
 
-	public String extractPredArgsStrsForceFinding(String text, String arg1, String arg2)
+	public String extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean debug)
 			throws ArgumentValidationException, IOException, InterruptedException {
 		// parser.nbestParses = 10;
-		String[] ret = extractPredArgsStrsForceFinding(text, arg1, arg2, true);
+		String[] ret = extractPredArgsStrsForceFinding(text, arg1, arg2, true, debug);
 		// parser.nbestParses = 1;
 		// if (ret[1].equals("false")) {
 		// System.out.println("bad VP "+ text);
@@ -151,33 +151,50 @@ public class PredicateArgumentExtractor implements Runnable {
 	// Do your best to find a good one. That means, rel, arg1, arg2 be different
 	// indexes
 	// dsStr,argMatch?
-	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP)
+	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP, boolean debug)
 			throws ArgumentValidationException, IOException, InterruptedException {
 		// System.out.println(text);
 		String ret = "";
 		int syntaxIdx = 0;
 		boolean partlyMatched = false;
+		
+		
+		text = Util.preprocess(text);
+		String sentence = text;
+		String mySent = "{\"sentence\" : \"" + sentence + "\"}";
+		List<List<LexicalGraph>> allGraphs = parser.processText(mySent);
+		if (allGraphs.size()==0) {
+			return new String[] { ret, "false" };
+		}
 
-		while (true) {
-			String[] predArgsStrs = extractPredArgsStrs(text, syntaxIdx, acceptNP, true);
+		while (syntaxIdx<allGraphs.size()) {
+			String[] predArgsStrs = extractPredArgsStrs(text, syntaxIdx, acceptNP, true, allGraphs);
 			String[] dsStrs = predArgsStrs[2].split("\n");// This might have
 															// multiple
 															// candidates
 															// itself. Let's see
 															// if any of those
 															// are good!
-			System.out.println("cont: " + predArgsStrs[3]);
+			if (debug) {
+				System.out.println("cont: " + predArgsStrs[3]);
+			}
 			if (dsStrs.length == 0) {
+				syntaxIdx++;
 				continue;
 			}
 			boolean argsMatch = false;
 			String thisDSStr = "";
-			System.out.println(text);
-			System.out.println("dsStrs: " + predArgsStrs[2]);
+			if (debug) {
+				System.out.println(text);
+				System.out.println("dsStrs: " + predArgsStrs[2]);
+			}
+			
 			arg1 = Util.getLemma(arg1);
 			arg2 = Util.getLemma(arg2);
 			for (String cand : dsStrs) {
-				System.out.println("cand: " + cand);
+				if (debug) {
+					System.out.println("cand: " + cand);
+				}
 				if (cand.equals("")) {
 					continue;
 				}
@@ -194,16 +211,22 @@ public class PredicateArgumentExtractor implements Runnable {
 								|| (arg1.contains(thisArgs[1]) && arg2.contains(thisArgs[0])));
 
 				if (thisMatch) {
-					System.out.println("matched for: " + cand + " " + arg1 + " " + arg2);
+					if (debug) {
+						System.out.println("matched for: " + cand + " " + arg1 + " " + arg2);
+					}
 				} else {
-					System.out.println("nope: " + cand + " " + arg1 + " " + arg2);
+					if (debug) {
+						System.out.println("nope: " + cand + " " + arg1 + " " + arg2);
+					}
 				}
 
 				if (thisDSStr.equals("")) {
 					thisDSStr = cand;
 					argsMatch = thisMatch;
 				} else {
-					System.out.println("matched for second time");
+					if (debug) {
+						System.out.println("matched for second time");
+					}
 					if (argsMatch == thisMatch) {// for both cases, it matches
 													// or not!
 						// if (cand.length() > thisDSStr.length()) {
@@ -253,14 +276,16 @@ public class PredicateArgumentExtractor implements Runnable {
 			syntaxIdx++;
 		}
 		if (!acceptNP) {
-			System.out.println("not matched: " + text);
+			if (debug) {
+				System.out.println("not matched: " + text);
+			}
 		}
 		return new String[] { ret, "false" };
 	}
 
 	public String[] extractPredArgsStrs(String text)
 			throws ArgumentValidationException, IOException, InterruptedException {
-		return extractPredArgsStrs(text, 0, false, false);
+		return extractPredArgsStrs(text, 0, false, false, null);
 	}
 
 	String[] getLeftRightPred(Edge<LexicalItem> edge) {
@@ -283,7 +308,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	// syntaxIdx means what syntactic parse we're interested in. Default is 0
 	// (the best one), but sometimes we wanna look at others too!
-	public String[] extractPredArgsStrs(String text, int syntaxIdx, boolean acceptNP, boolean acceptGG)
+	public String[] extractPredArgsStrs(String text, int syntaxIdx, boolean acceptNP, boolean acceptGG, List<List<LexicalGraph>> allGraphs)
 			throws ArgumentValidationException, IOException, InterruptedException {
 		String mainStr = "";
 		String mainStrOnlyNEs = "";
@@ -293,14 +318,16 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		// Gparser does the split itself
 		// System.out.println("before: " + text);
-		text = Util.preprocess(text);
-		// System.out.println("text: " + text);
-
-		String sentence = text;
-		String mySent = "{\"sentence\" : \"" + sentence + "\"}";
+		
+		
 
 		// // long t0 = System.currentTimeMillis();
-		List<List<LexicalGraph>> allGraphs = parser.processText(mySent);
+		if (allGraphs==null) {
+			text = Util.preprocess(text);
+			String sentence = text;
+			String mySent = "{\"sentence\" : \"" + sentence + "\"}";
+			allGraphs = parser.processText(mySent);
+		}
 		// System.out.println("gparse time: "
 		// + (System.currentTimeMillis() - t0));
 
@@ -736,9 +763,9 @@ public class PredicateArgumentExtractor implements Runnable {
 			// false);
 			if (shouldAdd) {
 				relInfos.add(relInfo0);
-				System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
-				System.out.println(edge2.getMediator().getLemma() + " " + edge2.getMediator().getPos() + " "
-						+ lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+//				System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
+//				System.out.println(edge2.getMediator().getLemma() + " " + edge2.getMediator().getPos() + " "
+//						+ lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
 			} else {
 				// System.out.println("not adding: "+relInfo0.mainStr);
 			}
@@ -1121,8 +1148,9 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
-		String s = "Barack Obama is not against all wars.";
-		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true);
+//		String s = "Barack Obama is not against all wars.";
+		String s = "the brakes to get in such condition.";
+		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);
 	}

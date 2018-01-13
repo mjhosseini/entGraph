@@ -26,9 +26,9 @@ public class PGraph {
 	public final static boolean checkFrgVio = true;
 	public final static boolean shouldWrite = true;
 	public static boolean emb = false;
-	public static boolean weightEdgeSimilarities = true;
-	public static boolean formBinaryGraph = false;
-	public static boolean transitive = false;
+	public static boolean weightEdgeSimilarities = false;
+	public static boolean formBinaryGraph = true;
+	public static boolean transitive = true;
 	public final static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
 	public static String suffix = "_sim.txt";
@@ -729,7 +729,7 @@ public class PGraph {
 			}
 
 			int lastDotIdx = pgraph.fname.lastIndexOf('.');
-			String postFix = "_graphsPlain.txt";// TODO: be careful
+			String postFix = "_graphs.txt";// TODO: be careful
 
 			if (!checkFrgVio) {
 				postFix = "_graphsNoFrg2.txt";
