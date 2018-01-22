@@ -33,9 +33,9 @@ public class TypePropagateMN {
 	static int numThreads = 60;
 	static int numIters = 4;
 	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda2 = 1;
+	public static double lmbda2 = 10;
 	public static double smoothParam = 5.0;
-	static final String tPropSuffix = "_tProp_i4_predBased_reg_1.0.txt";
+	static final String tPropSuffix = "_tProp_i4_predBased_reg_10.txt";
 	static final boolean predBasedPropagation = true;
 	static final boolean sizeBasedPropagation = false;
 
@@ -467,9 +467,7 @@ public class TypePropagateMN {
 			System.out.println("key1: " + key1 + " " + score1);
 			System.out.println("p key1: " + key1p + " " + score1);
 		}
-
 		return score1;
-
 	}
 
 	void readCompatibles() throws FileNotFoundException {

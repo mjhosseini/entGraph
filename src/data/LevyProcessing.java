@@ -591,7 +591,7 @@ public class LevyProcessing {
 					rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
 				}
 			}
-
+			
 			if (!rel2.equals("")) {
 				String[] rel2ss = rel2.split(" ");
 				String[] lemmas = Util.getPredicateLemma(rel2ss[0], true);

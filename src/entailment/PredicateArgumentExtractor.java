@@ -163,11 +163,14 @@ public class PredicateArgumentExtractor implements Runnable {
 		String sentence = text;
 		String mySent = "{\"sentence\" : \"" + sentence + "\"}";
 		List<List<LexicalGraph>> allGraphs = parser.processText(mySent);
+		
 		if (allGraphs.size()==0) {
 			return new String[] { ret, "false" };
 		}
+		
+//		System.out.println("num syn parses: "+allGraphs.get(0).size());
 
-		while (syntaxIdx<allGraphs.size()) {
+		while (syntaxIdx<allGraphs.get(0).size()) {
 			String[] predArgsStrs = extractPredArgsStrs(text, syntaxIdx, acceptNP, true, allGraphs);
 			String[] dsStrs = predArgsStrs[2].split("\n");// This might have
 															// multiple
@@ -189,8 +192,8 @@ public class PredicateArgumentExtractor implements Runnable {
 				System.out.println("dsStrs: " + predArgsStrs[2]);
 			}
 			
-			arg1 = Util.getLemma(arg1);
-			arg2 = Util.getLemma(arg2);
+			arg1 = Util.getLemma(arg1).replace("_", " ");//ADDED 14 Jan 18
+			arg2 = Util.getLemma(arg2).replace("_", " ");
 			for (String cand : dsStrs) {
 				if (debug) {
 					System.out.println("cand: " + cand);
@@ -212,11 +215,11 @@ public class PredicateArgumentExtractor implements Runnable {
 
 				if (thisMatch) {
 					if (debug) {
-						System.out.println("matched for: " + cand + " " + arg1 + " " + arg2);
+						System.out.println("matched for: " + cand + " " + arg1 + " " + arg2+" "+thisArgs[0]);
 					}
 				} else {
 					if (debug) {
-						System.out.println("nope: " + cand + " " + arg1 + " " + arg2);
+						System.out.println("nope: " + cand + " " + arg1 + " " + arg2+" "+thisArgs[0]);
 					}
 				}
 
@@ -1149,7 +1152,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
 //		String s = "Barack Obama is not against all wars.";
-		String s = "the brakes to get in such condition.";
+		String s = "people is abundantly clear that thing";
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);

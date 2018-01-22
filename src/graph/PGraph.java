@@ -25,21 +25,21 @@ public class PGraph {
 
 	public final static boolean checkFrgVio = true;
 	public final static boolean shouldWrite = true;
-	public static boolean emb = false;
-	public static boolean weightEdgeSimilarities = false;
-	public static boolean formBinaryGraph = true;
+	public static boolean emb = true;
+	public static boolean weightEdgeSimilarities = true;
+	public static boolean formBinaryGraph = false;
 	public static boolean transitive = true;
 	public final static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
 	public static String suffix = "_sim.txt";
-	static final String embSuffix = "_embsims22.txt";
-	static final String fpath = "../../python/gfiles/ent/ccg6.sim";
+	static final String embSuffix = "_embsims25.txt";
+	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
 	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
 	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
 
 	// static final String root =
 	// "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
-	static final int maxEmbIter = 5;
+	static final int maxEmbIter = 1;
 
 	public static float edgeThreshold = -1;// isn't worth it! .05 reduces
 	// edges by half, but not worth it
@@ -708,8 +708,8 @@ public class PGraph {
 //			if (fname.startsWith("location#location_sim.txt")) {
 //				seenLoc = true;
 //			}
-//			if (!seenLoc) {
-//				continue;
+//			if (seenLoc) {
+//				break;
 //			}
 
 			if (!fname.contains(PGraph.suffix)) {

@@ -132,9 +132,9 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
-			// if (lineNumbers==100000){
-			// break;
-			// }
+//			if (lineNumbers == 100000) {
+//				break;
+//			}
 			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
 				continue;
 			}
@@ -142,7 +142,30 @@ public class EntailGraphFactory implements Runnable {
 				int lineId = -1;
 				ArrayList<String> relStrs = new ArrayList<>();
 				ArrayList<Integer> counts = new ArrayList<>();
-				if (!EntailGraphFactoryAggregator.rawExtractions) {
+				String newsLine = null;
+				
+				if (EntailGraphFactoryAggregator.GBooksCCG) {
+					lineId++;
+					line = line.split("$$")[0];
+					String[] ss = line.split("\t");
+					int count = Integer.parseInt(ss[3]);
+					newsLine = ss[0]+" "+ss[2]+" "+ss[1]+".";
+					String rel = ss[4];
+					ss = rel.split(" ");
+					String relStr = "("+ss[0]+"::"+ss[1]+"::"+ss[2]+"::"+ss[4]+"::0::"+ss[3]+")";
+					relStrs.add(relStr);
+					counts.add(count);
+					
+					if (EntailGraphFactoryAggregator.backupToStanNER) {
+						lineIdSeen.set(lineId, lineIdSeen.get(lineId) + 1);
+						if (lineIdSeen.get(lineId) == EntailGraphFactoryAggregator.numThreads) {
+							lineIdToStanTypes.remove(lineId);
+						}
+					}
+					
+					
+				}
+				else if (!EntailGraphFactoryAggregator.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 					lineId = jObj.get("lineId").getAsInt();
 
@@ -153,8 +176,8 @@ public class EntailGraphFactory implements Runnable {
 						}
 					}
 
-					String mainLine = jObj.get("s").getAsString();
-					typedOp.println("line: " + mainLine);
+					newsLine = jObj.get("s").getAsString();
+					typedOp.println("line: " + newsLine);
 					JsonArray jar = jObj.get("rels").getAsJsonArray();
 					for (int i = 0; i < jar.size(); i++) {
 						JsonObject relObj = jar.get(i).getAsJsonObject();
@@ -172,7 +195,7 @@ public class EntailGraphFactory implements Runnable {
 				// let's see if we have NER ed the line, otherwise, do it
 				if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.figerTypes && lineIdSeen.get(lineId) == 1) {
 					// System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
-					Map<String, String> tokenToType = Util.getSimpleNERTypeSent(line);
+					Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
 					lineIdToStanTypes.put(lineId, tokenToType);
 				}
 

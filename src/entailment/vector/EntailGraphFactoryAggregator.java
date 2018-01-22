@@ -37,7 +37,8 @@ public class EntailGraphFactoryAggregator {
 	// arg
 
 	public static boolean onlyDSPreds = false;
-	public static boolean rawExtractions = false;// gbooks
+	public static boolean rawExtractions = false;// gbooks original
+	public static boolean GBooksCCG = true;
 	public static boolean useTimeEx = false;
 	public static boolean isCCG = true;
 	public static boolean isTyped = true;
@@ -47,15 +48,28 @@ public class EntailGraphFactoryAggregator {
 														// false.
 
 	public static final boolean lemmatizePredicate = true;
-	public static final boolean backupToStanNER = false;//You can make this true, but it will take some good time to run!
+	public static final boolean backupToStanNER = true;//You can make this true, but it will take some good time to run!
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static final int minArgPairForPred = 3;
-	static final int minPredForArgPair = 3;// min num of unique predicates for
+	static final int minArgPairForPred = 30;
+	static final int minPredForArgPair = 30;// min num of unique predicates for
 											// argpair
 	static final int minPredForArg = -1;// min num of unique predicates for 
 
-	static final String relAddress = "news_gen8_aida.json";
-	static final String simsFolder = "typedEntGrDir_aida_figer_3_3_f";
+	static final String relAddress;
+	static final String simsFolder;
+	
+	static {
+		if (GBooksCCG) {
+			relAddress = "gbooks_dir/gbooks_ccg.txt";
+			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
+		}
+		else {
+			relAddress = "news_gen8_aida.json";
+			simsFolder = "typedEntGrDir_aida_figer_3_3_f";
+
+		}
+	}
+	
 	static final int numThreads = 15;
 	
 	static final boolean writePMIorCount=false;//false:count, true: PMI
