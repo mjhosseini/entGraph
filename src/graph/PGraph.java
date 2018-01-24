@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-public class PGraph {
+public class PGraph implements Comparable<PGraph>{
 
 	public final static boolean checkFrgVio = true;
 	public final static boolean shouldWrite = true;
@@ -44,6 +44,7 @@ public class PGraph {
 	// static final String root =
 	// "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
 	static final int maxEmbIter = 1;
+	int sortIdx = -1;//the index of the graph after sorting all the graphs based on their sizes. 0 is the largets.
 
 	public static float edgeThreshold = 0.01f;// isn't worth it! .05 reduces
 	// edges by half, but not worth it
@@ -141,7 +142,7 @@ public class PGraph {
 		} catch (Exception e) {
 		}
 		List<String> predList = allPredsList.get(allPredsList.size() - 1);
-		op.println(this.name + " " + " label propagation num preds: " + predList.size());
+		op.println("types: " + this.name + ", " + " label propagation num preds: " + predList.size());
 		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> lastG = gs.get(gs.size() - 1);
 		for (int i = 0; i < predList.size(); i++) {
 			op.println("predicate: " + predList.get(i));
@@ -1061,5 +1062,10 @@ public class PGraph {
 		PriorityQueue<Integer> queue = new PriorityQueue<>(Collections.reverseOrder());
 		return true;
 
+	}
+
+	@Override
+	public int compareTo(PGraph o) {
+		return new Integer(this.nodes.size()).compareTo(o.nodes.size());
 	}
 }

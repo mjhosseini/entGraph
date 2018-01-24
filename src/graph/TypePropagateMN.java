@@ -27,6 +27,7 @@ import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import edu.stanford.nlp.util.CollectionUtils;
+import entailment.entityLinking.SimpleSpot;
 import sun.net.www.content.text.plain;
 
 public class TypePropagateMN {
@@ -34,13 +35,13 @@ public class TypePropagateMN {
 	ArrayList<PGraph> pGraphs;
 	// public final static float edgeThreshold = -1;// edgeThreshold
 	static int numThreads = 60;
-	static int numIters = 3;
+	static int numIters = 4;
 	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda2 = 0.0;
+	public static double lmbda2 = 1.0;
 	public static double tau = .3;
 	public static double smoothParam = 5.0;
-//	static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
-	static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_0_test.txt";
+	// static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
+	static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0_.3.txt";
 	static final boolean predBasedPropagation = true;
 	static final boolean sizeBasedPropagation = false;
 
@@ -132,19 +133,21 @@ public class TypePropagateMN {
 		long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
 		System.out.println("usedMb: " + usedMb);
 	}
-	
+
 	Set<String> deletableFiles;
-	//If we have something in test, but we don't even have a graph for it, just create fake empty graph (and then delete it!)
+
+	// If we have something in test, but we don't even have a graph for it, just
+	// create fake empty graph (and then delete it!)
 	void createEmptySimFiles(String root) {
 		deletableFiles = new HashSet<>();
-		for (String types: PGraph.types2TargetRels.keySet()) {
-			String types2 = types.split("#")[1]+"#"+types.split("#")[0];
-//			System.out.println("address: "+root+types+"_sim.txt");
-			File f = new File(root+types+"_sim.txt");
-			File f2 = new File(root+types2+"_sim.txt");
-			
+		for (String types : PGraph.types2TargetRels.keySet()) {
+			String types2 = types.split("#")[1] + "#" + types.split("#")[0];
+			// System.out.println("address: "+root+types+"_sim.txt");
+			File f = new File(root + types + "_sim.txt");
+			File f2 = new File(root + types2 + "_sim.txt");
+
 			if (!f.exists() && !f2.exists()) {
-				System.out.println("f not exists for: "+ types+" "+f.getName());
+				System.out.println("f not exists for: " + types + " " + f.getName());
 				try {
 					new PrintStream(new File(f.getPath()));
 					deletableFiles.add(types);
@@ -152,24 +155,25 @@ public class TypePropagateMN {
 					e.printStackTrace();
 				}
 			}
-			
-//			if(f.exists() && f.length()==0) {
-//				f.delete();
-//			}
-//			if (f2.exists() && f2.length()==0) {
-//				f2.delete();
-//			}
+
+			// if(f.exists() && f.length()==0) {
+			// f.delete();
+			// }
+			// if (f2.exists() && f2.length()==0) {
+			// f2.delete();
+			// }
 		}
 	}
-	
+
 	void readPGraphs(String root) {
 		pGraphs = new ArrayList<>();
 		graphToNumEdges = new HashMap<String, Integer>();
-		
+
 		createEmptySimFiles(root);
 
 		File folder = new File(root);
 		File[] files = folder.listFiles();
+
 		Arrays.sort(files);
 
 		rawPred2PGraphs = new HashMap<>();
@@ -195,7 +199,7 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			if (gc == 50) {
+			if (gc == 100) {
 				break;
 			}
 
@@ -207,7 +211,7 @@ public class TypePropagateMN {
 			pgraph.g0 = pgraph.formWeightedGraph(pgraph.sortedEdges, pgraph.nodes.size());
 			if (deletableFiles.contains(pgraph.types)) {
 				f.delete();
-//				System.out.println("shall we delete?: "+f.getAbsolutePath());
+				// System.out.println("shall we delete?: "+f.getAbsolutePath());
 			}
 			pgraph.clean();
 
@@ -232,9 +236,12 @@ public class TypePropagateMN {
 			System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 			gc++;
 		}
-		
-		
-		
+
+		Collections.sort(pGraphs, Collections.reverseOrder());
+		for (int i = 0; i < pGraphs.size(); i++) {
+			pGraphs.get(i).sortIdx = i;
+		}
+
 	}
 
 	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
@@ -464,7 +471,8 @@ public class TypePropagateMN {
 						w2 = pgraph_neigh.g0.getEdgeWeight(ee);
 					}
 					sum += Math.pow(w1 - w2, 2);
-//					System.out.println("adding: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1+" "+w2);
+					// System.out.println("adding: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1+"
+					// "+w2);
 				}
 
 			}
@@ -493,17 +501,16 @@ public class TypePropagateMN {
 					if (!pgraph.g0.containsEdge(r, qIdx2)) {
 						// DefaultWeightedEdge ee = pgraph.g0.getEdge(r,qIdx2);
 						// w2 = pgraph_neigh.g0.getEdgeWeight(ee);
-//						System.out.println("adding2: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1);
+						// System.out.println("adding2: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1);
 						sum += Math.pow(w1, 2);
 					}
 				}
 
 			}
 
-			if (TypePropagateMN.lmbda2==0) {
+			if (TypePropagateMN.lmbda2 == 0) {
 				score1 = 0;
-			}
-			else {
+			} else {
 				score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
 				score1 = Math.max(score1, 0);
 			}
@@ -527,7 +534,7 @@ public class TypePropagateMN {
 
 			String[] ss = line.split(" ");
 			double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) + smoothParam);
-//			System.out.println("compatibles: " + ss[0] + " " + prob);
+			// System.out.println("compatibles: " + ss[0] + " " + prob);
 			compatibles.put(ss[0], prob);
 		}
 		sc.close();
@@ -539,7 +546,7 @@ public class TypePropagateMN {
 		for (int iter = 0; iter < numIters; iter++) {
 			objChange = 0;
 			predTypeCompatibility = Collections.synchronizedMap(new HashMap<>());
-			System.err.println("iter "+iter);
+			System.err.println("iter " + iter);
 			for (PGraph pgraph : pGraphs) {
 				// initialize gMN (next g) based on g0 (cur g)
 				int N = pgraph.g0.vertexSet().size();
@@ -562,14 +569,14 @@ public class TypePropagateMN {
 				// }
 			}
 
-			//propagate between graphs
+			// propagate between graphs
 			try {
 				propagateAll(0);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-			
-			//propagate within graphs
+
+			// propagate within graphs
 			try {
 				propagateAll(1);
 			} catch (InterruptedException e1) {
@@ -645,10 +652,7 @@ public class TypePropagateMN {
 
 	public static void main(String[] args) {
 		String root = PGraph.root;
-		
-		int cores = Runtime.getRuntime().availableProcessors();
-		System.out.println("num free cores: "+cores);
-		
+
 		TypePropagateMN tpmn = new TypePropagateMN(root);
 	}
 
