@@ -25,23 +25,27 @@ public class PGraph {
 
 	public final static boolean checkFrgVio = true;
 	public final static boolean shouldWrite = true;
-	public static boolean emb = true;
+	public static boolean emb = false;
 	public static boolean weightEdgeSimilarities = true;
 	public static boolean formBinaryGraph = false;
 	public static boolean transitive = true;
 	public final static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
+	public final static boolean addTargetRels = true;
+
 	public static String suffix = "_sim.txt";
 	static final String embSuffix = "_embsims25.txt";
 	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
-	static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";
+	// static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";//
+	// TODO: update this
+	static final String allExamplesPath = "../../python/gfiles/ent/all_new_comb_rels.txt";// TODO: update this
 	static final String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
 
 	// static final String root =
 	// "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
 	static final int maxEmbIter = 1;
 
-	public static float edgeThreshold = -1;// isn't worth it! .05 reduces
+	public static float edgeThreshold = 0.01f;// isn't worth it! .05 reduces
 	// edges by half, but not worth it
 
 	static int allEdges = 0;
@@ -56,12 +60,13 @@ public class PGraph {
 	public static Map<String, List<PredSim>> rels2Sims;
 	public static Map<String, List<PredSim>> invRels2Sims;
 	public static Set<String> targetRels;
+	public static Map<String, Set<String>> types2TargetRels;
 	ArrayList<Edge> sortedEdges;
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
-	Map<String,Double> edgeToMNWeight;
+	Map<String, Double> edgeToMNWeight;
 
-//	static List<SimpleScore> scores = new ArrayList<>();
+	// static List<SimpleScore> scores = new ArrayList<>();
 
 	public PGraph(String fname) {
 		this.fname = fname;
@@ -71,6 +76,7 @@ public class PGraph {
 
 		try {
 			buildGraphFromFile(fname);
+			System.out.println("the name: "+this.name);
 			if (this.name == null) {
 				return;
 			}
@@ -78,9 +84,11 @@ public class PGraph {
 				System.out.println(i + ": " + nodes.get(i).id);
 			}
 		} catch (IOException e) {
+			System.err.println("exception before sorted edges");
 			e.printStackTrace();
 			return;
 		}
+//		System.out.println("here sorted edges1: "+sortedEdges);
 		this.setSortedEdges();
 		// Now, build the graph using embeddings
 
@@ -229,9 +237,9 @@ public class PGraph {
 
 	/*
 	 * 
-	 * 2) for p#q##t1#t2#a, in a graph for t1 and t2, we were checking both
-	 * p#t1#t2 and q#t1#t2 (if aligned), and p#t2#t1 and q#t2#t1. We're not
-	 * doing this anymore and just checking the correct one.
+	 * 2) for p#q##t1#t2#a, in a graph for t1 and t2, we were checking both p#t1#t2
+	 * and q#t1#t2 (if aligned), and p#t2#t1 and q#t2#t1. We're not doing this
+	 * anymore and just checking the correct one.
 	 * 
 	 */
 	// prevIds will change (new ids might get added)
@@ -526,6 +534,7 @@ public class PGraph {
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> formWeightedGraph(List<Edge> sortedEdges, int N) {
 		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0 = new DefaultDirectedWeightedGraph<>(
 				DefaultWeightedEdge.class);
+//		System.out.println("sorted edges: "+sortedEdges);
 		for (int i = 0; i < N; i++) {
 			g0.addVertex(i);
 			DefaultWeightedEdge ee = g0.addEdge(i, i);
@@ -542,14 +551,14 @@ public class PGraph {
 		}
 		return g0;
 	}
-	
+
 	public void clean() {
-		for (Node n:nodes) {
+		for (Node n : nodes) {
 			n.clean();
 		}
-//		sortedEdges = null;
+		// sortedEdges = null;
 	}
-	
+
 	float getW(int i, int j) {
 		if (i == j) {
 			return 1;
@@ -567,7 +576,8 @@ public class PGraph {
 
 		try {
 			read_rels_sim(fpath, true, true);
-			targetRels = readTargetRels(tfpath);
+			// targetRels = readTargetRels(tfpath);
+			setTargetRelsMap();
 		} catch (NumberFormatException | IOException e) {
 			e.printStackTrace();
 		}
@@ -577,6 +587,7 @@ public class PGraph {
 		BufferedReader br = new BufferedReader(new FileReader(fname));
 		String typeStr = fname.substring(fname.lastIndexOf('/') + 1, fname.lastIndexOf('_'));
 		this.types = typeStr;
+		this.name = this.types;
 		String line = "";
 		int lIdx = 0;
 		boolean first = true;
@@ -591,7 +602,7 @@ public class PGraph {
 			}
 			lIdx++;
 			if (first) {
-				this.name = line;
+//				this.name = line;
 				first = false;
 			} else if (line.equals("")) {
 				continue;
@@ -660,13 +671,49 @@ public class PGraph {
 						nNode = pred2node.get(nPred);
 						nIdx = nNode.idx;
 					}
-//					if (sim > .5) {
-//						PGraph.scores.add(new SimpleScore(node.id, nNode.id, sim));
-//					}
+					// if (sim > .5) {
+					// PGraph.scores.add(new SimpleScore(node.id, nNode.id, sim));
+					// }
 					node.addNeighbor(nIdx, sim);
 				}
 			}
 		}
+
+		// Now, add the target rels without any neighbors
+		if (addTargetRels) {
+			Set<String> targetPreds = null;
+			String[] ss = types.split("#");
+			String types2 = ss[1] + "#" + ss[0];
+			System.out.println("ss: "+ss[0]+" "+ss[1]);
+			if (types2TargetRels.containsKey(types)) {
+				targetPreds = types2TargetRels.get(types);
+			} else if (types2TargetRels.containsKey(types2)) {
+				targetPreds = types2TargetRels.get(types2);
+			}
+			if (targetPreds != null) {
+				for (String pred : targetPreds) {
+					if (!pred2node.containsKey(pred)) {
+						int nIdx = nodes.size();
+						System.out.println("adding new node: " + pred);
+						node = new Node(nIdx, pred);
+						this.insertNode(node);
+					}
+//					System.out.println("sss: "+ss[0]+" "+ss[1]+" "+(ss[0].equals(ss[1])));
+					if (ss[0].equals(ss[1])) {
+						String[] pss = pred.split("#");
+						String pred2 = pss[0] + "#" + pss[2] + "#" + pss[1];
+//						System.out.println("pred2: "+pred2);
+						if (!pred2node.containsKey(pred2)) {
+							int nIdx = nodes.size();
+							System.out.println("adding new node: " + pred2);
+							node = new Node(nIdx, pred2);
+							this.insertNode(node);
+						}
+					}
+				}
+			}
+		}
+
 		br.close();
 
 	}
@@ -702,15 +749,15 @@ public class PGraph {
 		File[] files = folder.listFiles();
 		Arrays.sort(files);
 
-//		boolean seenLoc = false;// TODO: be careful
+		// boolean seenLoc = false;// TODO: be careful
 		for (File f : files) {
 			String fname = f.getName();
-//			if (fname.startsWith("location#location_sim.txt")) {
-//				seenLoc = true;
-//			}
-//			if (seenLoc) {
-//				break;
-//			}
+			// if (fname.startsWith("location#location_sim.txt")) {
+			// seenLoc = true;
+			// }
+			// if (seenLoc) {
+			// break;
+			// }
 
 			if (!fname.contains(PGraph.suffix)) {
 				continue;
@@ -787,6 +834,73 @@ public class PGraph {
 			ret.add(line);
 		}
 		return ret;
+	}
+
+	// (cause.1,cause.2) pharyngitis::disease fever::disease =>
+	// {(cause.1,cause.2)#disease_1#disease_2,disease#disease}
+	private static String[] getTypedRel(String s) {
+		String[] ss = s.split(" ");
+		String t1 = ss[1].split("::")[1];
+		String t2 = ss[2].split("::")[1];
+
+		String types = t1 + "#" + t2;
+
+		if (t1.equals(t2)) {
+			t1 += "_1";
+			t2 += "_2";
+		}
+		return new String[] { ss[0] + "#" + t1 + "#" + t2, types };
+
+	}
+
+	static void setTargetRelsMap() throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(allExamplesPath));
+		types2TargetRels = new HashMap<>();
+		targetRels = new HashSet<>();
+		String line = null;
+
+		while ((line = br.readLine()) != null) {
+			String[] ss = line.split("\t");
+			if (!ss[0].equals("")) {
+				String[] rel1t = getTypedRel(ss[0]);
+				String types1 = rel1t[1];
+				String types1p = types1.split("#")[1] + types1.split("#")[0];
+				String rel1 = rel1t[0];
+				targetRels.add(rel1);
+
+				if (types2TargetRels.containsKey(types1)) {
+					types2TargetRels.get(types1).add(rel1);
+				} else if (types2TargetRels.containsKey(types1p)) {
+					types2TargetRels.get(types1p).add(rel1);
+				} else {
+					types2TargetRels.put(types1, new HashSet<>());
+					types2TargetRels.get(types1).add(rel1);
+				}
+			}
+			
+			if (!ss[1].equals("")) {
+				String[] rel2t = getTypedRel(ss[1]);
+
+				
+
+				String types2 = rel2t[1];
+				String types2p = types2.split("#")[1] + types2.split("#")[0];
+				String rel2 = rel2t[0];
+				targetRels.add(rel2);
+
+				if (types2TargetRels.containsKey(types2)) {
+					types2TargetRels.get(types2).add(rel2);
+				} else if (types2TargetRels.containsKey(types2p)) {
+					types2TargetRels.get(types2p).add(rel2);
+				} else {
+					types2TargetRels.put(types2, new HashSet<>());
+					types2TargetRels.get(types2).add(rel2);
+				}
+			}
+			
+			
+		}
+		br.close();
 	}
 
 	static void read_rels_sim(String fpath, boolean isCCG, boolean useSims) throws NumberFormatException, IOException {
@@ -873,12 +987,12 @@ public class PGraph {
 				invRels2Sims.get(qsim.pred).add(new PredSim(p, qsim.sim));
 			}
 
-			System.out.println("p: " + p);
-			System.out.println("sims: ");
-			for (PredSim qq : qs) {
-				System.out.print(qq.pred + " ");
-			}
-			System.out.println();
+//			System.out.println("p: " + p);
+//			System.out.println("sims: ");
+//			for (PredSim qq : qs) {
+//				System.out.print(qq.pred + " ");
+//			}
+//			System.out.println();
 		}
 
 		// make sure invRels2Sims has itself!
@@ -946,7 +1060,6 @@ public class PGraph {
 		}
 		PriorityQueue<Integer> queue = new PriorityQueue<>(Collections.reverseOrder());
 		return true;
-		
-		
+
 	}
 }

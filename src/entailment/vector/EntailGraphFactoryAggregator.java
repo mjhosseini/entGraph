@@ -38,41 +38,41 @@ public class EntailGraphFactoryAggregator {
 
 	public static boolean onlyDSPreds = false;
 	public static boolean rawExtractions = false;// gbooks original
-	public static boolean GBooksCCG = true;
+	public static boolean GBooksCCG = false;
 	public static boolean useTimeEx = false;
 	public static boolean isCCG = true;
 	public static boolean isTyped = true;
 	public static boolean figerTypes = true;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
-	public static boolean lemmatizePredWords = false;// if it has been already lemmatized in rel extraction. Must be
-														// false.
+	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
+	// if it has been already lemmatized in rel extraction. Must be false.
 
-	public static final boolean lemmatizePredicate = true;
-	public static final boolean backupToStanNER = true;//You can make this true, but it will take some good time to run!
+	public static final boolean normalizePredicate = true;
+	public static final boolean backupToStanNER = true;// You can make this true, but it will take some good time to
+														// run!
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static final int minArgPairForPred = 30;
-	static final int minPredForArgPair = 30;// min num of unique predicates for
+	static final int minArgPairForPred = 3;
+	static final int minPredForArgPair = 3;// min num of unique predicates for
 											// argpair
-	static final int minPredForArg = -1;// min num of unique predicates for 
+	static final int minPredForArg = -1;// min num of unique predicates for
 
 	static final String relAddress;
 	static final String simsFolder;
-	
+
 	static {
 		if (GBooksCCG) {
 			relAddress = "gbooks_dir/gbooks_ccg.txt";
 			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
-		}
-		else {
+		} else {
 			relAddress = "news_gen8_aida.json";
-			simsFolder = "typedEntGrDir_aida_figer_3_3_f";
+			simsFolder = "typedEntGrDir_aida_figer_3_3_g";
 
 		}
 	}
-	
-	static final int numThreads = 15;
-	
-	static final boolean writePMIorCount=false;//false:count, true: PMI
+
+	static final int numThreads = 1;
+
+	static final boolean writePMIorCount = false;// false:count, true: PMI
 
 	static int allNonZero = 0;
 	static int allEdgeCounts = 0;

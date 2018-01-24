@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,16 +35,286 @@ public class LabelPropagateMN implements Runnable {
 		this.threadIdx = threadIdx;
 	}
 
-	void propagateLabel() {
-		
+	private Set<Integer> getUnionIntersection(DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g,
+			Set<DefaultWeightedEdge> edges1, Set<DefaultWeightedEdge> edges2, boolean incoming1, boolean incoming2,
+			boolean intersect) {
+		Set<Integer> e1s = new HashSet<>();
+		Set<Integer> e2s = new HashSet<>();
+		for (DefaultWeightedEdge e : edges1) {
+			if (incoming1) {
+				e1s.add(g.getEdgeSource(e));
+			} else {
+				e1s.add(g.getEdgeTarget(e));
+			}
+		}
+
+		for (DefaultWeightedEdge e : edges2) {
+			if (incoming2) {
+				e2s.add(g.getEdgeSource(e));
+			} else {
+				e2s.add(g.getEdgeTarget(e));
+			}
+		}
+
+		if (intersect) {
+			return CollectionUtils.intersection(e1s, e2s);
+		} else {
+			return CollectionUtils.unionAsSet(e1s, e2s);
+		}
+
+	}
+
+	void addNumeratorDenom(PGraph pgraph, int i, int j, double numerator, double denom) {
+		if (numerator == 0 && denom == 0) {
+			// System.err.println("both numer and denom zero "+i+" "+j+" "+pgraph.name);
+			return;
+		}
+		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN = pgraph.gMN;
+		double w;
+		DefaultWeightedEdge ee;
+
+		if (numerator != 0) {
+			// synchronized (gMN) {
+
+			if (!gMN.containsEdge(i, j)) {
+				ee = gMN.addEdge(i, j);
+				gMN.setEdgeWeight(ee, 0);
+				w = 0;
+				TypePropagateMN.allPropEdges++;
+			} else {
+				ee = gMN.getEdge(i, j);
+				w = gMN.getEdgeWeight(ee);
+			}
+
+			gMN.setEdgeWeight(ee, w + numerator);
+
+			// }
+		}
+
+		if (denom != 0) {
+			String edgeStr = i + "#" + j;
+			synchronized (pgraph.edgeToMNWeight) {
+				if (!pgraph.edgeToMNWeight.containsKey(edgeStr)) {
+					pgraph.edgeToMNWeight.put(edgeStr, denom);
+				} else {
+					double prevDenom = pgraph.edgeToMNWeight.get(edgeStr);
+					pgraph.edgeToMNWeight.put(edgeStr, prevDenom + denom);
+				}
+			}
+		}
+
+	}
+	
+	static int numOperations = 0;
+	static int numPassedEdges = 0;
+
+	// label propagate inside a graph!
+	void propagateLabelWithinGraphs() {
+		for (PGraph pgraph : thispGraphs) {
+			System.out.println("mn prop within graphs: " + pgraph.fname + " " + threadIdx);
+			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gPrev = pgraph.g0;
+
+			// (3) in formulations: add to numerator of w_ij: -wji* \sum_k
+			// [(w_ik-w_jk)^2+(w_ki-w_kj)^2]
+			
+			for (int j = 0; j < gPrev.vertexSet().size(); j++) {
+				if (j % 100 == 0) {
+					System.out.println("3 j: " + j + " " + pgraph.name);
+				}
+				
+				for (DefaultWeightedEdge e : gPrev.outgoingEdgesOf(j)) {
+					int i = gPrev.getEdgeTarget(e);
+					double w_ji = gPrev.getEdgeWeight(e) - TypePropagateMN.tau;
+
+					if (w_ji <= 0) {
+						continue;
+					}
+					
+					if (i == j) {
+						continue;
+					}
+					
+					numPassedEdges++;
+
+					double numerator = 0;
+
+					// Now, form i's in \\union j's in
+					Set<DefaultWeightedEdge> e_incoming_i = gPrev.incomingEdgesOf(i);
+					Set<DefaultWeightedEdge> e_incoming_j = gPrev.incomingEdgesOf(j);
+
+					Set<Integer> ks = getUnionIntersection(gPrev, e_incoming_i, e_incoming_j, true, true, false);
+					
+					for (int k : ks) {
+						if (k == i || k == j) {
+							continue;
+						}
+						double w_ki = 0;
+						double w_kj = 0;
+
+						if (gPrev.containsEdge(k, i)) {
+							w_ki = gPrev.getEdgeWeight(gPrev.getEdge(k, i));
+						}
+
+						if (gPrev.containsEdge(k, j)) {
+							w_kj = gPrev.getEdgeWeight(gPrev.getEdge(k, j));
+						}
+
+						if (w_ki == 0 && w_kj == 0) {
+							System.err.println(
+									"both incoming edges zero, how??" + i + " " + j + " " + k + " " + pgraph.name);
+							System.exit(0);
+						}
+						
+						numerator -= w_ji * Math.pow(w_ki - w_kj, 2);
+						
+					}
+
+					// Now, form i's out \\union j's out
+					Set<DefaultWeightedEdge> e_outgoing_i = gPrev.outgoingEdgesOf(i);
+					Set<DefaultWeightedEdge> e_outgoing_j = gPrev.outgoingEdgesOf(j);
+
+					ks = getUnionIntersection(gPrev, e_outgoing_i, e_outgoing_j, false, false, false);
+					for (int k : ks) {
+						if (k == i || k == j) {
+							continue;
+						}
+						double w_ik = 0;
+						double w_jk = 0;
+
+						if (gPrev.containsEdge(i, k)) {
+							w_ik = gPrev.getEdgeWeight(gPrev.getEdge(i, k));
+						}
+
+						if (gPrev.containsEdge(j, k)) {
+							w_jk = gPrev.getEdgeWeight(gPrev.getEdge(j, k));
+						}
+
+						if (w_ik == 0 && w_jk == 0) {
+							System.err.println(
+									"both outgoing edges zero, how??" + i + " " + j + " " + k + " " + pgraph.name);
+							System.exit(0);
+						}
+
+						numerator -= w_ji * Math.pow(w_ik - w_jk, 2);
+					}
+					
+					numOperations += e_incoming_i.size()+e_incoming_j.size()+e_outgoing_i.size()+e_outgoing_j.size();
+					System.out.println("here num op: "+numOperations+" "+w_ji+" "+numPassedEdges);
+					
+					// now, use denominator and numerator for i and j
+					if (numerator > 0) {
+						System.err.println("numerator >0, how??");
+						System.exit(0);
+					}
+					addNumeratorDenom(pgraph, i, j, numerator, 0);
+				}
+			}
+
+			// (1) in formulations: add to numerator of w_ij: w_jk*w_kj*w_ik and
+			// denominator: w_jk*w_kj
+			// (2) in formulations: add to numerator of w_ij: w_ik*w_ki*w_kj and
+			// denominator: w_ik*w_ki. For 2, i and j are really reverse in the below code
+
+			double[] reflexSumWeights = new double[gPrev.vertexSet().size()];
+//			Set<String> nzijs = new HashSet<>();
+			for (int k = 0; k < gPrev.vertexSet().size(); k++) {
+				if (k % 100 == 0) {
+					System.out.println("1,2 k: " + k + " " + pgraph.name);
+				}
+				// Find k's out \\intersection k's in
+				Set<DefaultWeightedEdge> e_outgoing_k = gPrev.outgoingEdgesOf(k);
+				Set<DefaultWeightedEdge> e_incoming_k = gPrev.incomingEdgesOf(k);
+
+				Set<Integer> k_neighs = getUnionIntersection(gPrev, e_outgoing_k, e_incoming_k, false, true, true);
+				
+				numOperations += e_incoming_k.size()*e_incoming_k.size() + e_outgoing_k.size()*e_outgoing_k.size();
+						
+				for (int j : k_neighs) {
+
+					if (j == k) {
+						continue;
+					}
+
+					double w_jk = gPrev.getEdgeWeight(gPrev.getEdge(j, k)) - TypePropagateMN.tau;
+					double w_kj = gPrev.getEdgeWeight(gPrev.getEdge(k, j)) - TypePropagateMN.tau;
+
+					if (w_jk <= 0 || w_kj <= 0) {
+						continue;
+					}
+
+					double denom = 2 * w_jk * w_kj;
+					reflexSumWeights[j] += denom;
+
+					// (1) in formulation
+					for (DefaultWeightedEdge e : e_incoming_k) {
+						int i = gPrev.getEdgeSource(e);
+						if (i == k || i == j) {
+							continue;
+						}
+
+						double w_ik = gPrev.getEdgeWeight(e);
+
+						double numerator = denom * w_ik;
+
+//						nzijs.add(i + "#" + j);
+
+						addNumeratorDenom(pgraph, i, j, numerator, 0);// save all denoms for later!
+					}
+
+					// (2) in formulation
+					for (DefaultWeightedEdge e : e_outgoing_k) {
+						int i = gPrev.getEdgeSource(e);
+						if (i == k || i == j) {
+							continue;
+						}
+
+						double w_ki = gPrev.getEdgeWeight(e);
+//						nzijs.add(j + "#" + i);
+
+						double numerator = denom * w_ki;
+
+						addNumeratorDenom(pgraph, j, i, numerator, 0);// save all denoms for later!
+					}
+
+				}
+
+			}
+
+			// Now, handle the rest of the denoms for 1 and 2! We saved it until here,
+			// because we didn't know which numerators are zero
+			// until now
+			for (int i = 0; i < pgraph.gMN.vertexSet().size(); i++) {
+				if (i % 100 == 0) {
+					System.out.println("1,2 k: " + i + " " + pgraph.name);
+				}
+				for (DefaultWeightedEdge e : pgraph.gMN.outgoingEdgesOf(i)) {
+					int j = gPrev.getEdgeTarget(e);
+					double denom = reflexSumWeights[i] + reflexSumWeights[j];
+//					if (denom == 0 && nzijs.contains(i + "#" + j)) {
+//						System.err.println("here denom 0" + i + " " + j);
+//					}
+					
+					addNumeratorDenom(pgraph, i, j, 0, denom);
+				}
+			}
+
+			System.out.println("done within graphs: " + pgraph.fname + " " + threadIdx);
+			System.out.println("num operations: "+numOperations);
+
+		}
+	}
+
+	// typePropagate
+	void propagateLabelBetweenGraphs() {
+
 		Map<String, Set<Integer>> rawPred2PGraphs = TypePropagateMN.rawPred2PGraphs;
 
 		// r => rp is used to update p=>q. propagate similarities of pgraph to all its
 		// neighbors
 		for (PGraph pgraph : thispGraphs) {
-			System.out.println("MN prop: " + pgraph.fname + " " + threadIdx);
+			System.out.println("MN prop between graphs: " + pgraph.fname + " " + threadIdx);
 			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gPrev = pgraph.g0;
-			
+
 			for (int r = 0; r < gPrev.vertexSet().size(); r++) {
 
 				if (r % 100 == 0) {
@@ -82,8 +353,9 @@ public class LabelPropagateMN implements Runnable {
 					}
 
 					// Let's propagate to all the neighbor graphs
-					//neighGraphs have the rawPred, but we don't know about the exact type ordering.
-					//So, we try both ways!
+					// neighGraphs have the rawPred, but we don't know about the exact type
+					// ordering.
+					// So, we try both ways!
 					for (int ngIdx : neighborGraphs) {
 						PGraph pgraph_neigh = allpGraphs.get(ngIdx);
 						String tp1 = pgraph_neigh.types.split("#")[0];// don't get confused with rp, etc. tp1 is for the
@@ -111,27 +383,28 @@ public class LabelPropagateMN implements Runnable {
 
 						if (!TypePropagateMN.predBasedPropagation) {
 							// make sure you give to both cases: tp1#tp2 and tp2#tp1
-							compScore1 = TypePropagateMN.getCompatibleScore(tp1_plain, tp2_plain, aligned, t1_r_plain, t2_r_plain);
+							compScore1 = TypePropagateMN.getCompatibleScore(tp1_plain, tp2_plain, aligned, t1_r_plain,
+									t2_r_plain);
 							// compScore1 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 							// TODO: added, be
 							// careful
 
 						} else {
-//							System.out.println("from label prop1");
+							// System.out.println("from label prop1");
 							// make sure you give to both cases: tp1#tp2 and tp2#tp1
-							//how much pred_r => pred_rp is compatible with pred_p => pred_q
-							//pred_r(p) are in pgraph. pred_p(q) are in pgraph_neigh
-							//types are t1_r, t2_r and tp1, tp2
+							// how much pred_r => pred_rp is compatible with pred_p => pred_q
+							// pred_r(p) are in pgraph. pred_p(q) are in pgraph_neigh
+							// types are t1_r, t2_r and tp1, tp2
 							compScore1 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_r,
-									rawPred_rp, pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, aligned, tp1_plain,
-									tp2_plain);
+									rawPred_rp, pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, aligned,
+									tp1_plain, tp2_plain);
 							// compScore1 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 							// TODO: added, be
 							// careful
 
 						}
-						
-//						System.out.println("propagating from: "+pred_r+" "+pred_rp);
+
+						// System.out.println("propagating from: "+pred_r+" "+pred_rp);
 						// propagate similarity to pred_p => pred_q. Also, compute the coef sum of all
 						// the neighbors for those (pre-compute all at once)
 						propagateOneEdge(pgraph, pgraph_neigh, pred_p, pred_q, sim, compScore1, rawPred_r, rawPred_rp,
@@ -147,15 +420,16 @@ public class LabelPropagateMN implements Runnable {
 						}
 
 						if (!TypePropagateMN.predBasedPropagation) {
-							compScore2 = TypePropagateMN.getCompatibleScore(tp2_plain, tp1_plain, aligned, t1_r_plain, t2_r_plain);
+							compScore2 = TypePropagateMN.getCompatibleScore(tp2_plain, tp1_plain, aligned, t1_r_plain,
+									t2_r_plain);
 							// compScore2 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 							// TODO: added, be
 							// careful
 						} else {
-//							System.out.println("from label prop2");
+							// System.out.println("from label prop2");
 							compScore2 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_r,
-									rawPred_rp, pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, aligned, tp2_plain,
-									tp1_plain);
+									rawPred_rp, pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, aligned,
+									tp2_plain, tp1_plain);
 							// compScore2 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 							// TODO: added, be
 							// careful
@@ -170,7 +444,6 @@ public class LabelPropagateMN implements Runnable {
 			// pgraph.g0 = null;//TODO: make this null? need it for distance
 			System.out.println("all prop edges: " + TypePropagateMN.allPropEdges);
 		}
-		System.out.println("thread Idx +" + threadIdx + " done");
 	}
 
 	// private static String removeUnderlines(String t) {
@@ -182,8 +455,9 @@ public class LabelPropagateMN implements Runnable {
 			double compScore, String rawPred_p, String rawPred_q, String tp1, String tp2, boolean aligned,
 			Set<Integer> neighborGraphs, int minPairOcc1) {
 		if (pgraph_neigh.pred2node.containsKey(pred_p) && pgraph_neigh.pred2node.containsKey(pred_q)) {
-//			System.out.println("propagating from graph: " + pgraph.types + " to graph " + pgraph_neigh.types + " for "
-//					+ pred_p + " " + pred_q+" "+compScore);
+			// System.out.println("propagating from graph: " + pgraph.types + " to graph " +
+			// pgraph_neigh.types + " for "
+			// + pred_p + " " + pred_q+" "+compScore);
 			int minPairOcc2 = 1;
 			if (TypePropagateMN.sizeBasedPropagation) {
 				minPairOcc2 = Math.min(TypePropagateMN.predToOcc.get(pred_p), TypePropagateMN.predToOcc.get(pred_q));
@@ -218,6 +492,9 @@ public class LabelPropagateMN implements Runnable {
 
 					double sumCoefs = getSumNeighboringCoefs(pgraph_neigh, rawPred_p, rawPred_q, pred_p, pred_q, tp1,
 							tp2, aligned, neighborGraphs, minPairOcc2);
+//					if (Double.isNaN(sumCoefs)) {
+//						System.err.println("sum coefs nan: "+edgeStr);
+//					}
 					pgraph_neigh.edgeToMNWeight.put(edgeStr, sumCoefs);
 				}
 
@@ -359,19 +636,28 @@ public class LabelPropagateMN implements Runnable {
 					if (p == q) {
 						gMN.setEdgeWeight(e, 1);
 					} else {
-						double denom = pgraph.edgeToMNWeight.get(p + "#" + q);
 						double c = gMN.getEdgeWeight(e);
 
-						if (c <= TypePropagateMN.lmbda && c >= -TypePropagateMN.lmbda) {
+						// if (c<0) {
+						// System.err.println("neg c: "+c);
+						// }
+
+						if (c <= 0 || (c <= TypePropagateMN.lmbda && c >= -TypePropagateMN.lmbda)) {
 							removableEdges.add(e);
 							continue;
 						} else {
+//							if (!pgraph.edgeToMNWeight.containsKey(p + "#" + q)) {
+//								System.err.println("doesn't have: " + p + "#" + q + " " + c + " " + pgraph.name);
+//							}
+							double denom = pgraph.edgeToMNWeight.get(p + "#" + q);
 							double w;
 							if (c > 0) {
 								w = (c - TypePropagateMN.lmbda) / denom;
 							} else {
 								w = (c + TypePropagateMN.lmbda) / denom;
 							}
+
+
 							// System.out.println(
 							// "avg: " + pgraph.idx2node.get(p).id + " " + pgraph.idx2node.get(q).id + " ");
 							// System.out.println("avg: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
@@ -423,11 +709,16 @@ public class LabelPropagateMN implements Runnable {
 	@Override
 	public void run() {
 		if (runIdx == 0) {
-			propagateLabel();
+			propagateLabelBetweenGraphs();
+			System.out.println("between prop done!");
 			allpGraphs = null;
 		} else if (runIdx == 1) {
+			propagateLabelWithinGraphs();
+			System.out.println("within prop done!");
+			System.out.println("thread Idx +" + threadIdx + " done");
+		} else if (runIdx == 2) {
 			getAvg();
-		} else {
+		} else if (runIdx==3){
 			writeResults();
 		}
 

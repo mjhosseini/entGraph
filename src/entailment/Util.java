@@ -321,7 +321,7 @@ public class Util {
 	public static String[] getPredicateLemma(String pred, boolean isCCG) {
 
 		String[] ret = new String[2];
-		if (!EntailGraphFactoryAggregator.lemmatizePredicate) {
+		if (!EntailGraphFactoryAggregator.normalizePredicate) {
 			ret[0] = pred;
 			ret[1] = "false";
 			return ret;
@@ -887,7 +887,7 @@ public class Util {
 					String typeCand = tokenToType.get(s);
 					if (typeCand != null && !typeCand.equals("thing")) {
 						type = typeCand;
-						System.out.println("backed up to stan: "+type+" "+arg);
+//						System.out.println("backed up to stan: "+type+" "+arg);
 //						break;
 					}
 				}

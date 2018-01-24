@@ -5,17 +5,20 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -31,11 +34,13 @@ public class TypePropagateMN {
 	ArrayList<PGraph> pGraphs;
 	// public final static float edgeThreshold = -1;// edgeThreshold
 	static int numThreads = 60;
-	static int numIters = 4;
+	static int numIters = 3;
 	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda2 = 10;
+	public static double lmbda2 = 0.0;
+	public static double tau = .3;
 	public static double smoothParam = 5.0;
-	static final String tPropSuffix = "_tProp_i4_predBased_reg_10.txt";
+//	static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
+	static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_0_test.txt";
 	static final boolean predBasedPropagation = true;
 	static final boolean sizeBasedPropagation = false;
 
@@ -62,7 +67,6 @@ public class TypePropagateMN {
 			e.printStackTrace();
 		}
 		readPGraphs(root);
-
 		System.gc();
 		System.err.println("after reading all pgraphs");
 		memStat();
@@ -128,10 +132,41 @@ public class TypePropagateMN {
 		long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
 		System.out.println("usedMb: " + usedMb);
 	}
-
+	
+	Set<String> deletableFiles;
+	//If we have something in test, but we don't even have a graph for it, just create fake empty graph (and then delete it!)
+	void createEmptySimFiles(String root) {
+		deletableFiles = new HashSet<>();
+		for (String types: PGraph.types2TargetRels.keySet()) {
+			String types2 = types.split("#")[1]+"#"+types.split("#")[0];
+//			System.out.println("address: "+root+types+"_sim.txt");
+			File f = new File(root+types+"_sim.txt");
+			File f2 = new File(root+types2+"_sim.txt");
+			
+			if (!f.exists() && !f2.exists()) {
+				System.out.println("f not exists for: "+ types+" "+f.getName());
+				try {
+					new PrintStream(new File(f.getPath()));
+					deletableFiles.add(types);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+			
+//			if(f.exists() && f.length()==0) {
+//				f.delete();
+//			}
+//			if (f2.exists() && f2.length()==0) {
+//				f2.delete();
+//			}
+		}
+	}
+	
 	void readPGraphs(String root) {
 		pGraphs = new ArrayList<>();
 		graphToNumEdges = new HashMap<String, Integer>();
+		
+		createEmptySimFiles(root);
 
 		File folder = new File(root);
 		File[] files = folder.listFiles();
@@ -160,9 +195,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-//			if (gc == 100) {
-//				break;
-//			}
+			if (gc == 50) {
+				break;
+			}
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -170,6 +205,10 @@ public class TypePropagateMN {
 				continue;
 			}
 			pgraph.g0 = pgraph.formWeightedGraph(pgraph.sortedEdges, pgraph.nodes.size());
+			if (deletableFiles.contains(pgraph.types)) {
+				f.delete();
+//				System.out.println("shall we delete?: "+f.getAbsolutePath());
+			}
 			pgraph.clean();
 
 			if (pgraph.nodes.size() == 0) {
@@ -193,6 +232,9 @@ public class TypePropagateMN {
 			System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 			gc++;
 		}
+		
+		
+		
 	}
 
 	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
@@ -458,8 +500,13 @@ public class TypePropagateMN {
 
 			}
 
-			score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
-			score1 = Math.max(score1, 0);
+			if (TypePropagateMN.lmbda2==0) {
+				score1 = 0;
+			}
+			else {
+				score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
+				score1 = Math.max(score1, 0);
+			}
 
 			predTypeCompatibility.put(key1, score1);
 			predTypeCompatibility.put(key1p, score1);
@@ -480,7 +527,7 @@ public class TypePropagateMN {
 
 			String[] ss = line.split(" ");
 			double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) + smoothParam);
-			System.out.println("compatibles: " + ss[0] + " " + prob);
+//			System.out.println("compatibles: " + ss[0] + " " + prob);
 			compatibles.put(ss[0], prob);
 		}
 		sc.close();
@@ -492,7 +539,7 @@ public class TypePropagateMN {
 		for (int iter = 0; iter < numIters; iter++) {
 			objChange = 0;
 			predTypeCompatibility = Collections.synchronizedMap(new HashMap<>());
-
+			System.err.println("iter "+iter);
 			for (PGraph pgraph : pGraphs) {
 				// initialize gMN (next g) based on g0 (cur g)
 				int N = pgraph.g0.vertexSet().size();
@@ -515,8 +562,16 @@ public class TypePropagateMN {
 				// }
 			}
 
+			//propagate between graphs
 			try {
 				propagateAll(0);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			
+			//propagate within graphs
+			try {
+				propagateAll(1);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
@@ -524,7 +579,7 @@ public class TypePropagateMN {
 			// Now, just let's get the average for gMNs
 
 			try {
-				propagateAll(1);
+				propagateAll(2);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
@@ -540,7 +595,7 @@ public class TypePropagateMN {
 
 		// now, let's write the results
 		try {
-			propagateAll(2);
+			propagateAll(3);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
@@ -590,6 +645,10 @@ public class TypePropagateMN {
 
 	public static void main(String[] args) {
 		String root = PGraph.root;
+		
+		int cores = Runtime.getRuntime().availableProcessors();
+		System.out.println("num free cores: "+cores);
+		
 		TypePropagateMN tpmn = new TypePropagateMN(root);
 	}
 
