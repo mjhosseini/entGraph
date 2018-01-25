@@ -1066,6 +1066,13 @@ public class PGraph implements Comparable<PGraph>{
 
 	@Override
 	public int compareTo(PGraph o) {
-		return new Integer(this.nodes.size()).compareTo(o.nodes.size());
+//		return new Integer(this.nodes.size()).compareTo(new Integer(o.nodes.size()));
+		if (this.nodes.size()>o.nodes.size()) {
+			return 1;
+		}
+		else if(this.nodes.size()<o.nodes.size()) {
+			return -1;
+		}
+		return 0;
 	}
 }

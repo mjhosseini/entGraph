@@ -11,14 +11,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -27,8 +25,6 @@ import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import edu.stanford.nlp.util.CollectionUtils;
-import entailment.entityLinking.SimpleSpot;
-import sun.net.www.content.text.plain;
 
 public class TypePropagateMN {
 	ThreadPoolExecutor threadPool;
@@ -199,9 +195,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			if (gc == 100) {
-				break;
-			}
+//			if (gc == 50) {
+//				break;
+//			}
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -219,13 +215,7 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			for (String s : pgraph.pred2node.keySet()) {
-				String rawPred = s.split("#")[0];
-				if (!rawPred2PGraphs.containsKey(rawPred)) {
-					rawPred2PGraphs.put(rawPred, new HashSet<>());
-				}
-				rawPred2PGraphs.get(rawPred).add(gc);
-			}
+			
 
 			pGraphs.add(pgraph);
 			String[] ss = pgraph.types.split("#");
@@ -238,8 +228,20 @@ public class TypePropagateMN {
 		}
 
 		Collections.sort(pGraphs, Collections.reverseOrder());
+		
 		for (int i = 0; i < pGraphs.size(); i++) {
-			pGraphs.get(i).sortIdx = i;
+			PGraph pgraph = pGraphs.get(i);
+			pgraph.sortIdx = i;
+			
+			for (String s : pgraph.pred2node.keySet()) {
+				String rawPred = s.split("#")[0];
+				if (!rawPred2PGraphs.containsKey(rawPred)) {
+					rawPred2PGraphs.put(rawPred, new HashSet<>());
+				}
+				rawPred2PGraphs.get(rawPred).add(i);
+			}
+			
+			System.out.println("pgraph name: "+pGraphs.get(i).name+" "+pGraphs.get(i).nodes.size());
 		}
 
 	}
@@ -415,6 +417,9 @@ public class TypePropagateMN {
 		} else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
 			return 0;
 		}
+		else if (TypePropagateMN.lmbda2==0) {
+			return 0;
+		}
 
 		// outgoing
 		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
@@ -515,8 +520,11 @@ public class TypePropagateMN {
 				score1 = Math.max(score1, 0);
 			}
 
-			predTypeCompatibility.put(key1, score1);
-			predTypeCompatibility.put(key1p, score1);
+			synchronized (predTypeCompatibility) {
+				predTypeCompatibility.put(key1, score1);
+				predTypeCompatibility.put(key1p, score1);
+			}
+			
 
 			System.out.println("key1: " + key1 + " " + score1);
 			System.out.println("p key1: " + key1p + " " + score1);
