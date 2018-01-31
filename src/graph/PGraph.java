@@ -31,8 +31,6 @@ public class PGraph implements Comparable<PGraph>{
 	public static boolean transitive = true;
 	public final static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
-	public final static boolean addTargetRels = true;
-
 	public static String suffix = "_sim.txt";
 	static final String embSuffix = "_embsims25.txt";
 	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
@@ -60,8 +58,9 @@ public class PGraph implements Comparable<PGraph>{
 	Map<String, Node> pred2node;
 	public static Map<String, List<PredSim>> rels2Sims;
 	public static Map<String, List<PredSim>> invRels2Sims;
-	public static Set<String> targetRels;
-	public static Map<String, Set<String>> types2TargetRels;
+	public static Set<String> targetRels = new HashSet<>();
+	public static Set<String> targetRelsAddedToGraphs = new HashSet<>();
+	public static Map<String, Set<String>> types2TargetRels = new HashMap<>();
 	ArrayList<Edge> sortedEdges;
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
 	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
@@ -578,7 +577,9 @@ public class PGraph implements Comparable<PGraph>{
 		try {
 			read_rels_sim(fpath, true, true);
 			// targetRels = readTargetRels(tfpath);
-			setTargetRelsMap();
+			if (TypePropagateMN.addTargetRels) {
+				setTargetRelsMap();
+			}
 		} catch (NumberFormatException | IOException e) {
 			e.printStackTrace();
 		}
@@ -681,7 +682,7 @@ public class PGraph implements Comparable<PGraph>{
 		}
 
 		// Now, add the target rels without any neighbors
-		if (addTargetRels) {
+		if (TypePropagateMN.addTargetRels) {
 			Set<String> targetPreds = null;
 			String[] ss = types.split("#");
 			String types2 = ss[1] + "#" + ss[0];
@@ -697,12 +698,14 @@ public class PGraph implements Comparable<PGraph>{
 						int nIdx = nodes.size();
 						System.out.println("adding new node: " + pred);
 						node = new Node(nIdx, pred);
+						targetRelsAddedToGraphs.add(pred);
 						this.insertNode(node);
 					}
 //					System.out.println("sss: "+ss[0]+" "+ss[1]+" "+(ss[0].equals(ss[1])));
 					if (ss[0].equals(ss[1])) {
 						String[] pss = pred.split("#");
 						String pred2 = pss[0] + "#" + pss[2] + "#" + pss[1];
+						targetRelsAddedToGraphs.add(pred2);
 //						System.out.println("pred2: "+pred2);
 						if (!pred2node.containsKey(pred2)) {
 							int nIdx = nodes.size();
@@ -858,6 +861,7 @@ public class PGraph implements Comparable<PGraph>{
 		BufferedReader br = new BufferedReader(new FileReader(allExamplesPath));
 		types2TargetRels = new HashMap<>();
 		targetRels = new HashSet<>();
+		targetRelsAddedToGraphs = new HashSet<>();
 		String line = null;
 
 		while ((line = br.readLine()) != null) {

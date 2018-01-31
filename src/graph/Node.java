@@ -10,6 +10,7 @@ public class Node {
 	String id;
 	List<Oedge> oedges;
 	Map<Integer, Oedge> idx2oedges;
+	private int numNeighs = -1;
 
 	public Node(int idx, String id) {
 		this.idx = idx;
@@ -28,7 +29,15 @@ public class Node {
 		}
 	}
 	
+	public int getNumNeighs() {
+		if (numNeighs==-1) {
+			numNeighs=this.oedges.size();
+		}
+		return numNeighs;
+	}
+	
 	public void clean() {
+		this.numNeighs = this.oedges.size();
 		this.oedges = null;
 		this.idx2oedges = null;
 	}

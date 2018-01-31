@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.security.AllPermission;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -62,26 +63,37 @@ public class BerantProcessing {
 		String past = realiser.realise(infl).getRealisation();
 		return past;
 	}
+	
+	static Set<String> allPreds = new HashSet<>();
 
-	static String[] getNodeAndSent(String berStr) {
+	static String[] getNodeAndSent(String berStr, Map<String,String> lemmaToPlain) {
 		berStr = berStr.substring(1, berStr.length() - 1);
 		String node = berStr;
 		String[] ss = berStr.split("::");
 		for (int i = 0; i < ss.length; i++) {
 			ss[i] = ss[i].replace(", ", "");
 		}
+		
+		if (lemmaToPlain.containsKey(ss[0].trim())) {
+			System.out.println("replacing: "+ss[0]+" by "+lemmaToPlain.get(ss[0].trim()));
+			ss[0] = lemmaToPlain.get(ss[0].trim()).trim();
+		}
 
 		String[] ess = ss[0].split(" ");
+		allPreds.add(ss[0]);
 		System.out.println("ss0: " + ss[0]);
-		if (ess[ess.length - 1].equals("by")) {
-			ess[ess.length - 2] = getPastParticiple(ess[ess.length - 2]);
-			System.out.println("past parti: " + ess[ess.length - 2]);
-		}
-
-		if (ess[0].equals("have")) {
-			ess[1] = getPastParticiple(ess[1]);
-			System.out.println("past parti: " + ess[1]);
-		}
+		
+		
+		
+//		if (ess[ess.length - 1].equals("by")) {
+//			ess[ess.length - 2] = getPastParticiple(ess[ess.length - 2]);
+//			System.out.println("past parti: " + ess[ess.length - 2]);
+//		}
+//
+//		if (ess[0].equals("have")) {
+//			ess[1] = getPastParticiple(ess[1]);
+//			System.out.println("past parti: " + ess[1]);
+//		}
 
 		ss[0] = "";
 		for (String s : ess) {
@@ -148,8 +160,24 @@ public class BerantProcessing {
 		return rel1;
 
 	}
+	
+	static Map<String,String> readLemmaToPlain() throws IOException{
+		BufferedReader br = new BufferedReader(new FileReader("data/Ber_ACL/predLemmaToPlain.txt"));
+		String line = null;
+		
+		Map<String,String> ret = new HashMap<>();
+		
+		while ((line=br.readLine())!=null) {
+			String[] ss = line.split("#");
+			if (ss.length==2) {
+				ret.put(ss[0], ss[1]);
+			}
+		}
+		br.close();
+		return ret;
+	}
 
-	static void convertToLevyFormat(Set<String> allPos, String fname, PrintStream op, PrintStream op2)
+	static void convertToLevyFormat(Set<String> allPos, String fname, PrintStream op, PrintStream op2, Map<String,String> lemmaToPlain)
 			throws IOException, ArgumentValidationException, InterruptedException {
 		String line = null;
 		BufferedReader br = new BufferedReader(new FileReader(fname));
@@ -166,8 +194,8 @@ public class BerantProcessing {
 			String[] ss = line.split("\t");
 			line = ss[0] + "\t" + ss[1];
 			
-			String[] nodeSent1 = getNodeAndSent(ss[0]);
-			String[] nodeSent2 = getNodeAndSent(ss[1]);
+			String[] nodeSent1 = getNodeAndSent(ss[0], lemmaToPlain);
+			String[] nodeSent2 = getNodeAndSent(ss[1], lemmaToPlain);
 
 			// ignore if first entity is _2 (it's just duplicate of its reverse...)
 			// <outnumber::animal_2::animal_1> <be susceptible than::animal_2::animal_1>
@@ -253,11 +281,12 @@ public class BerantProcessing {
 		PrintStream op2 = new PrintStream(new File("data/Ber_ACL/ber_all_rels.txt"));
 
 		Set<String> allPos = readAllPos();
+		Map<String, String> lemmaToPlain = readLemmaToPlain();
 
 		File folder = new File("data/Ber_ACL/local-scores");
 		File[] files = folder.listFiles();
 		for (File f : files) {
-			convertToLevyFormat(allPos, f.getPath(), op, op2);
+			convertToLevyFormat(allPos, f.getPath(), op, op2, lemmaToPlain);
 		}
 		op.close();
 		op2.close();
@@ -265,6 +294,10 @@ public class BerantProcessing {
 
 	public static void main(String[] args) throws IOException, ArgumentValidationException, InterruptedException {
 //		makeDS();
+//		System.out.println("all preds:");
+//		for (String s: allPreds) {
+//			System.out.println(s);
+//		}
 		splitIntoClasses();
 		
 	}

@@ -33,14 +33,17 @@ public class TypePropagateMN {
 	static int numThreads = 60;
 	static int numIters = 4;
 	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda2 = 1.0;
+	public static double lmbda2 = 0.0;
 	public static double tau = .3;
 	public static double smoothParam = 5.0;
 	// static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
-	static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0_.3.txt";
+	 static final String tPropSuffix = "_tProp_trans_0_.3_obj2_sn.txt";
+//	static final String tPropSuffix = "_tProp_u.txt";
+	public final static boolean addTargetRels = false;
 	static final boolean predBasedPropagation = true;
 	static final boolean sizeBasedPropagation = false;
-
+	static final boolean obj1 = false;// obj1: max(w-tau), false: 1(w>tau)w
+	
 	Map<String, Integer> graphToNumEdges;
 	String compatiblesPath = "../../python/gfiles/ent/compatibles_all.txt";
 	static Map<String, Double> compatibles;
@@ -164,8 +167,9 @@ public class TypePropagateMN {
 	void readPGraphs(String root) {
 		pGraphs = new ArrayList<>();
 		graphToNumEdges = new HashMap<String, Integer>();
-
-		createEmptySimFiles(root);
+		if (TypePropagateMN.addTargetRels) {
+			createEmptySimFiles(root);
+		}
 
 		File folder = new File(root);
 		File[] files = folder.listFiles();
@@ -179,6 +183,9 @@ public class TypePropagateMN {
 		for (File f : files) {
 
 			String fname = f.getName();
+			// if (!fname.contains("chemistry#thing")) {
+			// continue;
+			// }
 
 			// TODO: remove
 			// if (gc==0) {
@@ -195,17 +202,19 @@ public class TypePropagateMN {
 				continue;
 			}
 
-//			if (gc == 50) {
-//				break;
-//			}
+			// if (gc == 50) {
+			// break;
+			// }
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
 			if (pgraph.nodes.size() == 0) {
 				continue;
 			}
+
 			pgraph.g0 = pgraph.formWeightedGraph(pgraph.sortedEdges, pgraph.nodes.size());
-			if (deletableFiles.contains(pgraph.types)) {
+
+			if (TypePropagateMN.addTargetRels && deletableFiles.contains(pgraph.types)) {
 				f.delete();
 				// System.out.println("shall we delete?: "+f.getAbsolutePath());
 			}
@@ -214,8 +223,6 @@ public class TypePropagateMN {
 			if (pgraph.nodes.size() == 0) {
 				continue;
 			}
-
-			
 
 			pGraphs.add(pgraph);
 			String[] ss = pgraph.types.split("#");
@@ -228,11 +235,11 @@ public class TypePropagateMN {
 		}
 
 		Collections.sort(pGraphs, Collections.reverseOrder());
-		
+
 		for (int i = 0; i < pGraphs.size(); i++) {
 			PGraph pgraph = pGraphs.get(i);
 			pgraph.sortIdx = i;
-			
+
 			for (String s : pgraph.pred2node.keySet()) {
 				String rawPred = s.split("#")[0];
 				if (!rawPred2PGraphs.containsKey(rawPred)) {
@@ -240,8 +247,8 @@ public class TypePropagateMN {
 				}
 				rawPred2PGraphs.get(rawPred).add(i);
 			}
-			
-			System.out.println("pgraph name: "+pGraphs.get(i).name+" "+pGraphs.get(i).nodes.size());
+
+			System.out.println("pgraph name: " + pGraphs.get(i).name + " " + pGraphs.get(i).nodes.size());
 		}
 
 	}
@@ -413,11 +420,29 @@ public class TypePropagateMN {
 			boolean aligned, String tp1_plain, String tp2_plain) {
 
 		if (t1_plain.equals(tp1_plain) && t2_plain.equals(tp2_plain)) {
+			// The second condition below is not quite consistent with out MN, because we
+			// don't have a \beta for RHS. But, we put it
+			// as it's necessary not to rely on the zero similarity which isn't based on the
+			// data. It will converge anyway!
+			if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
+				return 1e-6;// small epsilon.
+			}
+
+			// TODO: changed, be careful
+			if (pgraph.pred2node.containsKey(pred_r)) {
+				return Math.sqrt(pgraph.pred2node.get(pred_r).getNumNeighs());
+				// return pgraph.pred2node.get(pred_r).getNumNeighs();
+			 }
 			return 1;
+		} else if (PGraph.targetRelsAddedToGraphs.contains(pred_r)
+				|| PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
+			return 0;// Don't propagate noise! Not consistent with MN again.
+		} else if (PGraph.targetRelsAddedToGraphs.contains(pred_p) || PGraph.targetRelsAddedToGraphs.contains(pred_q)) {
+			return 1.0;// The neighbor graph hasn't seen any evidence, it's happy to receive main
+						// graph's edges! Not consistent with MN again.
 		} else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
 			return 0;
-		}
-		else if (TypePropagateMN.lmbda2==0) {
+		} else if (TypePropagateMN.lmbda2 == 0) {
 			return 0;
 		}
 
@@ -524,7 +549,6 @@ public class TypePropagateMN {
 				predTypeCompatibility.put(key1, score1);
 				predTypeCompatibility.put(key1p, score1);
 			}
-			
 
 			System.out.println("key1: " + key1 + " " + score1);
 			System.out.println("p key1: " + key1p + " " + score1);
@@ -660,6 +684,7 @@ public class TypePropagateMN {
 
 	public static void main(String[] args) {
 		String root = PGraph.root;
+		System.out.println(tPropSuffix);
 
 		TypePropagateMN tpmn = new TypePropagateMN(root);
 	}

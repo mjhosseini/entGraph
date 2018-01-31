@@ -30,24 +30,40 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 		// [(w_ik-w_jk)^2+(w_ki-w_kj)^2]
 
 		for (int j = 0; j < gPrev.vertexSet().size(); j++) {
+			
 			if (j % numThreads != threadIdx) {
 				continue;
 			}
-			if (j % 100 == 0) {
+			
+			if ((j / numThreads) % 100 == 0) {
 				System.out.println("3 j: " + j + " " + pgraph.name);
 			}
 
 			for (DefaultWeightedEdge e : gPrev.outgoingEdgesOf(j)) {
 				int i = gPrev.getEdgeTarget(e);
-				double w_ji = gPrev.getEdgeWeight(e) - TypePropagateMN.tau;
-
-				if (w_ji <= 0) {
-					continue;
-				}
 
 				if (i == j) {
 					continue;
 				}
+				double w_ij = 0;
+				if (gPrev.containsEdge(i, j)) {
+					w_ij = gPrev.getEdgeWeight(gPrev.getEdge(i, j)) - TypePropagateMN.tau;
+				}
+
+				double w_ji = gPrev.getEdgeWeight(e) - TypePropagateMN.tau;
+
+				if (w_ji <= 0 || w_ij <= 0) {
+					continue;
+				}
+				
+				if (!TypePropagateMN.obj1) {
+					w_ij += TypePropagateMN.tau;
+					w_ji += TypePropagateMN.tau;
+				}
+
+				// if (!TypePropagateMN.obj1) {
+				// w_ji +=
+				// }
 
 				LabelPropagateMN.numPassedEdges++;
 
@@ -57,8 +73,8 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				Set<DefaultWeightedEdge> e_incoming_i = gPrev.incomingEdgesOf(i);
 				Set<DefaultWeightedEdge> e_incoming_j = gPrev.incomingEdgesOf(j);
 
-				Set<Integer> ks = LabelPropagationMNWithinGraph.getUnionIntersection(gPrev, e_incoming_i, e_incoming_j, true, true,
-						false);
+				Set<Integer> ks = LabelPropagationMNWithinGraph.getUnionIntersection(gPrev, e_incoming_i, e_incoming_j,
+						true, true, false);
 
 				for (int k : ks) {
 					if (k == i || k == j) {
@@ -82,14 +98,15 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					}
 
 					numerator -= w_ji * Math.pow(w_ki - w_kj, 2);
-
+//					System.out.println("numerator small 3 j: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(k).id+" "+w_ji * Math.pow(w_ki - w_kj, 2));
 				}
 
 				// Now, form i's out \\union j's out
 				Set<DefaultWeightedEdge> e_outgoing_i = gPrev.outgoingEdgesOf(i);
 				Set<DefaultWeightedEdge> e_outgoing_j = gPrev.outgoingEdgesOf(j);
 
-				ks = LabelPropagationMNWithinGraph.getUnionIntersection(gPrev, e_outgoing_i, e_outgoing_j, false, false, false);
+				ks = LabelPropagationMNWithinGraph.getUnionIntersection(gPrev, e_outgoing_i, e_outgoing_j, false, false,
+						false);
 				for (int k : ks) {
 					if (k == i || k == j) {
 						continue;
@@ -112,6 +129,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					}
 
 					numerator -= w_ji * Math.pow(w_ik - w_jk, 2);
+//					System.out.println("numerator small 3 j: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(k).id+" "+w_ji * Math.pow(w_ik - w_jk, 2));
 				}
 
 				LabelPropagateMN.numOperations += e_incoming_i.size() + e_incoming_j.size() + e_outgoing_i.size()
@@ -124,6 +142,12 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					System.err.println("numerator >0, how??");
 					System.exit(0);
 				}
+				
+//				System.out.println("numerator 3 j: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+numerator);
+				
+				//TODO: added, be careful
+//				numerator/=(pgraph.nodes.get(i).getNumNeighs()+pgraph.nodes.get(j).getNumNeighs());
+				
 				LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, i, j, numerator, 0);
 			}
 		}
@@ -138,15 +162,15 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 			if (k % numThreads != threadIdx) {
 				continue;
 			}
-			if (k % 100 == 0) {
+			if ((k % numThreads) % 100 == 0) {
 				System.out.println("1,2 k: " + k + " " + pgraph.name);
 			}
 			// Find k's out \\intersection k's in
 			Set<DefaultWeightedEdge> e_outgoing_k = gPrev.outgoingEdgesOf(k);
 			Set<DefaultWeightedEdge> e_incoming_k = gPrev.incomingEdgesOf(k);
 
-			Set<Integer> k_neighs = LabelPropagationMNWithinGraph.getUnionIntersection(gPrev, e_outgoing_k, e_incoming_k, false,
-					true, true);
+			Set<Integer> k_neighs = LabelPropagationMNWithinGraph.getUnionIntersection(gPrev, e_outgoing_k,
+					e_incoming_k, false, true, true);
 
 			LabelPropagateMN.numOperations += e_incoming_k.size() * e_incoming_k.size()
 					+ e_outgoing_k.size() * e_outgoing_k.size();
@@ -163,9 +187,21 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				if (w_jk <= 0 || w_kj <= 0) {
 					continue;
 				}
-
+				
+				if (!TypePropagateMN.obj1) {
+					w_jk += TypePropagateMN.tau;
+					w_kj += TypePropagateMN.tau;
+				}
+				
 				double denom = 2 * w_jk * w_kj;
+				
+				//TODO: added, be careful
+				double sumNeighs = pgraph.nodes.get(j).getNumNeighs()+pgraph.nodes.get(k).getNumNeighs();
+//				denom /= sumNeighs;
+				
 				reflexSumWeights[j] += denom;
+				
+				
 
 				// (1) in formulation
 				for (DefaultWeightedEdge e : e_incoming_k) {
@@ -179,8 +215,11 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					double numerator = denom * w_ik;
 
 					// nzijs.add(i + "#" + j);
-
-					LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, i, j, numerator, 0);// save all denoms for later!
+					
+//					System.out.println("numerator 1 k: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+ pgraph.nodes.get(k).id+" "+ numerator);
+					
+					LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, i, j, numerator, 0);// save all denoms for
+																								// later!
 				}
 
 				// (2) in formulation
@@ -194,8 +233,11 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					// nzijs.add(j + "#" + i);
 
 					double numerator = denom * w_ki;
+					
+//					System.out.println("numerator 2 k: "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(i).id+" "+ pgraph.nodes.get(k).id+" "+numerator);
 
-					LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, j, i, numerator, 0);// save all denoms for later!
+					LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, j, i, numerator, 0);// save all denoms for
+																								// later!
 				}
 			}
 
@@ -215,7 +257,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				e1s.add(g.getEdgeTarget(e));
 			}
 		}
-	
+
 		for (DefaultWeightedEdge e : edges2) {
 			if (incoming2) {
 				e2s.add(g.getEdgeSource(e));
@@ -223,13 +265,13 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				e2s.add(g.getEdgeTarget(e));
 			}
 		}
-	
+
 		if (intersect) {
 			return CollectionUtils.intersection(e1s, e2s);
 		} else {
 			return CollectionUtils.unionAsSet(e1s, e2s);
 		}
-	
+
 	}
 
 	static void addNumeratorDenom(PGraph pgraph, int i, int j, double numerator, double denom) {
@@ -240,19 +282,20 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN = pgraph.gMN;
 		double w;
 		DefaultWeightedEdge ee;
-		
+
 		if (numerator != 0) {
 			synchronized (gMN) {
-	
+
 				if (!gMN.containsEdge(i, j)) {
 					ee = gMN.addEdge(i, j);
-//					This means the edges hasn't been added in the typeProp phase, so add it's default value to numerator
-					
+					// This means the edges hasn't been added in the typeProp phase, so add it's
+					// default value to numerator
+
 					w = 0;
-					if (pgraph.g0.containsEdge(i,j)) {
-//						DefaultWeightedEdge e0 = pgraph.g0.getEdge(i, j);
-//						w = pgraph.g0.getEdgeWeight(e0);
-						
+					if (pgraph.g0.containsEdge(i, j)) {
+						// DefaultWeightedEdge e0 = pgraph.g0.getEdge(i, j);
+						// w = pgraph.g0.getEdgeWeight(e0);
+
 						System.err.println("g0 has the edge, but it hasn't been propagated!!!");
 						System.exit(1);
 					}
@@ -262,24 +305,25 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					ee = gMN.getEdge(i, j);
 					w = gMN.getEdgeWeight(ee);
 				}
-				
+
 				gMN.setEdgeWeight(ee, w + numerator);
-	
+
 			}
 		}
-	
+
 		if (denom != 0) {
 			String edgeStr = i + "#" + j;
 			synchronized (pgraph.edgeToMNWeight) {
 				if (!pgraph.edgeToMNWeight.containsKey(edgeStr)) {
-					pgraph.edgeToMNWeight.put(edgeStr, 1+denom);//we still need to add the "1" that we haven't added any other place!
+					pgraph.edgeToMNWeight.put(edgeStr, 1 + denom);// we still need to add the "1" that we haven't added
+																	// any other place! Although, the numerator is 0!
 				} else {
 					double prevDenom = pgraph.edgeToMNWeight.get(edgeStr);
 					pgraph.edgeToMNWeight.put(edgeStr, prevDenom + denom);
 				}
 			}
 		}
-	
+
 	}
 
 }

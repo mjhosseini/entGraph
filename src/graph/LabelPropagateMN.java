@@ -20,7 +20,6 @@ public class LabelPropagateMN implements Runnable {
 	List<PGraph> thispGraphs;
 	int runIdx;// 0: propagate, 1: average
 	int threadIdx;
-
 	public LabelPropagateMN(List<PGraph> allpGraphs, int threadIdx, int numThreads, int runIdx) {
 		if (runIdx == 0) {
 			this.allpGraphs = allpGraphs;
@@ -125,7 +124,7 @@ public class LabelPropagateMN implements Runnable {
 
 			// Parallelize inside a graph (we only parallelize for large graphs!)
 			int sortIdx = pgraph.sortIdx;
-			int numThreadsBetweenGraph = (sortIdx < 30) ? 15 : (sortIdx < 15 ? 10 : 3);
+			int numThreadsBetweenGraph = (sortIdx < 10) ? 10 : (sortIdx < 15 ? 5 : 1);
 			System.out.println("numThreadsBetweenGraph: " + pgraph.name + " " + numThreadsBetweenGraph);
 
 			final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreadsBetweenGraph);
@@ -184,6 +183,7 @@ public class LabelPropagateMN implements Runnable {
 		try {
 			op = new PrintStream(new File(fnameTProp));
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		// List<String> predList = allPredsList.get(allPredsList.size() - 1);
 
@@ -301,6 +301,7 @@ public class LabelPropagateMN implements Runnable {
 
 			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_')) + TypePropagateMN.tPropSuffix;
 			writeTPropResults(pgraph, gs, fnameTProp);
+			System.out.println("results wrote for: "+fnameTProp);
 		}
 	}
 
