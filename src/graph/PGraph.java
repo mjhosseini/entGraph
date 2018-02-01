@@ -705,11 +705,11 @@ public class PGraph implements Comparable<PGraph>{
 					if (ss[0].equals(ss[1])) {
 						String[] pss = pred.split("#");
 						String pred2 = pss[0] + "#" + pss[2] + "#" + pss[1];
-						targetRelsAddedToGraphs.add(pred2);
 //						System.out.println("pred2: "+pred2);
 						if (!pred2node.containsKey(pred2)) {
 							int nIdx = nodes.size();
 							System.out.println("adding new node: " + pred2);
+							targetRelsAddedToGraphs.add(pred2);
 							node = new Node(nIdx, pred2);
 							this.insertNode(node);
 						}

@@ -33,17 +33,17 @@ public class TypePropagateMN {
 	static int numThreads = 60;
 	static int numIters = 4;
 	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda2 = 0.0;
-	public static double tau = .3;
+	public static double lmbda2 = 1000000.0;
+	public static double tau = 1.0;
 	public static double smoothParam = 5.0;
 	// static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
-	 static final String tPropSuffix = "_tProp_trans_0_.3_obj2_sn.txt";
-//	static final String tPropSuffix = "_tProp_u.txt";
-	public final static boolean addTargetRels = false;
+	// static final String tPropSuffix = "_tProp_trans_0_.3_obj2_n.txt";
+	static final String tPropSuffix = "_tProp_areg_thread.txt";
+	public final static boolean addTargetRels = true;
 	static final boolean predBasedPropagation = true;
 	static final boolean sizeBasedPropagation = false;
 	static final boolean obj1 = false;// obj1: max(w-tau), false: 1(w>tau)w
-	
+
 	Map<String, Integer> graphToNumEdges;
 	String compatiblesPath = "../../python/gfiles/ent/compatibles_all.txt";
 	static Map<String, Double> compatibles;
@@ -202,9 +202,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			// if (gc == 50) {
-			// break;
-			// }
+//			if (gc == 150) {
+//				break;
+//			}
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -415,36 +415,9 @@ public class TypePropagateMN {
 
 	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
 	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
-	static double getCompatibleScorePredBased(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r, String rawPred_rp,
-			String pred_r, String pred_rp, String pred_p, String pred_q, String t1_plain, String t2_plain,
-			boolean aligned, String tp1_plain, String tp2_plain) {
-
-		if (t1_plain.equals(tp1_plain) && t2_plain.equals(tp2_plain)) {
-			// The second condition below is not quite consistent with out MN, because we
-			// don't have a \beta for RHS. But, we put it
-			// as it's necessary not to rely on the zero similarity which isn't based on the
-			// data. It will converge anyway!
-			if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
-				return 1e-6;// small epsilon.
-			}
-
-			// TODO: changed, be careful
-			if (pgraph.pred2node.containsKey(pred_r)) {
-				return Math.sqrt(pgraph.pred2node.get(pred_r).getNumNeighs());
-				// return pgraph.pred2node.get(pred_r).getNumNeighs();
-			 }
-			return 1;
-		} else if (PGraph.targetRelsAddedToGraphs.contains(pred_r)
-				|| PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
-			return 0;// Don't propagate noise! Not consistent with MN again.
-		} else if (PGraph.targetRelsAddedToGraphs.contains(pred_p) || PGraph.targetRelsAddedToGraphs.contains(pred_q)) {
-			return 1.0;// The neighbor graph hasn't seen any evidence, it's happy to receive main
-						// graph's edges! Not consistent with MN again.
-		} else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
-			return 0;
-		} else if (TypePropagateMN.lmbda2 == 0) {
-			return 0;
-		}
+	// once we have the sum, then do max(0,(\lamba_2-sum)/\lambda_2)
+	static double getCompatibleScoreSumPredBased(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r, String pred_r,
+			String pred_p, String t1_plain, String t2_plain, String tp1_plain, String tp2_plain) {
 
 		// outgoing
 		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
@@ -457,9 +430,9 @@ public class TypePropagateMN {
 																												// g2,
 																												// g1!
 
-		double score1;
+		double sum1 = 0;
 		if (predTypeCompatibility.containsKey(key1)) {
-			score1 = predTypeCompatibility.get(key1);
+			sum1 = predTypeCompatibility.get(key1);
 			// System.out.println("hash key1: " + key1 + " " + score1);
 		} else {
 
@@ -473,8 +446,6 @@ public class TypePropagateMN {
 
 			String[] ss_r = pred_r.split("#");
 			String[] ss_p = pred_p.split("#");
-
-			double sum = 0;
 
 			for (DefaultWeightedEdge e : outE_r) {
 				double w1 = pgraph.g0.getEdgeWeight(e);
@@ -500,7 +471,7 @@ public class TypePropagateMN {
 						DefaultWeightedEdge ee = pgraph_neigh.g0.getEdge(p, qIdx2);
 						w2 = pgraph_neigh.g0.getEdgeWeight(ee);
 					}
-					sum += Math.pow(w1 - w2, 2);
+					sum1 += Math.pow(w1 - w2, 2);
 					// System.out.println("adding: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1+"
 					// "+w2);
 				}
@@ -532,28 +503,90 @@ public class TypePropagateMN {
 						// DefaultWeightedEdge ee = pgraph.g0.getEdge(r,qIdx2);
 						// w2 = pgraph_neigh.g0.getEdgeWeight(ee);
 						// System.out.println("adding2: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1);
-						sum += Math.pow(w1, 2);
+						sum1 += Math.pow(w1, 2);
 					}
 				}
 
 			}
 
-			if (TypePropagateMN.lmbda2 == 0) {
-				score1 = 0;
-			} else {
-				score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
-				score1 = Math.max(score1, 0);
-			}
-
 			synchronized (predTypeCompatibility) {
-				predTypeCompatibility.put(key1, score1);
-				predTypeCompatibility.put(key1p, score1);
+				predTypeCompatibility.put(key1, sum1);
+				predTypeCompatibility.put(key1p, sum1);
 			}
 
-			System.out.println("key1: " + key1 + " " + score1);
-			System.out.println("p key1: " + key1p + " " + score1);
 		}
+
+		return sum1;
+
+	}
+
+	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
+	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
+	static double getCompatibleScorePredBased(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r, String pred_r,
+			String pred_rp, String pred_p, String pred_q, String t1_plain, String t2_plain, String tp1_plain,
+			String tp2_plain) {
+
+		if (t1_plain.equals(tp1_plain) && t2_plain.equals(tp2_plain)) {
+			// The second condition below is not quite consistent with out MN, because we
+			// don't have a \beta for RHS. But, we put it
+			// as it's necessary not to rely on the zero similarity which isn't based on the
+			// data. It will converge anyway!
+			if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
+
+				// System.out.println("compscore of graph: " + pgraph.types + " to graph " +
+				// pgraph_neigh.types + " for "
+				// + pred_p + " " + pred_q + " " + 1e-10 + " " + pred_r + " " + pred_rp);
+
+				return 1e-10;// very small epsilon.
+			}
+
+			// TODO: changed, be careful
+			// if (pgraph.pred2node.containsKey(pred_r)) {
+			// // return Math.sqrt(pgraph.pred2node.get(pred_r).getNumNeighs());
+			// return pgraph.pred2node.get(pred_r).getNumNeighs();
+			// }
+			return 1;
+		}
+
+		else if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
+			return 1e-6;// Don't propagate noise! Not consistent with MN again.
+		} else if (PGraph.targetRelsAddedToGraphs.contains(pred_p) || PGraph.targetRelsAddedToGraphs.contains(pred_q)) {
+			return 1e-6;// The neighbor graph hasn't seen any evidence, it's happy to receive main
+						// graph's edges! Not consistent with MN again.
+		} else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
+			return 0;
+		} else if (TypePropagateMN.lmbda2 == 0) {
+			return 0;
+		}
+
+		double sum = getCompatibleScoreSumPredBased(pgraph, pgraph_neigh, rawPred_r, pred_r, pred_p, t1_plain, t2_plain,
+				tp1_plain, tp2_plain);
+
+		double score1;
+
+		if (TypePropagateMN.lmbda2 == 0) {
+			score1 = 0;
+		} else {
+			score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
+			score1 = Math.max(score1, 0);
+		}
+
+		// outgoing
+		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
+		String key1p = rawPred_r + "#" + tp1_plain + "#" + tp2_plain + "#" + t1_plain + "#" + t2_plain + "#";// because
+																												// it's
+																												// symmetric
+																												// for
+																												// g1,//
+																												// g2 or
+																												// g2,
+																												// g1!
+
+//		System.out.println("key1: " + key1 + " " + score1);
+//		System.out.println("p key1: " + key1p + " " + score1);
+
 		return score1;
+
 	}
 
 	void readCompatibles() throws FileNotFoundException {

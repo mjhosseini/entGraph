@@ -31,13 +31,13 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 
 		for (int r = 0; r < gPrev.vertexSet().size(); r++) {
 
-			if (r % numThreads != threadIdx) {
-				continue;
-			}
+//			if (r % numThreads != threadIdx) {
+//				continue;
+//			}
 
 			if (r % 100 == 0) {
 				System.out.println("r: " + r);
-				TypePropagateMN.memStat();
+//				TypePropagateMN.memStat();
 			}
 
 			// graphs having r's pred
@@ -79,7 +79,13 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				// neighGraphs have the rawPred, but we don't know about the exact type
 				// ordering.
 				// So, we try both ways!
+				
 				for (int ngIdx : neighborGraphs) {
+					
+					if (ngIdx%numThreads!=threadIdx) {
+						continue;
+					}
+					
 					PGraph pgraph_neigh = allpGraphs.get(ngIdx);
 					String tp1 = pgraph_neigh.types.split("#")[0];// don't get confused with rp, etc. tp1 is for the
 																	// neigh graph
@@ -119,7 +125,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 						// pred_r(p) are in pgraph. pred_p(q) are in pgraph_neigh
 						// types are t1_r, t2_r and tp1, tp2
 						compScore1 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_r,
-								rawPred_rp, pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, aligned, tp1_plain,
+								pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, tp1_plain,
 								tp2_plain);
 						// compScore1 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 						// TODO: added, be
@@ -151,7 +157,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 					} else {
 						// System.out.println("from label prop2");
 						compScore2 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_r,
-								rawPred_rp, pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, aligned, tp2_plain,
+								pred_r, pred_rp, pred_p, pred_q, t1_r_plain, t2_r_plain, tp2_plain,
 								tp1_plain);
 						// compScore2 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 						// TODO: added, be
@@ -160,7 +166,6 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 
 					propagateOneEdge(pgraph, pgraph_neigh, pred_p, pred_q, sim, compScore2, rawPred_r, rawPred_rp,
 							tp2_plain, tp1_plain, aligned, neighborGraphs, minPairOcc1);
-
 				}
 			}
 		}
@@ -172,9 +177,8 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 			double compScore, String rawPred_p, String rawPred_q, String tp1, String tp2, boolean aligned,
 			Set<Integer> neighborGraphs, int minPairOcc1) {
 		if (pgraph_neigh.pred2node.containsKey(pred_p) && pgraph_neigh.pred2node.containsKey(pred_q)) {
-			// System.out.println("propagating from graph: " + pgraph.types + " to graph " +
-			// pgraph_neigh.types + " for "
-			// + pred_p + " " + pred_q+" "+compScore);
+//			System.out.println("propagating from graph: " + pgraph.types + " to graph " + pgraph_neigh.types + " for "
+//					+ pred_p + " " + pred_q + " " + compScore+" "+sim);
 			int minPairOcc2 = 1;
 			if (TypePropagateMN.sizeBasedPropagation) {
 				minPairOcc2 = Math.min(TypePropagateMN.predToOcc.get(pred_p), TypePropagateMN.predToOcc.get(pred_q));
@@ -217,7 +221,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				//Don't synchronize when we wanna compute sumCoefs!!!
 				double sumCoefs = getSumNeighboringCoefs(pgraph_neigh, rawPred_p, rawPred_q, pred_p, pred_q, tp1, tp2,
 						aligned, neighborGraphs, minPairOcc2);
-				synchronized (edgeStr) {
+				synchronized (pgraph_neigh.edgeToMNWeight) {
 					// if (Double.isNaN(sumCoefs)) {
 					// System.err.println("sum coefs nan: "+edgeStr);
 					// }
@@ -227,8 +231,6 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 					pgraph_neigh.edgeToMNWeight.put(edgeStr, sumCoefs);
 				}
 			}
-			
-
 		}
 	}
 
@@ -278,10 +280,10 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 
 				// It should be originally propagating from pred_r=>pred_rp to pred_rp=>pred_q
 				// but here, we do from pred_p=>pred_q to p1, q1. Doesn't matter!
-				compScore1 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_p, rawPred_q,
-						pred_p, pred_q, p1, q1, tp1, tp2, aligned, t1_plain, t2_plain);
-				compScore2 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_p, rawPred_q,
-						pred_p, pred_q, p2, q2, tp1, tp2, aligned, t2_plain, t1_plain);
+				compScore1 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_p,
+						pred_p, pred_q, p1, q1, tp1, tp2, t1_plain, t2_plain);
+				compScore2 = TypePropagateMN.getCompatibleScorePredBased(pgraph, pgraph_neigh, rawPred_p,
+						pred_p, pred_q, p2, q2, tp1, tp2, t2_plain, t1_plain);
 
 			}
 
