@@ -23,17 +23,17 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 public class PGraph implements Comparable<PGraph>{
 
-	public final static boolean checkFrgVio = true;
-	public final static boolean shouldWrite = true;
+	public static boolean checkFrgVio = true;
+	public static boolean shouldWrite = true;
 	public static boolean emb = false;
 	public static boolean weightEdgeSimilarities = true;
 	public static boolean formBinaryGraph = false;
 	public static boolean transitive = true;
-	public final static int maxNeighs = 1000;// more than 30!
+	public static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
 	public static String suffix = "_sim.txt";
-	static final String embSuffix = "_embsims25.txt";
-	static final String fpath = "../../python/gfiles/ent/ccg5.sim";
+	static String embSuffix = "_embsims25.txt";
+	static String fpath = "../../python/gfiles/ent/ccg5.sim";
 	// static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";//
 	// TODO: update this
 	static final String allExamplesPath = "../../python/gfiles/ent/all_new_comb_rels.txt";// TODO: update this

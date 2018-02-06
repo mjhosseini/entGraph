@@ -196,7 +196,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				double denom = 2 * w_jk * w_kj;
 				
 				//TODO: added, be careful
-				double sumNeighs = pgraph.nodes.get(j).getNumNeighs()+pgraph.nodes.get(k).getNumNeighs();
+//				double sumNeighs = pgraph.nodes.get(j).getNumNeighs()+pgraph.nodes.get(k).getNumNeighs();
 //				denom /= sumNeighs;
 				
 				reflexSumWeights[j] += denom;

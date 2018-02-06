@@ -2,10 +2,13 @@ package data;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -627,6 +630,27 @@ public class Scripts {
 		op.close();
 		br.close();
 	}
+	
+	static void countKeys() throws NumberFormatException, IOException {
+		BufferedReader br = new BufferedReader(new FileReader("MN_keys.txt"));
+		String line = null;
+		
+		int lineNumber = 0;
+		int numOne = 0;
+		
+		while ((line=br.readLine())!=null) {
+			lineNumber++;
+			if (lineNumber<7500000) {
+				continue;
+			}
+			String[] ss = line.split(" ");
+			double key = Float.parseFloat(ss[ss.length-1]);
+			if (key>.999) {
+				numOne++;
+			}
+		}
+		System.out.println(numOne+" "+(lineNumber-7500000));
+	}
 
 	public static void main(String[] args) throws IOException {
 
@@ -636,7 +660,7 @@ public class Scripts {
 		// makeUniqueDS("data/ent/all_new.txt");
 		// swapDS("data/ent/all_new_dir.txt");
 		// swapDS("data/ent/all_new.txt");
-		makeEntTypes();
+//		makeEntTypes();
 		// testEntTypes();
 		// trueCase();
 
@@ -653,6 +677,9 @@ public class Scripts {
 		// postProcess();
 		// normalizeLDAWeights();
 		// makeSNLIFormatJsonAll();
+		
+		countKeys();
+		
 	}
 
 }

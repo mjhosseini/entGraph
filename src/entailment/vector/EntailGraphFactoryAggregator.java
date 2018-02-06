@@ -44,6 +44,7 @@ public class EntailGraphFactoryAggregator {
 	public static boolean isTyped = true;
 	public static boolean figerTypes = true;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
+	public static boolean isGerman = true;
 	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
 	// if it has been already lemmatized in rel extraction. Must be false.
 
@@ -63,7 +64,11 @@ public class EntailGraphFactoryAggregator {
 		if (GBooksCCG) {
 			relAddress = "gbooks_dir/gbooks_ccg.txt";
 			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
-		} else {
+		} else if(isGerman) {
+			relAddress = "binary_relations.json";
+			simsFolder = "typedEntGrDir_German";
+		}
+		else {
 			relAddress = "news_gen8_aida.json";
 			simsFolder = "typedEntGrDir_aida_figer_3_3_g";
 
