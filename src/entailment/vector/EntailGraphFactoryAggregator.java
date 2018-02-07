@@ -49,11 +49,11 @@ public class EntailGraphFactoryAggregator {
 	// if it has been already lemmatized in rel extraction. Must be false.
 
 	public static final boolean normalizePredicate = true;
-	public static final boolean backupToStanNER = true;// You can make this true, but it will take some good time to
+	public static final boolean backupToStanNER = false;// You can make this true, but it will take some good time to
 														// run!
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static final int minArgPairForPred = 3;
-	static final int minPredForArgPair = 3;// min num of unique predicates for
+	static final int minArgPairForPred = 0;
+	static final int minPredForArgPair = 0;// min num of unique predicates for
 											// argpair
 	static final int minPredForArg = -1;// min num of unique predicates for
 
@@ -234,7 +234,7 @@ public class EntailGraphFactoryAggregator {
 		HashSet<String> allTypes = new HashSet<>();
 
 		allTypes.add("thing");
-		if (EntailGraphFactoryAggregator.isTyped) {
+		if (EntailGraphFactoryAggregator.isTyped && !EntailGraphFactoryAggregator.isGerman) {
 			if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 				for (String s : Util.getEntToFigerType().values()) {
 					allTypes.add(s);
@@ -360,6 +360,7 @@ public class EntailGraphFactoryAggregator {
 		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
 			DistrTyping.loadLDATypes();
 		}
+		System.out.println("fileName: "+fileName);
 		agg.runAllEntGrFacts(fileName, "", "", typedEntGrDir);
 
 	}

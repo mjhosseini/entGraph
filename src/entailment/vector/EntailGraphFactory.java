@@ -39,7 +39,7 @@ public class EntailGraphFactory implements Runnable {
 	HashSet<String> similarityFileTypes = new HashSet<>();
 
 	// TODO: remove
-	static PrintStream typedOp;
+	// static PrintStream typedOp;
 	static ConcurrentHashMap<String, Integer> allPredCounts = new ConcurrentHashMap<>();
 	static ConcurrentHashMap<String, String> predToDocument = new ConcurrentHashMap<>();
 	static ConcurrentHashMap<Integer, Map<String, String>> lineIdToStanTypes = new ConcurrentHashMap<>();
@@ -48,18 +48,18 @@ public class EntailGraphFactory implements Runnable {
 																						// lines
 
 	static {
-		try {
 
-			for (int i = 0; i < 20000000; i++) {
-				lineIdSeen.add(0);
-			}
-
-			typedOp = new PrintStream(new File("typedOP.txt"), "UTF-8");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
+		for (int i = 0; i < 20000000; i++) {
+			lineIdSeen.add(0);
 		}
+		// try {
+		//
+		// typedOp = new PrintStream(new File("typedOP.txt"), "UTF-8");
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// } catch (UnsupportedEncodingException e) {
+		// e.printStackTrace();
+		// }
 	}
 
 	// For knowing the ordering: type1, type2 => type1+type2. type2, type1 =>
@@ -132,9 +132,9 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
-//			if (lineNumbers == 100000) {
-//				break;
-//			}
+			// if (lineNumbers == 100000) {
+			// break;
+			// }
 			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
 				continue;
 			}
@@ -143,29 +143,27 @@ public class EntailGraphFactory implements Runnable {
 				ArrayList<String> relStrs = new ArrayList<>();
 				ArrayList<Integer> counts = new ArrayList<>();
 				String newsLine = null;
-				
+
 				if (EntailGraphFactoryAggregator.GBooksCCG) {
 					lineId++;
 					line = line.split("$$")[0];
 					String[] ss = line.split("\t");
 					int count = Integer.parseInt(ss[3]);
-					newsLine = ss[0]+" "+ss[2]+" "+ss[1]+".";
+					newsLine = ss[0] + " " + ss[2] + " " + ss[1] + ".";
 					String rel = ss[4];
 					ss = rel.split(" ");
-					String relStr = "("+ss[0]+"::"+ss[1]+"::"+ss[2]+"::"+ss[4]+"::0::"+ss[3]+")";
+					String relStr = "(" + ss[0] + "::" + ss[1] + "::" + ss[2] + "::" + ss[4] + "::0::" + ss[3] + ")";
 					relStrs.add(relStr);
 					counts.add(count);
-					
+
 					if (EntailGraphFactoryAggregator.backupToStanNER) {
 						lineIdSeen.set(lineId, lineIdSeen.get(lineId) + 1);
 						if (lineIdSeen.get(lineId) == EntailGraphFactoryAggregator.numThreads) {
 							lineIdToStanTypes.remove(lineId);
 						}
 					}
-					
-					
-				}
-				else if (!EntailGraphFactoryAggregator.rawExtractions) {
+
+				} else if (!EntailGraphFactoryAggregator.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 					lineId = jObj.get("lineId").getAsInt();
 
@@ -177,7 +175,7 @@ public class EntailGraphFactory implements Runnable {
 					}
 
 					newsLine = jObj.get("s").getAsString();
-					typedOp.println("line: " + newsLine);
+					// typedOp.println("line: " + newsLine);
 					JsonArray jar = jObj.get("rels").getAsJsonArray();
 					for (int i = 0; i < jar.size(); i++) {
 						JsonObject relObj = jar.get(i).getAsJsonObject();
@@ -193,7 +191,8 @@ public class EntailGraphFactory implements Runnable {
 				}
 
 				// let's see if we have NER ed the line, otherwise, do it
-				if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.figerTypes && lineIdSeen.get(lineId) == 1) {
+				if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.figerTypes
+						&& lineIdSeen.get(lineId) == 1) {
 					// System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
 					Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
 					lineIdToStanTypes.put(lineId, tokenToType);
@@ -218,6 +217,7 @@ public class EntailGraphFactory implements Runnable {
 					}
 					relStr = relStr.substring(1, relStr.length() - 1);
 					String[] parts = relStr.split("::");
+					System.out.println("parts len: "+parts.length+" "+relStr);
 					String pred = parts[0];
 					// System.out.println("now pred: "+pred);
 
@@ -238,9 +238,15 @@ public class EntailGraphFactory implements Runnable {
 						// number normalization:
 
 					}
+
 					String type1 = null, type2 = null;
 
-					if (!EntailGraphFactoryAggregator.useTimeEx) {
+					if (EntailGraphFactoryAggregator.isGerman) {
+						type1 = parts[3].substring(1);
+						type2 = parts[4].substring(1);
+						System.out.println("types german: "+type1+" "+type2);
+					}
+					else if (!EntailGraphFactoryAggregator.useTimeEx) {
 						try {
 							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
 							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
@@ -266,7 +272,7 @@ public class EntailGraphFactory implements Runnable {
 					 * 
 					 * 
 					 */
-					if (EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
+					if (!EntailGraphFactoryAggregator.isGerman && EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
 							&& !acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
 						continue;
@@ -278,7 +284,7 @@ public class EntailGraphFactory implements Runnable {
 					// }
 					// }
 					String[] predicateLemma;
-					if (!EntailGraphFactoryAggregator.rawExtractions) {
+					if (!EntailGraphFactoryAggregator.rawExtractions && !EntailGraphFactoryAggregator.isGerman) {
 						predicateLemma = Util.getPredicateLemma(pred, EntailGraphFactoryAggregator.isCCG);
 					} else {
 						predicateLemma = new String[] { pred, "false" };
@@ -321,7 +327,8 @@ public class EntailGraphFactory implements Runnable {
 
 					// Now we have pred, arg1 and arg2 and type1 and type2
 
-					typedOp.println(pred + "#" + type1 + "#" + type2 + "::" + arg1 + "::" + arg2);
+					// typedOp.println(pred + "#" + type1 + "#" + type2 + "::" + arg1 + "::" +
+					// arg2);
 					if (allPredCounts.containsKey(pred)) {
 						allPredCounts.put(pred, allPredCounts.get(pred) + 1);
 					} else {
@@ -514,7 +521,7 @@ public class EntailGraphFactory implements Runnable {
 				System.err.println("exception for: " + line);
 				e.printStackTrace();
 			}
-			typedOp.println();
+			// typedOp.println();
 		}
 
 		System.err.println("allNNZ: " + EntailGraphFactoryAggregator.allNonZero);
@@ -532,7 +539,7 @@ public class EntailGraphFactory implements Runnable {
 
 		boolean rev = (forceRev || (!thisType.equals(type1 + "#" + type2)) && !type1.equals("") && !type2.equals(""));
 
-		if (!acceptableTypes.contains(thisType)) {
+		if (!EntailGraphFactoryAggregator.isGerman && !acceptableTypes.contains(thisType)) {
 			// System.out.println("returning because not covered: " + thisType +
 			// " " + threadNum);
 			return rev;// this is because of

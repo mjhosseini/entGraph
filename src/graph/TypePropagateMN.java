@@ -33,14 +33,15 @@ public class TypePropagateMN {
 	// public final static float edgeThreshold = -1;// edgeThreshold
 	static int numThreads = 60;
 	static int numIters = 4;
-//	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda = .3;// lmbda for L1 regularization
+	// public static double lmbda = .001;// lmbda for L1 regularization
+	public static double lmbda = .001;// lmbda for L1 regularization
 	public static double lmbda2 = 1.0;
 	public static double tau = 1.0;
 	public static double smoothParam = 5.0;
 	// static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
 	// static final String tPropSuffix = "_tProp_trans_0_.3_obj2_n.txt";
-	static String tPropSuffix = "_tprop_lm1_.3_reg_1.txt";
+	// static String tPropSuffix = "_tprop_lm1_.01_reg_1.txt";
+	static String tPropSuffix = "_tprop_test.txt";
 	public static boolean addTargetRels = false;
 	static boolean predBasedPropagation = true;
 	static boolean sizeBasedPropagation = false;
@@ -204,9 +205,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-//			if (gc == 50) {
-//				break;
-//			}
+			if (gc == 50) {
+				break;
+			}
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -722,11 +723,11 @@ public class TypePropagateMN {
 			}
 
 			// TODO: changed, be careful
-//			if (pgraph.pred2node.containsKey(pred_r)) {
-//				return Math.sqrt(Math.min(pgraph.pred2node.get(pred_r).getNumNeighs(),
-//						pgraph.pred2node.get(pred_rp).getNumNeighs()));
-//				// return pgraph.pred2node.get(pred_r).getNumNeighs();
-//			}
+			// if (pgraph.pred2node.containsKey(pred_r)) {
+			// return Math.sqrt(Math.min(pgraph.pred2node.get(pred_r).getNumNeighs(),
+			// pgraph.pred2node.get(pred_rp).getNumNeighs()));
+			// // return pgraph.pred2node.get(pred_r).getNumNeighs();
+			// }
 			return 1;
 		}
 
@@ -764,11 +765,11 @@ public class TypePropagateMN {
 																												// g2,
 																												// g1!
 
-//		System.out.println("key1: " + key1 + " " + score1);
-//		System.out.println("p key1: " + key1p + " " + score1);
-//
-//		double sum1 = getBeta(pGraphs, rawPred_r, t1_plain, tp1_plain);
-//		System.out.println("sum: " + sum1);
+		System.out.println("key1: " + key1 + " " + score1);
+		System.out.println("p key1: " + key1p + " " + score1);
+
+		double sum1 = getBeta(pGraphs, rawPred_r, t1_plain, tp1_plain);
+		System.out.println("sum: " + sum1);
 
 		return score1;
 
@@ -936,7 +937,5 @@ public class TypePropagateMN {
 		threadPool.awaitTermination(200, TimeUnit.HOURS);
 
 	}
-	
-	
 
 }

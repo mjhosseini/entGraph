@@ -69,8 +69,8 @@ public class Util {
 	static String defaultEntToWikiFName = "entToWiki.txt";
 	static String defaultEntToFigerType = "freebase_types/entity2Types.txt";
 	static Map<String, String> stan2Figer;
-//	public static Map<String, String> entToType = null;
-//	public static Map<String, String> genToType = null;
+	// public static Map<String, String> entToType = null;
+	// public static Map<String, String> genToType = null;
 	// public static Map<String, String> entToWiki = null;
 	private static Map<String, String> entToFigerType = null;
 	private static Map<String, Boolean> entToFigerONLYNE = null;
@@ -93,7 +93,7 @@ public class Util {
 			stan2Figer.put(stans[i], figers[i]);
 		}
 
-//		loadEntGenTypes(defaultEntTypesFName, defaultGenTypesFName);
+		// loadEntGenTypes(defaultEntTypesFName, defaultGenTypesFName);
 		// try {
 		// loadEntToWiki(0);
 		// } catch (IOException e) {
@@ -738,7 +738,7 @@ public class Util {
 						currentNEType = "time";
 					}
 				}
-//				System.out.println(token + " " + currentNEType);
+				// System.out.println(token + " " + currentNEType);
 				tokenToType.put(thisToken, currentNEType);
 				// ret += token.get(LemmaAnnotation.class);
 			}
@@ -859,7 +859,7 @@ public class Util {
 	// backup: should we check genTypes if no entTypes? Mainly good for not
 	// well-formed sentences!
 	// arg must be simple-normalized
-	public static String getType(String arg, boolean isEntity, Map<String,String> tokenToType) {
+	public static String getType(String arg, boolean isEntity, Map<String, String> tokenToType) {
 		if (!EntailGraphFactoryAggregator.isTyped) {
 			return "thing";
 		}
@@ -880,15 +880,15 @@ public class Util {
 			if (!isEntity && entToFigerONLYNE.containsKey(arg) && entToFigerONLYNE.get(arg) == true) {
 				type = "thing";
 			}
-			
-			if (tokenToType!=null && type.equals("thing")) {
+
+			if (tokenToType != null && type.equals("thing")) {
 				String[] ss = arg.split(" ");
 				for (String s : ss) {
 					String typeCand = tokenToType.get(s);
 					if (typeCand != null && !typeCand.equals("thing")) {
 						type = typeCand;
-//						System.out.println("backed up to stan: "+type+" "+arg);
-//						break;
+						// System.out.println("backed up to stan: "+type+" "+arg);
+						// break;
 					}
 				}
 
@@ -896,16 +896,16 @@ public class Util {
 
 			// System.out.println(arg+" "+type);
 			return type;
-		} else {//This must not be used!
+		} else {// This must not be used!
 			String type = null;
 			if (isEntity) {
-//				type = entToType.get(arg);
+				// type = entToType.get(arg);
 				if (type == null || type.equals("none")) {
 					// System.err.println("no type for " + arg1);
 					type = "thing";
 				}
 			} else {
-//				type = genToType.get(arg);
+				// type = genToType.get(arg);
 				if (type == null) {
 					// System.err.println("no type for " + arg1);
 					type = "thing";
@@ -980,21 +980,22 @@ public class Util {
 		entToFigerType = ret;
 	}
 
-//	public static void loadEntGenTypes(String entTypesFName, String genTypesFName) {
-//		try {
-//			entToType = new HashMap<String, String>();// I do this so that other
-//														// threads don't touch
-//														// this!
-//			entToType = loadEntTypes(entTypesFName, true);
-//			genToType = new HashMap<>();
-//			genToType = loadEntTypes(genTypesFName, false);
-//
-//			// entToFigerType = loadFigerTypes(defaultEntToFigerType);
-//
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//	}
+	// public static void loadEntGenTypes(String entTypesFName, String
+	// genTypesFName) {
+	// try {
+	// entToType = new HashMap<String, String>();// I do this so that other
+	// // threads don't touch
+	// // this!
+	// entToType = loadEntTypes(entTypesFName, true);
+	// genToType = new HashMap<>();
+	// genToType = loadEntTypes(genTypesFName, false);
+	//
+	// // entToFigerType = loadFigerTypes(defaultEntToFigerType);
+	//
+	// } catch (IOException e) {
+	// e.printStackTrace();
+	// }
+	// }
 
 	public static Map<String, String> loadEntTypes(String entTypesFName, boolean forEnts) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(entTypesFName));
@@ -1022,9 +1023,9 @@ public class Util {
 		return entToType;
 	}
 
-	static HashMap<String, HashMap<String, String>> loadAidaLinked() throws IOException {
-		String path = "aida/news_linked.json";
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+	static HashMap<String, HashMap<String, String>> loadAidaLinked(String aidaPath) throws IOException {
+
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(aidaPath)));
 		JsonParser jsonParser = new JsonParser();
 		String line;
 		HashMap<String, HashMap<String, String>> artIdToEntToWiki = new HashMap<>();
@@ -1119,14 +1120,17 @@ public class Util {
 	// works for NewsSpike
 	static void convertPredArgsToJson(String[] args) throws IOException {
 		if (args == null || args.length == 0) {
-			args = new String[] { "predArgs_gen.txt", "true", "true", "12000000" };
+			args = new String[] { "predArgs_gen.txt", "true", "true", "12000000", "aida/news_linked.json" };
 		}
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF-8"));
 		boolean shouldLink = Boolean.parseBoolean(args[1]);
 		boolean useContext = Boolean.parseBoolean(args[2]);// aidalight
 		HashMap<String, HashMap<String, String>> artIdToEntToWiki = null;
+
+		String AIDAPath = args[4];
+
 		if (useContext) {
-			artIdToEntToWiki = loadAidaLinked();
+			artIdToEntToWiki = loadAidaLinked(AIDAPath);
 		}
 		System.err.println("useNamedEntities: " + shouldLink);
 		int maxLines = Integer.parseInt(args[3]);
@@ -1943,7 +1947,7 @@ public class Util {
 
 		getSimpleNERType("kansas jayhawks won the game.");
 		getSimpleNERType("prime minister stephen harper");
-		
+
 		// testNERStan();
 
 		// String[] ss = "2013-02-07".split("$");
@@ -1965,7 +1969,7 @@ public class Util {
 		// System.out.println(1d);
 		// readJSONSimple();
 		// convertReleaseToRawJson();
-		// convertPredArgsToJson(args);
+		convertPredArgsToJson(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));
 
