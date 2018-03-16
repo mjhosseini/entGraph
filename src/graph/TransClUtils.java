@@ -12,27 +12,30 @@ import org.jgrapht.DirectedGraph;
 import org.jgrapht.alg.GabowStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 
-public class TNF {
+public class TransClUtils {
 	boolean checkFrgVio;
 	PGraph pgraph;
-	float lmbda;
+	double lmbda;
 	gtGraph scc;
 	int[] node2comp;
 	PrintStream op;
 	int N;
+	static boolean debug = false;
+	ConnectivityChecker connChecker;
 
-	public TNF(PGraph pgraph, PrintStream op, float lmbda, boolean checkFrgVio) {
+	public TransClUtils(PGraph pgraph, PrintStream op, double lmbda, boolean checkFrgVio,
+			ConnectivityChecker connChecker) {
 		this.checkFrgVio = checkFrgVio;
 		this.op = op;
 		this.pgraph = pgraph;
 		this.lmbda = lmbda;
+		this.connChecker = connChecker;
 		List<Edge> sortedEdges = pgraph.getSortedEdges();
-//		System.out.println("heree" + pgraph.nodes.size() + " " + pgraph.sortedEdges);
+		// System.out.println("heree" + pgraph.nodes.size() + " " + pgraph.sortedEdges);
 		this.N = pgraph.nodes.size();
-		if (PGraph.transitive){
-			this.formGraphInit(sortedEdges, this.lmbda);
-		}
-		else{
+		if (PGraph.transitive) {
+			this.HTLFRG(sortedEdges, this.lmbda);
+		} else {
 			this.formGraphPlain(sortedEdges, lmbda);
 		}
 	}
@@ -41,10 +44,21 @@ public class TNF {
 		int idx1 = node2comp[i];
 		int idx2 = node2comp[j];
 		return idx1 == idx2 || scc.containsEdge(idx1, idx2);
-
 	}
 
-	static boolean check_FRG_vio_edge(gtGraph scc, int[] node2comp, int i, int j, boolean checkFrgVio) {
+	static void writeComponent(PGraph pgraph, gtGraph scc, int idx) {
+		System.out.println("component: " + idx);
+		List<Integer> nodesIdxes = scc.comps.get(idx);
+		for (int i : nodesIdxes) {
+			Node n = pgraph.nodes.get(i);
+			System.out.println(n.id);
+		}
+	}
+
+	boolean check_FRG_vio_edge(gtGraph scc, int[] node2comp, int i, int j, boolean checkFrgVio) {
+		if (!checkFrgVio) {
+			return false;
+		}
 		int idx1 = node2comp[i];
 		int idx2 = node2comp[j];
 		assert idx1 != idx2;
@@ -55,7 +69,12 @@ public class TNF {
 				continue;
 			}
 			if (!scc.containsEdge(idx3, idx2) && !scc.containsEdge(idx2, idx3)) {
-				// System.out.println("frg vio: "+idx1+" "+idx2+" "+idx3);
+				if (debug) {
+					System.out.println("frg vio: " + idx1 + " " + idx2 + " " + idx3);
+					writeComponent(pgraph, scc, idx1);
+					writeComponent(pgraph, scc, idx2);
+					writeComponent(pgraph, scc, idx3);
+				}
 				numVio++;
 				if (checkFrgVio) {
 					return true;
@@ -96,6 +115,11 @@ public class TNF {
 				for (int ii : nodes1) {
 					for (int jj : nodes2) {
 						float sim = pgraph.getW(ii, jj);
+						if (connChecker != null) {
+							if (connChecker.isConnected(ii, jj) == 0) {
+								return 0;// We can't do this!
+							}
+						}
 						sumSims += sim - this.lmbda;
 					}
 				}
@@ -118,21 +142,28 @@ public class TNF {
 				}
 			}
 		}
-
-		// System.out.println("sumSims: "+sumSims);
+		if (debug) {
+			System.out.println("sumSims: " + sumSims);
+		}
 
 		if (this.lmbda > 0 && sumSims <= 0) {
 			return 0;
 		} else {
 			boolean loopAdded = false;
 			for (long x : seenEdges) {
-				// System.out.println("set to true");
+				if (debug) {
+					System.out.println("set to true");
+				}
 				idx1 = (int) (x % N);
 				idx2 = (int) (x / N);
-				// System.out.println("adding edge: "+idx1+" "+idx2);
+				if (debug) {
+					System.out.println("adding edge: " + idx1 + " " + idx2);
+				}
 				scc.addEdge(idx1, idx2);
 				if (scc.containsEdge(idx2, idx1)) {
-					// System.out.println("loop added");
+					if (debug) {
+						System.out.println("loop added");
+					}
 					loopAdded = true;
 				}
 			}
@@ -147,11 +178,11 @@ public class TNF {
 
 	}
 
-	void formGraphPlain(List<Edge> sortedEdges, float lmbda) {
+	void formGraphPlain(List<Edge> sortedEdges, double lmbda) {
 		int N = pgraph.nodes.size();
 		this.node2comp = new int[N];
 		this.scc = new gtGraph(DefaultEdge.class);
-		
+
 		for (int i = 0; i < N; i++) {
 			scc.addVertex(i);
 
@@ -163,7 +194,7 @@ public class TNF {
 		}
 
 		for (Edge e : sortedEdges) {
-			float sim = e.sim - lmbda;
+			float sim = e.sim - (float) lmbda;
 			if (sim <= lmbda) {
 				break;
 			}
@@ -173,57 +204,93 @@ public class TNF {
 			scc.addEdge(i, j);
 
 		}
-		
+
 		updateSCC();
 
 	}
 
-	void formGraphInit(List<Edge> sortedEdges, float lmbda) {
+	void HTLFRG(List<Edge> sortedEdges, double lmbda) {
 		int N = pgraph.nodes.size();
 		this.node2comp = new int[N];
 		this.scc = new gtGraph(DefaultEdge.class);
 		for (int i = 0; i < N; i++) {
 			scc.addVertex(i);
-
 			List<Integer> l = new ArrayList<>();
 			l.add(i);
 			scc.comps.add(l);
 			node2comp[i] = i;
-
 		}
 
+		if (connChecker != null) {
+			for (int i = 0; i < N; i++) {
+				for (int j = 0; j < N; j++) {
+					if (connChecker.isConnected(i, j) == 1) {
+						scc.addEdge(i, j);
+					}
+				}
+			}
+			updateSCC();
+		}
+
+		int idx = 0;
+		System.out.println("num all edges: " + sortedEdges.size());
+
 		for (Edge e : sortedEdges) {
-			float sim = e.sim - lmbda;
-			if (sim <= lmbda) {
+			float sim = e.sim - (float) lmbda;
+			if (sim <= 0) {
 				break;
 			}
 			int i = e.i;
 			int j = e.j;
 
-			System.out.println("checking: " + i + " " + j + " " + sim + " " + pgraph.nodes.get(i).id + " "
-					+ pgraph.nodes.get(j).id);
+			if (connChecker != null && connChecker.isConnected(i, j) == 0) {// These are not supposed to be connected
+																			// due to local ILP
+				continue;
+			}
+
+			if (idx % 1000 == 0) {
+				System.out.println(idx+" "+pgraph.name+ " "+ sim);
+			}
+
+			idx++;
+
 			if (isConnectedScc(scc, node2comp, i, j) || (check_FRG_vio_edge(scc, node2comp, i, j, checkFrgVio))) {
 				continue;
 			}
-			System.out.println("no frg vio");
+
+			if (debug) {
+				System.out.println("checking: " + i + " " + j + " " + sim + " " + pgraph.nodes.get(i).id + " "
+						+ pgraph.nodes.get(j).id);
+			}
+
+			if (debug) {
+				System.out.println("no frg vio");
+			}
 			int tr = get_tr_cl_edges_scc(scc, node2comp, i, j);
 			boolean loopAdded = tr == 2;
-			System.out.println("anyAdded: " + (tr > 0));
+			if (debug) {
+				System.out.println("anyAdded: " + (tr > 0));
+			}
 
 			if (loopAdded) {
-				System.out.println("loop added");
+				if (debug) {
+					System.out.println("loop added");
+				}
 				updateSCC();
 			}
 		}
-
 	}
 
 	void updateSCC() {
+		this.scc = updateSCC(scc, node2comp);
+	}
+
+	static gtGraph updateSCC(gtGraph scc, int[] node2comp) {
 		GabowStrongConnectivityInspector<Integer, DefaultEdge> insp = new GabowStrongConnectivityInspector<>(scc);
 		List<Set<Integer>> comps = insp.stronglyConnectedSets();
 
-		gtGraph scc0 = this.scc;
-		this.scc = new gtGraph(DefaultEdge.class);
+		gtGraph scc0 = scc;
+		scc = new gtGraph(DefaultEdge.class);
 		int[] scc0Node2comp = new int[scc0.vertexSet().size()];
 
 		for (int i = 0; i < comps.size(); i++) {
@@ -259,12 +326,17 @@ public class TNF {
 				scc.addEdge(idx, idx2);
 			}
 		}
-
+		return scc;
 	}
 
 	void writeSCC() {
+		writeSCC(scc, lmbda, op, pgraph);
+	}
+
+	// This is usable from outside
+	public static void writeSCC(gtGraph scc, double lmbda, PrintStream op, PGraph pgraph) {
 		// example: person#location_sim.txt
-		op.println("lambda: " + this.lmbda+" N: "+scc.vertexSet().size());
+		op.println("lambda: " + lmbda + " N: " + scc.vertexSet().size());
 		for (int i = 0; i < scc.vertexSet().size(); i++) {
 			op.println("\ncomponent " + i);
 			List<Integer> nodesIdxes = scc.comps.get(i);
@@ -281,6 +353,35 @@ public class TNF {
 			}
 		}
 		op.println("writing Done\n");
+	}
+
+	public static double computeObj(gtGraph scc, PGraph pgraph, double lmbda) {
+		double obj = 0;
+		int idx1 = 0;
+		for (List<Integer> comp : scc.comps) {
+			for (int i : comp) {
+
+				// edges inside the component
+				for (int j : comp) {
+					if (i != j) {
+						obj += (pgraph.getW(i, j) - lmbda);
+					}
+				}
+
+				// edges outside the component
+				for (DefaultEdge e : scc.outgoingEdgesOf(idx1)) {
+					int idx2 = scc.getEdgeTarget(e);
+					if (idx1 != idx2) {
+						for (int j : scc.comps.get(idx2)) {
+							obj += pgraph.getW(i, j) - lmbda;
+						}
+					}
+				}
+			}
+
+			idx1++;
+		}
+		return obj;
 	}
 
 }

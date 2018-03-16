@@ -1,16 +1,20 @@
 package entailment;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.Normalizer;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,7 +32,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.jsoup.Jsoup;
-import org.netlib.lapack.Sspcon;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -53,10 +56,10 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import edu.stanford.nlp.util.logging.RedwoodConfiguration;
 import entailment.entityLinking.SimpleSpot;
 import entailment.stringUtils.RelationString;
 import entailment.vector.EntailGraphFactoryAggregator;
-import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 public class Util {
 
@@ -82,6 +85,8 @@ public class Util {
 	static Logger logger;
 
 	static {
+
+		RedwoodConfiguration.current().clear().apply();
 
 		stan2Figer = new HashMap<>();
 		String[] stans = new String[] { "location", "organization", "date", "number", "person", "misc", "time",
@@ -804,8 +809,8 @@ public class Util {
 		// "/Users/hosseini/Desktop/D/research/release/crawl"));
 		// BufferedReader br = new BufferedReader(new InputStreamReader(
 		// new FileInputStream("data/release/crawl"), "UTF-8"));
-		BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream("/Users/hosseini/Desktop/D/research/release/crawl"), "UTF-8"));
+		BufferedReader br = new BufferedReader(
+				new InputStreamReader(new FileInputStream("data/release/crawlbatched"), "UTF-8"));
 		JsonParser parser = new JsonParser();
 		int lineId = 0;
 		int lineNumber = 0;
@@ -831,8 +836,8 @@ public class Util {
 					myObj.addProperty("date", date);
 					myObj.addProperty("articleId", articleId);
 					myObj.addProperty("lineId", lineId);
-					// System.out.println(myObj);
-					System.out.println(l);
+					System.out.println(myObj);
+					// System.out.println(l);
 					lineId++;
 					// if (lineId%100000==0){
 					// System.err.println(lineId);
@@ -1032,7 +1037,6 @@ public class Util {
 		int lineNumber = 0;
 		while ((line = br.readLine()) != null) {
 			JsonObject jo = jsonParser.parse(line).getAsJsonObject();
-
 			String articleId = jo.get("artId").getAsString();
 			JsonArray ews = jo.get("ew").getAsJsonArray();
 			HashMap<String, String> thisEntToWiki = null;
@@ -1921,6 +1925,18 @@ public class Util {
 		}
 	}
 
+	public static void renewStanfordParser() {
+		Properties props = new Properties();
+		// props.put("annotators",
+		// "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
+		props.put("annotators", "tokenize,ssplit,pos,lemma,ner");
+		// logger = Logger.getLogger(StanfordCoreNLP.class);
+		// logger.setLevel(Level.OFF);
+		// System.out.println("here111");
+		StanfordCoreNLP stanfordPipelineTmp = new StanfordCoreNLP(props);
+		stanPipeline = stanfordPipelineTmp;
+	}
+
 	static void testNERStan() throws FileNotFoundException {
 
 		Scanner sc2 = new Scanner(new File("freebase_types/types.map"));
@@ -1943,10 +1959,54 @@ public class Util {
 		}
 	}
 
-	public static void main(String[] args) throws ParseException, IOException {
+	static void recordStanTypes(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF-8"));
 
-		getSimpleNERType("kansas jayhawks won the game.");
-		getSimpleNERType("prime minister stephen harper");
+		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[1]), "UTF-8"));
+
+		PrintWriter op = new PrintWriter(bw);
+
+		String line;
+		JsonParser jparser = new JsonParser();
+
+		while ((line = br.readLine()) != null) {
+			JsonObject obj = jparser.parse(line).getAsJsonObject();
+			int artId = obj.get("articleId").getAsInt();
+			int lineId = obj.get("lineId").getAsInt();
+			String s = obj.get("s").getAsString();
+			JsonObject stanTypesObj = getStanTypesJson(s, artId, lineId);
+			op.println(stanTypesObj);
+		}
+
+		op.close();
+		br.close();
+
+	}
+
+	static JsonObject getStanTypesJson(String s, int artId, int lineId) throws RemoteException {
+		Map<String, String> tokenToType = getSimpleNERTypeSent(s);
+
+		JsonObject ret = new JsonObject();
+		ret.addProperty("lineId", lineId);
+		ret.addProperty("artId", artId);
+
+		JsonArray ja = new JsonArray();
+		for (String e : tokenToType.keySet()) {
+			JsonObject et = new JsonObject();
+			et.addProperty("e", e);
+			et.addProperty("t", tokenToType.get(e));
+			ja.add(et);
+		}
+
+		ret.add("et", ja);
+		return ret;
+		// System.out.println();
+	}
+
+	public static void main(String[] args) throws ParseException, IOException {
+		// Logger.getRootLogger().setLevel(Level.WARN);
+		// getSimpleNERType("kansas jayhawks won the game.");
+		// getSimpleNERType("prime minister stephen harper");
 
 		// testNERStan();
 
@@ -1970,6 +2030,7 @@ public class Util {
 		// readJSONSimple();
 		// convertReleaseToRawJson();
 		convertPredArgsToJson(args);
+		// recordStanTypes(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));
 

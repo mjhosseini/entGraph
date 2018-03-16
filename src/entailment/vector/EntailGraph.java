@@ -7,15 +7,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class EntailGraph extends SimpleEntailGraph{
+public class EntailGraph extends SimpleEntailGraph {
 
 	// static final int numSimilarsToShow = 40;
-	static final int numSimilarsToShow = 100000000;// inf!
+	static final int numSimilarsToShow = 1000000000;// inf!
 	ArrayList<String> argPairs = new ArrayList<String>();
 	HashMap<String, Integer> argPairToIdx = new HashMap<>();
 	HashMap<Integer, Float> argPairIdxToCount = new HashMap<>();
 	private ArrayList<PredicateVector> pvecs = new ArrayList<PredicateVector>();
-	
+
 	int numTuples;
 	int nnz;
 	PrintStream graphOp1;// This is for writing the predicate vectors
@@ -26,24 +26,22 @@ public class EntailGraph extends SimpleEntailGraph{
 	ArrayList<InvertedIdx> invertedIdxes;
 	boolean unary = false;
 
-	
 	@Override
 	public ArrayList<SimplePredicateVector> getPvecs() {
 		ArrayList<SimplePredicateVector> ret = new ArrayList<>();
-		for (PredicateVector pvec: pvecs){
+		for (PredicateVector pvec : pvecs) {
 			ret.add(pvec);
 		}
 		return ret;
 	}
 
-	public void setPvecs(ArrayList<SimplePredicateVector> pvecs) { 
+	public void setPvecs(ArrayList<SimplePredicateVector> pvecs) {
 		this.pvecs = new ArrayList<>();
-		for (SimplePredicateVector pvec: pvecs){
-			this.pvecs.add((PredicateVector)pvec); 
+		for (SimplePredicateVector pvec : pvecs) {
+			this.pvecs.add((PredicateVector) pvec);
 		}
 	}
 
-	
 	// deletes unnecessary objects!!!
 	void clean1() {
 		this.argPairToIdx = null;
@@ -70,14 +68,14 @@ public class EntailGraph extends SimpleEntailGraph{
 	}
 
 	void processGraph() {
-		
-//		int nnz = 0;
-//		for (PredicateVector pvec: pvecs){
-//			nnz += pvec.argIdxes.size();
-//		}
-//		
-//		System.out.println("nnz0: "+nnz);
-		
+
+		// int nnz = 0;
+		// for (PredicateVector pvec: pvecs){
+		// nnz += pvec.argIdxes.size();
+		// }
+		//
+		// System.out.println("nnz0: "+nnz);
+
 		// System.out.println("process: "+types+" "+writeInfo+" "+writeSims);
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
@@ -126,12 +124,12 @@ public class EntailGraph extends SimpleEntailGraph{
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
-		
+
 		setPvecNorms();
-		
+
 		try {
 			if (writeInfo) {
-				this.graphOp1 = new PrintStream(new File(opFileName + ".txt"));
+				this.graphOp1 = new PrintStream(new File(opFileName + "_rels.txt"));
 			}
 			if (writeSims) {
 				this.graphOp2 = new PrintStream(new File(opFileName + "_sim.txt"));
@@ -188,15 +186,15 @@ public class EntailGraph extends SimpleEntailGraph{
 		long t0 = System.currentTimeMillis();
 		buildInvertedIdx();
 		System.err.println("build inv idx time: " + (System.currentTimeMillis() - t0));
-		
+
 		t0 = System.currentTimeMillis();
 		setAllPMIs();
 		System.err.println("set PMIs time: " + (System.currentTimeMillis() - t0));
 
-		for (PredicateVector pvec: pvecs){
+		for (PredicateVector pvec : pvecs) {
 			pvec.clean();
 		}
-		
+
 		t0 = System.currentTimeMillis();
 		setSimilarVecs();
 		System.err.println("set similar vecs: " + (System.currentTimeMillis() - t0));
@@ -298,19 +296,18 @@ public class EntailGraph extends SimpleEntailGraph{
 			numOperations += numSamples * (numSamples - 1) / 2;
 			nnz += numSamples;
 		}
-		
+
 		this.nnz = nnz;
 		System.err.println("num operations: " + numOperations);
 		System.err.println("nnz: " + nnz);
-		
-//		int nnz2 = 0;
-//		for (PredicateVector pvec: pvecs){
-//			nnz2 += pvec.argIdxes.size();
-//		}
-//		
-//		System.out.println("nnz2: "+nnz2);
-		
-		
+
+		// int nnz2 = 0;
+		// for (PredicateVector pvec: pvecs){
+		// nnz2 += pvec.argIdxes.size();
+		// }
+		//
+		// System.out.println("nnz2: "+nnz2);
+
 		int ii = 0;
 		for (InvertedIdx invIdx : invertedIdxes) {
 			if (ii % 10000 == 0) {
@@ -319,16 +316,16 @@ public class EntailGraph extends SimpleEntailGraph{
 			for (int i = 0; i < invIdx.samplesIdxes.size(); i++) {
 				int pvecIdx1 = invIdx.samplesIdxes.get(i);
 				float val1 = invIdx.vals.get(i);
-				
+
 				float PMI1 = invIdx.PMIs.get(i);
 				String leftInterval1 = invIdx.maxLeftTimes.get(i);
 				String rightInterval1 = invIdx.minRightTimes.get(i);
 				PredicateVector pvec1 = pvecs.get(pvecIdx1);
-				
-				if (val1==0){
-					System.err.println("weird val1: "+pvec1.predicate+" ");
+
+				if (val1 == 0) {
+					System.err.println("weird val1: " + pvec1.predicate + " ");
 				}
-				
+
 				// System.out.println("intervals: "+ pvec1.predicate + " "+
 				// leftInterval1+" "+rightInterval1);
 				for (int j = i + 1; j < invIdx.samplesIdxes.size(); j++) {
@@ -374,11 +371,12 @@ public class EntailGraph extends SimpleEntailGraph{
 					}
 
 					if (EntailGraphFactoryAggregator.allEdgeCounts % 1000000 == 0) {
-						
+
 						int mb = 1024 * 1024;
 						long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
-						
-						System.err.println("alledges: " + EntailGraphFactoryAggregator.allEdgeCounts+" mb: "+usedMb);
+
+						System.err
+								.println("alledges: " + EntailGraphFactoryAggregator.allEdgeCounts + " mb: " + usedMb);
 					}
 
 					pvec2.similarityInfos.get(pvecIdx1).addSims(val1 * val2, val2, PMI2, Math.min(val1, val2),

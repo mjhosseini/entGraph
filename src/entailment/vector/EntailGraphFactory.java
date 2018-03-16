@@ -132,9 +132,14 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
-			// if (lineNumbers == 100000) {
-			// break;
-			// }
+//			if (lineNumbers == 100000) {
+//				break;
+//			}
+			
+			if (lineNumbers%1000000==0 && EntailGraphFactoryAggregator.backupToStanNER) {
+				Util.renewStanfordParser();
+			}
+			
 			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
 				continue;
 			}
@@ -190,14 +195,6 @@ public class EntailGraphFactory implements Runnable {
 					counts.add(Integer.parseInt(ss[3]));
 				}
 
-				// let's see if we have NER ed the line, otherwise, do it
-				if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.figerTypes
-						&& lineIdSeen.get(lineId) == 1) {
-					// System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
-					Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
-					lineIdToStanTypes.put(lineId, tokenToType);
-				}
-
 				// t0 = 0;
 
 				for (int i = 0; i < relStrs.size(); i++) {
@@ -217,14 +214,46 @@ public class EntailGraphFactory implements Runnable {
 					}
 					relStr = relStr.substring(1, relStr.length() - 1);
 					String[] parts = relStr.split("::");
-					System.out.println("parts len: "+parts.length+" "+relStr);
 					String pred = parts[0];
 					// System.out.println("now pred: "+pred);
 
 					if (!Util.acceptablePredFormat(pred, EntailGraphFactoryAggregator.isCCG)) {
 						continue;
 					}
+					
+					
+					String[] predicateLemma;
+					if (!EntailGraphFactoryAggregator.rawExtractions && !EntailGraphFactoryAggregator.isGerman) {
+						predicateLemma = Util.getPredicateLemma(pred, EntailGraphFactoryAggregator.isCCG);
+					} else {
+						predicateLemma = new String[] { pred, "false" };
+					}
+					pred = predicateLemma[0];
 
+					if (EntailGraphFactoryAggregator.onlyDSPreds
+							&& !EntailGraphFactoryAggregator.dsPreds.contains(pred)) {
+						// System.out.println("continue: " + pred);
+						continue;
+					}
+
+					if (pred.equals("")) {
+						continue;
+					}
+
+					if (EntailGraphFactoryAggregator.maxPredsTotal > 0
+							&& !EntailGraphFactoryAggregator.acceptablePreds.contains(pred)) {
+						continue;
+					}
+					
+					//Now, we might need to to backuptoStan. We do this down here to prevent unnecessary overhead!
+					// let's see if we have NER ed the line, otherwise, do it
+					if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.figerTypes
+							&& lineIdSeen.get(lineId) == 1) {
+						// System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
+						Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
+						lineIdToStanTypes.put(lineId, tokenToType);
+					}
+					
 					// We also remove "-" here, because sometimes, we have the
 					// type
 					// without "-". But we didn't remove
@@ -244,9 +273,8 @@ public class EntailGraphFactory implements Runnable {
 					if (EntailGraphFactoryAggregator.isGerman) {
 						type1 = parts[3].substring(1);
 						type2 = parts[4].substring(1);
-						System.out.println("types german: "+type1+" "+type2);
-					}
-					else if (!EntailGraphFactoryAggregator.useTimeEx) {
+						System.out.println("types german: " + type1 + " " + type2);
+					} else if (!EntailGraphFactoryAggregator.useTimeEx) {
 						try {
 							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
 							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
@@ -272,7 +300,8 @@ public class EntailGraphFactory implements Runnable {
 					 * 
 					 * 
 					 */
-					if (!EntailGraphFactoryAggregator.isGerman && EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
+					if (!EntailGraphFactoryAggregator.isGerman
+							&& EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
 							&& !acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
 						continue;
@@ -283,23 +312,8 @@ public class EntailGraphFactory implements Runnable {
 					// parts[j] = Util.normalizeArg(parts[j]);
 					// }
 					// }
-					String[] predicateLemma;
-					if (!EntailGraphFactoryAggregator.rawExtractions && !EntailGraphFactoryAggregator.isGerman) {
-						predicateLemma = Util.getPredicateLemma(pred, EntailGraphFactoryAggregator.isCCG);
-					} else {
-						predicateLemma = new String[] { pred, "false" };
-					}
-					pred = predicateLemma[0];
+					
 
-					if (EntailGraphFactoryAggregator.onlyDSPreds
-							&& !EntailGraphFactoryAggregator.dsPreds.contains(pred)) {
-						// System.out.println("continue: " + pred);
-						continue;
-					}
-
-					if (pred.equals("")) {
-						continue;
-					}
 					// System.out.println("normalized: "+predicateLemma[0]);
 					// String pred0 = pred;
 
@@ -1237,6 +1251,7 @@ public class EntailGraphFactory implements Runnable {
 	void setAcceptableTypes(HashSet<String> acceptableTypes) {
 		this.acceptableTypes = acceptableTypes;
 	}
+	
 
 	public static void main(String[] args) throws JsonSyntaxException, IOException {
 		String fileName;

@@ -30,11 +30,11 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 		// [(w_ik-w_jk)^2+(w_ki-w_kj)^2]
 
 		for (int j = 0; j < gPrev.vertexSet().size(); j++) {
-			
+
 			if (j % numThreads != threadIdx) {
 				continue;
 			}
-			
+
 			if ((j / numThreads) % 100 == 0) {
 				System.out.println("3 j: " + j + " " + pgraph.name);
 			}
@@ -55,7 +55,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				if (w_ji <= 0 || w_ij <= 0) {
 					continue;
 				}
-				
+
 				if (!TypePropagateMN.obj1) {
 					w_ij += TypePropagateMN.tau;
 					w_ji += TypePropagateMN.tau;
@@ -98,7 +98,9 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					}
 
 					numerator -= w_ji * Math.pow(w_ki - w_kj, 2);
-//					System.out.println("numerator small 3 j: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(k).id+" "+w_ji * Math.pow(w_ki - w_kj, 2));
+					// System.out.println("numerator small 3 j: "+pgraph.nodes.get(i).id+"
+					// "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(k).id+" "+w_ji * Math.pow(w_ki
+					// - w_kj, 2));
 				}
 
 				// Now, form i's out \\union j's out
@@ -129,7 +131,9 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					}
 
 					numerator -= w_ji * Math.pow(w_ik - w_jk, 2);
-//					System.out.println("numerator small 3 j: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(k).id+" "+w_ji * Math.pow(w_ik - w_jk, 2));
+					// System.out.println("numerator small 3 j: "+pgraph.nodes.get(i).id+"
+					// "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(k).id+" "+w_ji * Math.pow(w_ik
+					// - w_jk, 2));
 				}
 
 				LabelPropagateMN.numOperations += e_incoming_i.size() + e_incoming_j.size() + e_outgoing_i.size()
@@ -142,12 +146,13 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					System.err.println("numerator >0, how??");
 					System.exit(0);
 				}
-				
-//				System.out.println("numerator 3 j: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+numerator);
-				
-				//TODO: added, be careful
-//				numerator/=(pgraph.nodes.get(i).getNumNeighs()+pgraph.nodes.get(j).getNumNeighs());
-				
+
+				// System.out.println("numerator 3 j: "+pgraph.nodes.get(i).id+"
+				// "+pgraph.nodes.get(j).id+" "+numerator);
+
+				// TODO: added, be careful
+				// numerator/=(pgraph.nodes.get(i).getNumNeighs()+pgraph.nodes.get(j).getNumNeighs());
+
 				LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, i, j, numerator, 0);
 			}
 		}
@@ -187,21 +192,20 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				if (w_jk <= 0 || w_kj <= 0) {
 					continue;
 				}
-				
+
 				if (!TypePropagateMN.obj1) {
 					w_jk += TypePropagateMN.tau;
 					w_kj += TypePropagateMN.tau;
 				}
-				
+
 				double denom = 2 * w_jk * w_kj;
-				
-				//TODO: added, be careful
-//				double sumNeighs = pgraph.nodes.get(j).getNumNeighs()+pgraph.nodes.get(k).getNumNeighs();
-//				denom /= sumNeighs;
-				
+
+				// TODO: added, be careful
+				// double sumNeighs =
+				// pgraph.nodes.get(j).getNumNeighs()+pgraph.nodes.get(k).getNumNeighs();
+				// denom /= sumNeighs;
+
 				reflexSumWeights[j] += denom;
-				
-				
 
 				// (1) in formulation
 				for (DefaultWeightedEdge e : e_incoming_k) {
@@ -215,9 +219,10 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					double numerator = denom * w_ik;
 
 					// nzijs.add(i + "#" + j);
-					
-//					System.out.println("numerator 1 k: "+pgraph.nodes.get(i).id+" "+pgraph.nodes.get(j).id+" "+ pgraph.nodes.get(k).id+" "+ numerator);
-					
+
+					// System.out.println("numerator 1 k: "+pgraph.nodes.get(i).id+"
+					// "+pgraph.nodes.get(j).id+" "+ pgraph.nodes.get(k).id+" "+ numerator);
+
 					LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, i, j, numerator, 0);// save all denoms for
 																								// later!
 				}
@@ -233,8 +238,9 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					// nzijs.add(j + "#" + i);
 
 					double numerator = denom * w_ki;
-					
-//					System.out.println("numerator 2 k: "+pgraph.nodes.get(j).id+" "+pgraph.nodes.get(i).id+" "+ pgraph.nodes.get(k).id+" "+numerator);
+
+					// System.out.println("numerator 2 k: "+pgraph.nodes.get(j).id+"
+					// "+pgraph.nodes.get(i).id+" "+ pgraph.nodes.get(k).id+" "+numerator);
 
 					LabelPropagationMNWithinGraph.addNumeratorDenom(pgraph, j, i, numerator, 0);// save all denoms for
 																								// later!
@@ -285,7 +291,6 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 
 		if (numerator != 0) {
 			synchronized (gMN) {
-
 				if (!gMN.containsEdge(i, j)) {
 					ee = gMN.addEdge(i, j);
 					// This means the edges hasn't been added in the typeProp phase, so add it's
@@ -297,7 +302,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 						// w = pgraph.g0.getEdgeWeight(e0);
 
 						System.err.println("g0 has the edge, but it hasn't been propagated!!!");
-						System.exit(1);
+//						System.exit(1);
 					}
 					gMN.setEdgeWeight(ee, w);
 					TypePropagateMN.allPropEdges++;

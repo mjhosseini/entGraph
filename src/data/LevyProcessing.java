@@ -80,7 +80,7 @@ public class LevyProcessing {
 		PrintWriter train = new PrintWriter(root + "train1.txt");
 		PrintWriter dev = new PrintWriter(root + "dev1.txt");
 		PrintWriter test = new PrintWriter(root + "test1.txt");
-
+		
 		int ds = -1;
 		String qt_qp = "";
 

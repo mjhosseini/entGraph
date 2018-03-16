@@ -35,14 +35,14 @@ import it.cnr.isti.hpc.dexter.rest.domain.SpottedDocument;
 public class LinesHandler {
 	final int maxLinesToRun = 100000;// This is because of the memory leak in
 									// easyCCG
-	final int numThreads = 1;
+	final int numThreads = 70;
 	final int maxMBallowd = 14000;
 //	final int maxMBallowd = 140;
 	int numPortionsToSkip;
 	BufferedReader br;
 	int lineNumber;
 	ThreadPoolExecutor threadPool;
-	public static boolean convToEntityLinked = false;
+	public static boolean convToEntityLinked = false;//Must be always false, we do linking separately!
 	PrintStream opJson;
 	BufferedWriter opEnts;
 	BufferedWriter opMainStrs;
@@ -181,7 +181,9 @@ public class LinesHandler {
 				if (lineNumber < lineOffset) {
 					continue;
 				}
-
+				if (line.length()>100000) {
+					System.err.println("very long line, not processing: "+line);
+				}
 				if (lineNumber % 1000 == 0) {
 					System.err.println(lineNumber);
 				}

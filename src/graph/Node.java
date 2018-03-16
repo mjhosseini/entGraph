@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 public class Node {
-	int idx;
-	String id;
-	List<Oedge> oedges;
-	Map<Integer, Oedge> idx2oedges;
+	public int idx;
+	public String id;
+	public List<Oedge> oedges;
+	public Map<Integer, Oedge> idx2oedges;
 	private int numNeighs = -1;
 
 	public Node(int idx, String id) {

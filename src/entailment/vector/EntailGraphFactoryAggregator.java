@@ -1,18 +1,27 @@
 package entailment.vector;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
@@ -44,7 +53,7 @@ public class EntailGraphFactoryAggregator {
 	public static boolean isTyped = true;
 	public static boolean figerTypes = true;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
-	public static boolean isGerman = true;
+	public static boolean isGerman = false;
 	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
 	// if it has been already lemmatized in rel extraction. Must be false.
 
@@ -52,10 +61,17 @@ public class EntailGraphFactoryAggregator {
 	public static final boolean backupToStanNER = false;// You can make this true, but it will take some good time to
 														// run!
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static final int minArgPairForPred = 0;
-	static final int minPredForArgPair = 0;// min num of unique predicates for
-											// argpair
+	static int minArgPairForPred = 10;
+	static int minPredForArgPair = 10;// min num of unique predicates for
+										// argpair
+	public static int maxPredsTotal = -1;
+	public static HashSet<String> acceptablePreds;
 	static final int minPredForArg = -1;// min num of unique predicates for
+	
+	static final int numThreads = 16;
+
+	static final boolean writePMIorCount = false;// false:count, true: PMI
+
 
 	static final String relAddress;
 	static final String simsFolder;
@@ -64,20 +80,111 @@ public class EntailGraphFactoryAggregator {
 		if (GBooksCCG) {
 			relAddress = "gbooks_dir/gbooks_ccg.txt";
 			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
-		} else if(isGerman) {
+		} else if (isGerman) {
 			relAddress = "binary_relations.json";
 			simsFolder = "typedEntGrDir_German";
-		}
-		else {
+		} else {
 			relAddress = "news_gen8_aida.json";
-			simsFolder = "typedEntGrDir_aida_figer_3_3_g";
+			// simsFolder = "typedEntGrDir_aida_figer_3_3_g";
+			simsFolder = "typedEntGrDir_aida_figer_10_10";
+		}
+
+		if (maxPredsTotal != -1) {// we should just look at maxPT predicates, no other cutoff
+			minArgPairForPred = 0;
+			minPredForArgPair = 0;
+
+			try {
+				formAcceptablePreds();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 		}
+
 	}
 
-	static final int numThreads = 1;
+	// a quick scan over the corpus and find the highest counts
+	static void formAcceptablePreds() throws IOException {
+		acceptablePreds = new HashSet<>();
+		Map<String, Integer> relCounts = new HashMap<String, Integer>();
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relAddress), "UTF-8"));
 
-	static final boolean writePMIorCount = false;// false:count, true: PMI
+		int lineNumbers = 0;
+		JsonParser jsonParser = new JsonParser();
+
+		// long t0;
+		// long sharedTime = 0;
+
+		String line;
+		while ((line = br.readLine()) != null) {
+			lineNumbers++;
+//			if (lineNumbers == 100000) {
+//				break;
+//			}
+			if (lineNumbers % 100000 == 0) {
+				System.out.println("quick scan: " + lineNumbers);
+			}
+			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
+				continue;
+			}
+			try {
+				ArrayList<String> relStrs = new ArrayList<>();
+
+				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
+
+				// typedOp.println("line: " + newsLine);
+				JsonArray jar = jObj.get("rels").getAsJsonArray();
+				for (int i = 0; i < jar.size(); i++) {
+					JsonObject relObj = jar.get(i).getAsJsonObject();
+					String relStr = relObj.get("r").getAsString();
+					relStrs.add(relStr);
+					relStr = relStr.substring(1, relStr.length() - 1);
+					String[] parts = relStr.split("::");
+					String pred = parts[0];
+
+					if (!Util.acceptablePredFormat(pred, EntailGraphFactoryAggregator.isCCG)) {
+						continue;
+					}
+
+					String[] predicateLemma;
+					if (!EntailGraphFactoryAggregator.isGerman) {
+						predicateLemma = Util.getPredicateLemma(pred, EntailGraphFactoryAggregator.isCCG);
+					} else {
+						predicateLemma = new String[] { pred, "false" };
+					}
+					pred = predicateLemma[0];
+
+					if (pred.equals("")) {
+						continue;
+					}
+
+					if (!relCounts.containsKey(pred)) {
+						relCounts.put(pred, 1);
+					} else {
+						relCounts.put(pred, relCounts.get(pred) + 1);
+					}
+
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		List<SimpleSpot> ss = new ArrayList<>();
+		for (String pred : relCounts.keySet()) {
+			ss.add(new SimpleSpot(pred, relCounts.get(pred)));
+		}
+
+		Collections.sort(ss, Collections.reverseOrder());
+		System.out.println("all acceptable preds:");
+		for (int i = 0; i < maxPredsTotal; i++) {
+			SimpleSpot s = ss.get(i);
+			System.out.println(s.spot + " " + s.count);
+			acceptablePreds.add(s.spot);
+		}
+		br.close();
+	}
 
 	static int allNonZero = 0;
 	static int allEdgeCounts = 0;
@@ -225,7 +332,6 @@ public class EntailGraphFactoryAggregator {
 		for (String pred : EntailGraphFactory.predToDocument.keySet()) {
 			op.println(pred + "\tX\t" + EntailGraphFactory.predToDocument.get(pred).trim());
 		}
-
 		op.close();
 	}
 
@@ -360,7 +466,7 @@ public class EntailGraphFactoryAggregator {
 		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
 			DistrTyping.loadLDATypes();
 		}
-		System.out.println("fileName: "+fileName);
+		System.out.println("fileName: " + fileName);
 		agg.runAllEntGrFacts(fileName, "", "", typedEntGrDir);
 
 	}

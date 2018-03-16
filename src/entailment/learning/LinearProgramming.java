@@ -20,8 +20,8 @@ public class LinearProgramming {
 		int Ncol, j, ret = 0;
 
 		/*
-		 * We will build the model row by row So we start with creating a model
-		 * with 0 rows and 2 columns
+		 * We will build the model row by row So we start with creating a model with 0
+		 * rows and 2 columns
 		 */
 		Ncol = 2; /* there are two variables in the model */
 
@@ -35,15 +35,13 @@ public class LinearProgramming {
 
 		if (ret == 0) {
 			/*
-			 * let us name our variables. Not required, but can be useful for
-			 * debugging
+			 * let us name our variables. Not required, but can be useful for debugging
 			 */
 			lp.setColName(1, "x");
 			lp.setColName(2, "y");
 
 			lp.setAddRowmode(true); /*
-									 * makes building the model faster if it is
-									 * done rows by row
+									 * makes building the model faster if it is done rows by row
 									 */
 
 			/* construct first row (120 x + 210 y <= 15000) */
@@ -89,8 +87,7 @@ public class LinearProgramming {
 
 		if (ret == 0) {
 			lp.setAddRowmode(false); /*
-										 * rowmode should be turned off again when
-										 * done building the model
+										 * rowmode should be turned off again when done building the model
 										 */
 
 			/* set the objective function (143 x + 60 y) */
@@ -111,8 +108,7 @@ public class LinearProgramming {
 			lp.setMaxim();
 
 			/*
-			 * just out of curioucity, now generate the model in lp format in
-			 * file model.lp
+			 * just out of curioucity, now generate the model in lp format in file model.lp
 			 */
 			lp.writeLp("model.lp");
 
@@ -153,8 +149,8 @@ public class LinearProgramming {
 		int Ncol, j, ret = 0;
 
 		/*
-		 * We will build the model row by row So we start with creating a model
-		 * with 0 rows and 2 columns
+		 * We will build the model row by row So we start with creating a model with 0
+		 * rows and 2 columns
 		 */
 		Ncol = 2; /* there are two variables in the model */
 
@@ -177,8 +173,7 @@ public class LinearProgramming {
 		// lp.setColName(2, "y");
 
 		lp.setAddRowmode(true); /*
-								 * makes building the model faster if it is done
-								 * rows by row
+								 * makes building the model faster if it is done rows by row
 								 */
 
 		// --------------------------------------------------
@@ -229,8 +224,7 @@ public class LinearProgramming {
 		lp.setMaxim();
 
 		/*
-		 * just out of curioucity, now generate the model in lp format in file
-		 * model.lp
+		 * just out of curioucity, now generate the model in lp format in file model.lp
 		 */
 		/// lp.writeLp("model.lp");
 
@@ -440,13 +434,12 @@ public class LinearProgramming {
 			// new LinearProgramming().execute();
 			LinearProgramming lp = new LinearProgramming(6);
 			/*
-			 * double p[] = {.1, .3, .2, .05, .3, .05}; lp.addProbs(p); p = new
-			 * double[] {.25, .15, .1, .05, .05, .4}; lp.addProbs(p); p = new
-			 * double[] {.21, .20, .19, .20, .1, .1}; lp.addProbs(p); /* double
-			 * p[] = {-2.3, -1.2, -1.6, -3, -1.2, -3}; lp.addProbs(p); p = new
-			 * double[] {-1.39, -1.9, -2.3, -3, -3, -.91}; lp.addProbs(p); p =
-			 * new double[] {-1.56, -1.61, -1.66, -1.61, -2.3, -2.3};
-			 * lp.addProbs(p); lp.addTransitiveConstraint(5, 12, 14);
+			 * double p[] = {.1, .3, .2, .05, .3, .05}; lp.addProbs(p); p = new double[]
+			 * {.25, .15, .1, .05, .05, .4}; lp.addProbs(p); p = new double[] {.21, .20,
+			 * .19, .20, .1, .1}; lp.addProbs(p); /* double p[] = {-2.3, -1.2, -1.6, -3,
+			 * -1.2, -3}; lp.addProbs(p); p = new double[] {-1.39, -1.9, -2.3, -3, -3,
+			 * -.91}; lp.addProbs(p); p = new double[] {-1.56, -1.61, -1.66, -1.61, -2.3,
+			 * -2.3}; lp.addProbs(p); lp.addTransitiveConstraint(5, 12, 14);
 			 */
 
 			double p[] = { -34.20010312954961, -44.687800075167246, -37.20647984488537, -41.33895209484322,

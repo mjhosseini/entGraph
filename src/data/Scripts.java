@@ -630,26 +630,93 @@ public class Scripts {
 		op.close();
 		br.close();
 	}
-	
+
 	static void countKeys() throws NumberFormatException, IOException {
 		BufferedReader br = new BufferedReader(new FileReader("MN_keys.txt"));
 		String line = null;
-		
+
 		int lineNumber = 0;
 		int numOne = 0;
-		
-		while ((line=br.readLine())!=null) {
+
+		while ((line = br.readLine()) != null) {
 			lineNumber++;
-			if (lineNumber<7500000) {
+			if (lineNumber < 7500000) {
 				continue;
 			}
 			String[] ss = line.split(" ");
-			double key = Float.parseFloat(ss[ss.length-1]);
-			if (key>.999) {
+			double key = Float.parseFloat(ss[ss.length - 1]);
+			if (key > .999) {
 				numOne++;
 			}
 		}
-		System.out.println(numOne+" "+(lineNumber-7500000));
+		System.out.println(numOne + " " + (lineNumber - 7500000));
+	}
+
+	static void dumpGoodLines() throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("predArgsC_gen.txt"));
+		String line;
+		
+		boolean shouldWrite = true;
+		String prevMainLine = "";
+		while ((line=br.readLine())!=null) {
+			if (line.startsWith("#line: ")) {
+				prevMainLine = line;
+			}
+			else if(line.startsWith("#lineId")) {
+				try {
+					int lineId = Integer.parseInt(line.split(" ")[1]);
+					if (lineId<110000000) {
+						System.out.println(prevMainLine);
+						System.out.println(line);
+						shouldWrite = true;
+					}
+					else {
+						shouldWrite = false;
+					}
+				} catch (Exception e) {
+					shouldWrite = false;
+				}
+			}
+			else {
+				if (shouldWrite) {
+					System.out.println(line);
+				}
+			}
+		}
+		br.close();
+	}
+	
+	static void findLastRead() throws IOException {// because of some memory overload, I needed this function. Not
+													// important, though
+		BufferedReader br = new BufferedReader(new FileReader("predArgsC_gen.txt"));
+		String line;
+		boolean[] seenIdxes = new boolean[130000000];
+		int idx = 0;
+		while ((line = br.readLine()) != null) {
+			if (line.startsWith("#lineId:")) {
+				try {
+					int lineId = Integer.parseInt(line.split(" ")[1]);
+					seenIdxes[lineId] = true;
+					idx++;
+					if (idx % 100000 == 0) {
+						System.out.println(idx);
+					}
+				} catch (Exception e) {
+					System.err.println("exception for: " + line);
+				}
+
+			}
+		}
+
+		int n = 0;
+		for (int i = 0; i < seenIdxes.length - 1; i++) {
+			if (!seenIdxes[i + 1]) {
+				n = i;
+				System.out.println("N: " + n);
+			}
+		}
+
+		br.close();
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -660,7 +727,7 @@ public class Scripts {
 		// makeUniqueDS("data/ent/all_new.txt");
 		// swapDS("data/ent/all_new_dir.txt");
 		// swapDS("data/ent/all_new.txt");
-//		makeEntTypes();
+		// makeEntTypes();
 		// testEntTypes();
 		// trueCase();
 
@@ -677,9 +744,12 @@ public class Scripts {
 		// postProcess();
 		// normalizeLDAWeights();
 		// makeSNLIFormatJsonAll();
-		
-		countKeys();
-		
+
+		// countKeys();
+
+//		findLastRead();
+		dumpGoodLines();
+
 	}
 
 }

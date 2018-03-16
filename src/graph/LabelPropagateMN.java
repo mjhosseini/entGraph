@@ -125,6 +125,7 @@ public class LabelPropagateMN implements Runnable {
 			// Parallelize inside a graph (we only parallelize for large graphs!)
 			int sortIdx = pgraph.sortIdx;
 			int numThreadsBetweenGraph = (sortIdx < 10) ? 10 : (sortIdx < 15 ? 5 : 1);
+//			int numThreadsBetweenGraph = 1;
 			System.out.println("numThreadsBetweenGraph: " + pgraph.name + " " + numThreadsBetweenGraph);
 
 			final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreadsBetweenGraph);

@@ -151,26 +151,25 @@ public class PredicateArgumentExtractor implements Runnable {
 	// Do your best to find a good one. That means, rel, arg1, arg2 be different
 	// indexes
 	// dsStr,argMatch?
-	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP, boolean debug)
-			throws ArgumentValidationException, IOException, InterruptedException {
+	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP,
+			boolean debug) throws ArgumentValidationException, IOException, InterruptedException {
 		// System.out.println(text);
 		String ret = "";
 		int syntaxIdx = 0;
 		boolean partlyMatched = false;
-		
-		
+
 		text = Util.preprocess(text);
 		String sentence = text;
 		String mySent = "{\"sentence\" : \"" + sentence + "\"}";
 		List<List<LexicalGraph>> allGraphs = parser.processText(mySent);
-		
-		if (allGraphs.size()==0) {
+
+		if (allGraphs.size() == 0) {
 			return new String[] { ret, "false" };
 		}
-		
-//		System.out.println("num syn parses: "+allGraphs.get(0).size());
 
-		while (syntaxIdx<allGraphs.get(0).size()) {
+		// System.out.println("num syn parses: "+allGraphs.get(0).size());
+
+		while (syntaxIdx < allGraphs.get(0).size()) {
 			String[] predArgsStrs = extractPredArgsStrs(text, syntaxIdx, acceptNP, true, allGraphs);
 			String[] dsStrs = predArgsStrs[2].split("\n");// This might have
 															// multiple
@@ -191,8 +190,8 @@ public class PredicateArgumentExtractor implements Runnable {
 				System.out.println(text);
 				System.out.println("dsStrs: " + predArgsStrs[2]);
 			}
-			
-			arg1 = Util.getLemma(arg1).replace("_", " ");//ADDED 14 Jan 18
+
+			arg1 = Util.getLemma(arg1).replace("_", " ");// ADDED 14 Jan 18
 			arg2 = Util.getLemma(arg2).replace("_", " ");
 			for (String cand : dsStrs) {
 				if (debug) {
@@ -215,11 +214,11 @@ public class PredicateArgumentExtractor implements Runnable {
 
 				if (thisMatch) {
 					if (debug) {
-						System.out.println("matched for: " + cand + " " + arg1 + " " + arg2+" "+thisArgs[0]);
+						System.out.println("matched for: " + cand + " " + arg1 + " " + arg2 + " " + thisArgs[0]);
 					}
 				} else {
 					if (debug) {
-						System.out.println("nope: " + cand + " " + arg1 + " " + arg2+" "+thisArgs[0]);
+						System.out.println("nope: " + cand + " " + arg1 + " " + arg2 + " " + thisArgs[0]);
 					}
 				}
 
@@ -296,6 +295,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		if (lemmatizePred) {
 			leftPred = leftPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 		}
+
 		// System.out.println("leftPred: " + leftPred + " "
 		// + leftPred.replaceFirst(edge.getMediator().getWord(),
 		// edge.getMediator().getLemma()));
@@ -303,6 +303,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		if (lemmatizePred) {
 			rightPred = rightPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 		}
+
 		// System.out.println("rightPred: " + rightPred + " "
 		// + rightPred.replaceFirst(edge.getMediator().getWord(),
 		// edge.getMediator().getLemma()));
@@ -311,8 +312,8 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	// syntaxIdx means what syntactic parse we're interested in. Default is 0
 	// (the best one), but sometimes we wanna look at others too!
-	public String[] extractPredArgsStrs(String text, int syntaxIdx, boolean acceptNP, boolean acceptGG, List<List<LexicalGraph>> allGraphs)
-			throws ArgumentValidationException, IOException, InterruptedException {
+	public String[] extractPredArgsStrs(String text, int syntaxIdx, boolean acceptNP, boolean acceptGG,
+			List<List<LexicalGraph>> allGraphs) throws ArgumentValidationException, IOException, InterruptedException {
 		String mainStr = "";
 		String mainStrOnlyNEs = "";
 		String dsStr = "";// For very simple sentences with only one expected
@@ -321,11 +322,9 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		// Gparser does the split itself
 		// System.out.println("before: " + text);
-		
-		
 
 		// // long t0 = System.currentTimeMillis();
-		if (allGraphs==null) {
+		if (allGraphs == null) {
 			text = Util.preprocess(text);
 			String sentence = text;
 			String mySent = "{\"sentence\" : \"" + sentence + "\"}";
@@ -363,6 +362,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				// mainStr += ungroundedGraph+"\n";
 				// mainStr += ungroundedGraph.getSyntacticParse() + "\n";
 				String syntacticParse = ungroundedGraph.getSyntacticParse();
+
 				// System.out.println(syntacticParse);
 
 				if (!acceptNP && syntacticParse.startsWith("(<T NP")) {
@@ -426,7 +426,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					// edge.getMediator().getWord());
 
 					// let's fix the particle verbs
-					String[] eventTypeStr = getEventTypeStr(ungroundedGraph, idx2Node, eventIndex);
+					String[] eventTypeStr = getEventTypeStr(ungroundedGraph, idx2Node, eventIndex, edge);
 					String eventTypeStrParticle = eventTypeStr[0];
 					String eventTypeStrNeg = eventTypeStr[1];
 					if (eventTypeStrNeg.equals("NEG")) {
@@ -434,8 +434,14 @@ public class PredicateArgumentExtractor implements Runnable {
 					}
 					if (!eventTypeStrParticle.equals("")) {
 						String eventStr = edge.getMediator().getWord();
+						if (lemmatizePred) {
+							eventStr = edge.getMediator().getLemma();
+						}
+
 						// mainStr += "replacing: " + eventStr + " " +
 						// eventTypeStr + "\n";
+						// System.out.println("replacing: " + eventStr + " " + eventTypeStrParticle +
+						// "\n");
 						leftPred = leftPred.replace(eventStr, eventTypeStrParticle);
 						rightPred = rightPred.replace(eventStr, eventTypeStrParticle);
 					}
@@ -766,9 +772,10 @@ public class PredicateArgumentExtractor implements Runnable {
 			// false);
 			if (shouldAdd) {
 				relInfos.add(relInfo0);
-//				System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
-//				System.out.println(edge2.getMediator().getLemma() + " " + edge2.getMediator().getPos() + " "
-//						+ lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+				// System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
+				// System.out.println(edge2.getMediator().getLemma() + " " +
+				// edge2.getMediator().getPos() + " "
+				// + lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
 			} else {
 				// System.out.println("not adding: "+relInfo0.mainStr);
 			}
@@ -857,7 +864,8 @@ public class PredicateArgumentExtractor implements Runnable {
 	}
 
 	// used for particle verbs
-	String[] getEventTypeStr(LexicalGraph ungroundedGraph, HashMap<Integer, LexicalItem> idx2Node, int eventIndex) {
+	String[] getEventTypeStr(LexicalGraph ungroundedGraph, HashMap<Integer, LexicalItem> idx2Node, int eventIndex,
+			Edge<LexicalItem> edge) {
 		String eventTypeStrParticle = "";
 		String eventTypeStrNegation = "";
 		if (idx2Node.get(eventIndex).getPos().startsWith("VB")) {
@@ -872,6 +880,11 @@ public class PredicateArgumentExtractor implements Runnable {
 					} else {
 						eventTypeStrParticle = type.getEntityType().toString();
 						eventTypeStrParticle = eventTypeStrParticle.substring(0, eventTypeStrParticle.length() - 4);
+
+						if (lemmatizePred) {
+							eventTypeStrParticle = eventTypeStrParticle
+									.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
+						}
 						break;
 					}
 				}
@@ -1151,11 +1164,11 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
-//		String s = "Barack Obama is not against all wars.";
-		String s = "place is celebrating event";
-//		String s = "location_1 be combined with location_2";
-//		String s = "drug_1 should be taken by drug_2";
-//		String s = "disease is increasing in country";
+		// String s = "Barack Obama is not against all wars.";
+		String s = "John picked up the book.";
+		// String s = "location_1 be combined with location_2";
+		// String s = "drug_1 should be taken by drug_2";
+		// String s = "disease is increasing in country";
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);

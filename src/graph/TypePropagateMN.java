@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -34,17 +33,19 @@ public class TypePropagateMN {
 	static int numThreads = 60;
 	static int numIters = 4;
 	// public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda2 = 1.0;
-	public static double tau = 1.0;
+	public static double lmbda = .01;// lmbda for L1 regularization
+	public static double lmbda2 = 100000000;
+	public static double tau = 1;
+	// public static double lmbda3 = 0;
 	public static double smoothParam = 5.0;
 	// static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
 	// static final String tPropSuffix = "_tProp_trans_0_.3_obj2_n.txt";
-	// static String tPropSuffix = "_tprop_lm1_.01_reg_1.txt";
-	static String tPropSuffix = "_tprop_test.txt";
+	static String tPropSuffix = "_lin_lm1_.01_reg_inf_1.txt";
+	// static String tPropSuffix = "_tprop_test2.txt";
 	public static boolean addTargetRels = false;
 	static boolean predBasedPropagation = true;
 	static boolean sizeBasedPropagation = false;
+	static boolean factorized = false;
 	static boolean obj1 = false;// obj1: max(w-tau), false: 1(w>tau)w
 
 	Map<String, Integer> graphToNumEdges;
@@ -53,8 +54,12 @@ public class TypePropagateMN {
 	static Map<String, Integer> predToOcc;// ex: (visit.1,visit.2)#person#location => 10344
 	static Map<String, Set<Integer>> rawPred2PGraphs;
 	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric)
+	static Map<String, Double> beta1s;// p#t1#t3(it will be symmetric)
+	static Map<String, Double> beta2s;// p#t2#t4(it will be symmetric)
 	static int allPropEdges = 0;
 	static double objChange = 0;
+	public static long numBetaOne = 0;
+	public static long numBetaAll = 0;
 
 	public TypePropagateMN(String root) {
 		PGraph.emb = false;
@@ -205,9 +210,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			if (gc == 50) {
-				break;
-			}
+			// if (gc == 50) {
+			// break;
+			// }
 
 			System.out.println("fname: " + fname);
 			PGraph pgraph = new PGraph(root + fname);
@@ -475,8 +480,9 @@ public class TypePropagateMN {
 						w2 = pgraph_neigh.g0.getEdgeWeight(ee);
 					}
 					sum1 += Math.pow(w1 - w2, 2);
-					// System.out.println("adding: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1+"
-					// "+w2);
+					// System.out
+					// .println("adding: " + pred_r + " " + pred_p + " " + id + " " + cand + " " +
+					// w1 + " " + w2);
 				}
 
 			}
@@ -505,7 +511,8 @@ public class TypePropagateMN {
 					if (!pgraph.g0.containsEdge(r, qIdx2)) {
 						// DefaultWeightedEdge ee = pgraph.g0.getEdge(r,qIdx2);
 						// w2 = pgraph_neigh.g0.getEdgeWeight(ee);
-						// System.out.println("adding2: "+pred_r+" "+pred_p+" "+id+" "+cand+" "+w1);
+						// System.out.println("adding2: " + pred_r + " " + pred_p + " " + id + " " +
+						// cand + " " + w1);
 						sum1 += Math.pow(w1, 2);
 					}
 				}
@@ -523,14 +530,17 @@ public class TypePropagateMN {
 
 	}
 
-	// beta1: true: beta1, t1 = t1_plain, t3 = tp1_plain
-	// false: beta2, t2 = t1_plain, t4 = tp1_plain (reverse, basically)
-	static double getBeta(ArrayList<PGraph> allPGraphs, String rawPred_r, String t1_plain, String tp1_plain) {
+	static double getSum1(ArrayList<PGraph> allPGraphs, String rawPred_r, String t1_plain, String tp1_plain) {
+
 		double sum1 = 0;
+		if (t1_plain.equals(tp1_plain)) {
+			return sum1;
+		}
 
 		Set<Integer> rawPred_r_PGraphs = TypePropagateMN.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
 																							// predicate
-		System.out.println("getBeta for " + rawPred_r + " " + t1_plain + " " + tp1_plain);
+		// System.out.println("getBeta1 for " + rawPred_r + " " + t1_plain + " " +
+		// tp1_plain);
 		for (int gIdx : rawPred_r_PGraphs) {
 			PGraph pgraph = allPGraphs.get(gIdx);
 
@@ -551,9 +561,9 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			System.out.println("pgraph: " + pgraph.name);
+			// System.out.println("pgraph: " + pgraph.name);
 
-			System.out.println(t1 + " " + t2);
+			// System.out.println(t1 + " " + t2);
 
 			if (t1.equals(t2)) {
 				t1 += "_1";
@@ -566,7 +576,7 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			System.out.println("pgraph has rawPred: " + pgraph.name);
+			// System.out.println("pgraph has rawPred: " + pgraph.name);
 
 			for (int gIdxw : rawPred_r_PGraphs) {
 				PGraph pgraph_neigh = allPGraphs.get(gIdxw);
@@ -576,17 +586,17 @@ public class TypePropagateMN {
 				String[] types_pgraphNeigh = pgraph_neigh.types.split("#");
 
 				String tp1, tp2, tp2_plain;
-				// t1_plain: person, graph: person#loc
+				// tp1_plain: person, graph: person#loc
 				if (types_pgraphNeigh[0].equals(tp1_plain)) {
-					tp1 = types_pgraph[0];
-					tp2 = types_pgraph[1];
-					tp2_plain = t2;
+					tp1 = types_pgraphNeigh[0];
+					tp2 = types_pgraphNeigh[1];
+					tp2_plain = tp2;
 				}
-				// t1_plain: person, graph: loc#person
-				else if (types_pgraph[1].equals(t1_plain)) {
-					tp1 = types_pgraph[1];
-					tp2 = types_pgraph[0];
-					tp2_plain = t2;
+				// tp1_plain: person, graph: loc#person
+				else if (types_pgraphNeigh[1].equals(tp1_plain)) {
+					tp1 = types_pgraphNeigh[1];
+					tp2 = types_pgraphNeigh[0];
+					tp2_plain = tp2;
 				} else {
 					continue;
 				}
@@ -596,9 +606,9 @@ public class TypePropagateMN {
 					tp2 += "_2";
 				}
 
-				System.out.println("pgraph_neigh: " + pgraph.name);
-
-				System.out.println(tp1 + " " + tp2);
+				// System.out.println("pgraph_neigh: " + pgraph.name);
+				//
+				// System.out.println(tp1 + " " + tp2);
 
 				String pred_p = rawPred_r + "#" + tp1 + "#" + tp2;
 
@@ -606,12 +616,12 @@ public class TypePropagateMN {
 					continue;
 				}
 
-				System.out.println("pgraph_neigh has pred_p: " + pred_p);
+				// System.out.println("pgraph_neigh has pred_p: " + pred_p);
 
 				double thisTerm = getCompatibleScoreSumPredBased(pgraph, pgraph_neigh, rawPred_r, pred_r, pred_p,
 						t1_plain, t2_plain, tp1_plain, tp2_plain);
 
-				System.out.println("this term: " + thisTerm);
+				// System.out.println("this term1: " + thisTerm);
 
 				// Because thisTerm could have been seen 2 or 4 times. Consider
 				// be_friend_with#person#person and loc#loc We have 4
@@ -628,77 +638,112 @@ public class TypePropagateMN {
 		return sum1;
 	}
 
-	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
-	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
-	// We factorize as \beta(p,{(t1,t2),(t3,t4)}) = \beta^1(p,{t1,t3}) +
-	// \beta^2(p,{t2,t4})
-	static double getCompatibleScorePredBasedFactorized(PGraph pgraph, PGraph pgraph_neigh, String rawPred_r,
-			String pred_r, String pred_rp, String pred_p, String pred_q, String t1_plain, String t2_plain,
-			String tp1_plain, String tp2_plain) {
+	static double getSum2(ArrayList<PGraph> allPGraphs, String rawPred_r, String t2_plain, String tp2_plain) {
+		double sum2 = 0;
 
-		if (t1_plain.equals(tp1_plain) && t2_plain.equals(tp2_plain)) {
-			// The second condition below is not quite consistent with out MN, because we
-			// don't have a \beta for RHS. But, we put it
-			// as it's necessary not to rely on the zero similarity which isn't based on the
-			// data. It will converge anyway!
-			if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
+		if (t2_plain.equals(tp2_plain)) {
+			return sum2;
+		}
 
-				// System.out.println("compscore of graph: " + pgraph.types + " to graph " +
-				// pgraph_neigh.types + " for "
-				// + pred_p + " " + pred_q + " " + 1e-10 + " " + pred_r + " " + pred_rp);
+		Set<Integer> rawPred_r_PGraphs = TypePropagateMN.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
+																							// predicate
+		// System.out.println("getBeta2 for " + rawPred_r + " " + t2_plain + " " +
+		// tp2_plain);
+		for (int gIdx : rawPred_r_PGraphs) {
+			PGraph pgraph = allPGraphs.get(gIdx);
 
-				return 1e-10;// very small epsilon.
+			String[] types_pgraph = pgraph.types.split("#");
+			String t1, t2, t1_plain;
+			// t2_plain: person, graph: person#loc
+			if (types_pgraph[0].equals(t2_plain)) {
+				t1 = types_pgraph[1];
+				t2 = types_pgraph[0];
+				t1_plain = t1;
+			}
+			// t2_plain: person, graph: loc#person
+			else if (types_pgraph[1].equals(t2_plain)) {
+				t1 = types_pgraph[0];
+				t2 = types_pgraph[1];
+				t1_plain = t1;
+			} else {
+				continue;
 			}
 
-			// TODO: changed, be careful
-			// if (pgraph.pred2node.containsKey(pred_r)) {
-			// return Math.sqrt(pgraph.pred2node.get(pred_r).getNumNeighs());
-			// // return pgraph.pred2node.get(pred_r).getNumNeighs();
-			// }
-			return 1;
+			// System.out.println("pgraph: " + pgraph.name);
+
+			// System.out.println(t1 + " " + t2);
+
+			if (t1.equals(t2)) {
+				t1 += "_1";
+				t2 += "_2";
+			}
+
+			String pred_r = rawPred_r + "#" + t1 + "#" + t2;
+
+			if (!pgraph.pred2node.containsKey(pred_r)) {
+				continue;
+			}
+
+			// System.out.println("pgraph has rawPred: " + pgraph.name);
+
+			for (int gIdxw : rawPred_r_PGraphs) {
+				PGraph pgraph_neigh = allPGraphs.get(gIdxw);
+				if (pgraph_neigh.equals(pgraph)) {
+					continue;
+				}
+				String[] types_pgraphNeigh = pgraph_neigh.types.split("#");
+
+				String tp1, tp2, tp1_plain;
+				// tp2_plain: person, graph: person#loc
+				if (types_pgraphNeigh[0].equals(tp2_plain)) {
+					tp1 = types_pgraphNeigh[1];
+					tp2 = types_pgraphNeigh[0];
+					tp1_plain = tp1;
+				}
+				// tp2_plain: person, graph: loc#person
+				else if (types_pgraphNeigh[1].equals(tp2_plain)) {
+					tp1 = types_pgraphNeigh[0];
+					tp2 = types_pgraphNeigh[1];
+					tp1_plain = tp1;
+				} else {
+					continue;
+				}
+
+				if (tp1.equals(tp2)) {
+					tp1 += "_1";
+					tp2 += "_2";
+				}
+
+				// System.out.println("pgraph_neigh: " + pgraph.name);
+				//
+				// System.out.println(tp1 + " " + tp2);
+
+				String pred_p = rawPred_r + "#" + tp1 + "#" + tp2;
+
+				if (!pgraph_neigh.pred2node.containsKey(pred_p)) {
+					continue;
+				}
+
+				// System.out.println("pgraph_neigh has pred_p: " + pred_p);
+
+				double thisTerm = getCompatibleScoreSumPredBased(pgraph, pgraph_neigh, rawPred_r, pred_r, pred_p,
+						t1_plain, t2_plain, tp1_plain, tp2_plain);
+
+				// System.out.println("this term2: " + thisTerm);
+
+				// Because thisTerm could have been seen 2 or 4 times. Consider
+				// be_friend_with#person#person and loc#loc We have 4
+				// cases to use \beta_1 be_friend_with, person, loc
+				if (t1_plain.equals(t2_plain)) {
+					thisTerm *= 2;
+				}
+				if (tp1_plain.equals(tp2_plain)) {
+					thisTerm *= 2;
+				}
+				sum2 += thisTerm;
+			}
 		}
-
-		else if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
-			return 1e-6;// Don't propagate noise! Not consistent with MN again.
-		} else if (PGraph.targetRelsAddedToGraphs.contains(pred_p) || PGraph.targetRelsAddedToGraphs.contains(pred_q)) {
-			return 1e-6;// The neighbor graph hasn't seen any evidence, it's happy to receive main
-						// graph's edges! Not consistent with MN again.
-		} else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
-			return 0;
-		} else if (TypePropagateMN.lmbda2 == 0) {
-			return 0;
-		}
-
-		double sum = getCompatibleScoreSumPredBased(pgraph, pgraph_neigh, rawPred_r, pred_r, pred_p, t1_plain, t2_plain,
-				tp1_plain, tp2_plain);
-
-		double score1;
-
-		if (TypePropagateMN.lmbda2 == 0) {
-			score1 = 0;
-		} else {
-			score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
-			score1 = Math.max(score1, 0);
-		}
-
-		// double beta1 =
-
-		// String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain +
-		// "#" + tp2_plain + "#";
-		// String key1p = rawPred_r + "#" + tp1_plain + "#" + tp2_plain + "#" + t1_plain
-		// + "#" + t2_plain + "#";// because
-		// it's
-		// symmetric
-		// for
-		// g1,//
-		// g2 or
-		// g2,
-		// g1!
-
-		// System.out.println("key1: " + key1 + " " + score1);
-		// System.out.println("p key1: " + key1p + " " + score1);
-
-		return score1;
+		return sum2;
 
 	}
 
@@ -713,14 +758,15 @@ public class TypePropagateMN {
 			// don't have a \beta for RHS. But, we put it
 			// as it's necessary not to rely on the zero similarity which isn't based on the
 			// data. It will converge anyway!
-			if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
-
-				// System.out.println("compscore of graph: " + pgraph.types + " to graph " +
-				// pgraph_neigh.types + " for "
-				// + pred_p + " " + pred_q + " " + 1e-10 + " " + pred_r + " " + pred_rp);
-
-				return 1e-10;// very small epsilon.
-			}
+			// if (PGraph.targetRelsAddedToGraphs.contains(pred_r) ||
+			// PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
+			//
+			// // System.out.println("compscore of graph: " + pgraph.types + " to graph " +
+			// // pgraph_neigh.types + " for "
+			// // + pred_p + " " + pred_q + " " + 1e-10 + " " + pred_r + " " + pred_rp);
+			//
+			// return 1e-10;// very small epsilon.
+			// }
 
 			// TODO: changed, be careful
 			// if (pgraph.pred2node.containsKey(pred_r)) {
@@ -731,47 +777,114 @@ public class TypePropagateMN {
 			return 1;
 		}
 
-		else if (PGraph.targetRelsAddedToGraphs.contains(pred_r) || PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
-			return 1e-6;// Don't propagate noise! Not consistent with MN again.
-		} else if (PGraph.targetRelsAddedToGraphs.contains(pred_p) || PGraph.targetRelsAddedToGraphs.contains(pred_q)) {
-			return 1e-6;// The neighbor graph hasn't seen any evidence, it's happy to receive main
-						// graph's edges! Not consistent with MN again.
-		} else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
+		// else if (PGraph.targetRelsAddedToGraphs.contains(pred_r) ||
+		// PGraph.targetRelsAddedToGraphs.contains(pred_rp)) {
+		// return 1e-6;// Don't propagate noise! Not consistent with MN again.
+		// } else if (PGraph.targetRelsAddedToGraphs.contains(pred_p) ||
+		// PGraph.targetRelsAddedToGraphs.contains(pred_q)) {
+		// return 1e-6;// The neighbor graph hasn't seen any evidence, it's happy to
+		// receive main
+		// // graph's edges! Not consistent with MN again.
+		// }
+		else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
 			return 0;
 		} else if (TypePropagateMN.lmbda2 == 0) {
 			return 0;
+		} else if (TypePropagateMN.lmbda2 > 1e6) {// inf
+			return 1;
 		}
 
-		double sum = getCompatibleScoreSumPredBased(pgraph, pgraph_neigh, rawPred_r, pred_r, pred_p, t1_plain, t2_plain,
-				tp1_plain, tp2_plain);
+		double ret;
 
-		double score1;
+		if (!factorized) {
 
-		if (TypePropagateMN.lmbda2 == 0) {
-			score1 = 0;
-		} else {
-			score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
-			score1 = Math.max(score1, 0);
+			double sum = getCompatibleScoreSumPredBased(pgraph, pgraph_neigh, rawPred_r, pred_r, pred_p, t1_plain,
+					t2_plain, tp1_plain, tp2_plain);
+
+			double score1 = 0;
+
+			if (TypePropagateMN.lmbda2 == 0) {
+				score1 = 0;
+			} else {
+				// if ((TypePropagateMN.lmbda2 - sum) > TypePropagateMN.lmbda3) {
+				// score1 = (TypePropagateMN.lmbda2 - sum - TypePropagateMN.lmbda3) /
+				// (TypePropagateMN.lmbda2);
+				// }
+
+				score1 = (TypePropagateMN.lmbda2 - sum) / (TypePropagateMN.lmbda2);
+				score1 = Math.max(score1, 0);
+
+			}
+
+			ret = score1;
 		}
 
-		// outgoing
-		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
-		String key1p = rawPred_r + "#" + tp1_plain + "#" + tp2_plain + "#" + t1_plain + "#" + t2_plain + "#";// because
-																												// it's
-																												// symmetric
-																												// for
-																												// g1,//
-																												// g2 or
-																												// g2,
-																												// g1!
+		else {
 
-		System.out.println("key1: " + key1 + " " + score1);
-		System.out.println("p key1: " + key1p + " " + score1);
+			// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
+			// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
+			// We factorize as \beta(p,{(t1,t2),(t3,t4)}) = \beta^1(p,{t1,t3}) +
+			// \beta^2(p,{t2,t4})
 
-		double sum1 = getBeta(pGraphs, rawPred_r, t1_plain, tp1_plain);
-		System.out.println("sum: " + sum1);
+			String beta1Key = rawPred_r + "#" + t1_plain + "#" + tp1_plain;
+			String beta1Keyp = rawPred_r + "#" + tp1_plain + "#" + t1_plain;
 
-		return score1;
+			String beta2Key = rawPred_r + "#" + t2_plain + "#" + tp2_plain;
+			String beta2Keyp = rawPred_r + "#" + tp2_plain + "#" + t2_plain;
+
+			double sum1, sum2;
+
+			boolean shouldWrite = false;
+
+			if (beta1s.containsKey(beta1Key)) {
+				sum1 = beta1s.get(beta1Key);
+			} else {
+				shouldWrite = true;
+				sum1 = getSum1(pGraphs, rawPred_r, t1_plain, tp1_plain);
+				synchronized (beta2Keyp) {
+					beta1s.put(beta1Key, sum1);
+					beta1s.put(beta1Keyp, sum1);
+				}
+				// System.out.println("sum1: " + sum1 + " " + beta1Key);
+			}
+
+			if (beta2s.containsKey(beta2Key)) {
+				sum2 = beta2s.get(beta2Key);
+			}
+
+			else {
+				shouldWrite = true;
+				sum2 = getSum2(pGraphs, rawPred_r, t2_plain, tp2_plain);
+				synchronized (beta2Keyp) {
+					beta2s.put(beta2Key, sum2);
+					beta2s.put(beta2Keyp, sum2);
+				}
+
+				// System.out.println("sum2: " + sum2 + " " + beta2Key);
+			}
+
+			double beta1 = (TypePropagateMN.lmbda2 / 2 - sum1) / (TypePropagateMN.lmbda2);
+			beta1 = Math.max(beta1, 0);
+			double beta2 = (TypePropagateMN.lmbda2 / 2 - sum2) / (TypePropagateMN.lmbda2);
+			beta2 = Math.max(beta2, 0);
+
+			if (shouldWrite) {
+				String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
+				System.out.println("factorized beta: " + (beta1 + beta2) + " " + key1 + " " + sum1 + " " + sum2);
+			}
+
+			ret = beta1 + beta2;
+		}
+
+		// String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain +
+		// "#" + tp2_plain + "#";
+		// System.out.println("beta: "+ret+" "+key1);
+		if (ret > .9) {
+			numBetaOne++;
+		}
+		numBetaAll++;
+
+		return ret;
 
 	}
 
@@ -797,6 +910,8 @@ public class TypePropagateMN {
 		for (int iter = 0; iter < numIters; iter++) {
 			objChange = 0;
 			predTypeCompatibility = Collections.synchronizedMap(new HashMap<>());
+			beta1s = Collections.synchronizedMap(new HashMap<>());
+			beta2s = Collections.synchronizedMap(new HashMap<>());
 			System.err.println("iter " + iter);
 			for (PGraph pgraph : pGraphs) {
 				// initialize gMN (next g) based on g0 (cur g)
@@ -849,6 +964,7 @@ public class TypePropagateMN {
 				}
 			}
 			System.out.println("obj change: " + objChange);
+			System.out.println("num beta1: " + numBetaOne + " " + numBetaAll);
 		}
 
 		// now, let's write the results
