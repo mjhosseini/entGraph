@@ -81,6 +81,7 @@ public class Util {
 	static HashMap<String, String[]> predToLemma = new HashMap<>();;
 
 	static HashSet<String> modals;
+	public static Set<String> stopPreds;
 	static HashSet<String> prepositions;// I need a predefined list when extending the predArg extraction
 	static Logger logger;
 
@@ -156,6 +157,19 @@ public class Util {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		stopPreds = new HashSet<>();
+		Scanner sc = null;
+		;
+		try {
+			sc = new Scanner(new File("stops.txt"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		while (sc.hasNext()) {
+			stopPreds.add(sc.nextLine());
+		}
+		
 	}
 
 	public static Map<String, String> getEntToFigerType() {
@@ -1036,7 +1050,13 @@ public class Util {
 		HashMap<String, HashMap<String, String>> artIdToEntToWiki = new HashMap<>();
 		int lineNumber = 0;
 		while ((line = br.readLine()) != null) {
-			JsonObject jo = jsonParser.parse(line).getAsJsonObject();
+//			System.err.println(line);
+			JsonObject jo = null;
+			try {
+				jo = jsonParser.parse(line).getAsJsonObject();
+			} catch (Exception e) {
+				continue;
+			}
 			String articleId = jo.get("artId").getAsString();
 			JsonArray ews = jo.get("ew").getAsJsonArray();
 			HashMap<String, String> thisEntToWiki = null;
@@ -1122,6 +1142,153 @@ public class Util {
 	// args: fileName, shouldLink, useContext (aidalight), num to have in
 	// memory. Note: you have optimize this for larger corpus!
 	// works for NewsSpike
+
+	static void convertPredArgsToJsonUnsorted(String[] args) throws IOException {
+		if (args == null || args.length == 0) {
+			args = new String[] { "predArgsC_gen.txt", "true", "true", "-1", "aida/newsC_linked.json" };
+		}
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF-8"));
+		boolean shouldLink = Boolean.parseBoolean(args[1]);
+		boolean useContext = Boolean.parseBoolean(args[2]);// aidalight
+		HashMap<String, HashMap<String, String>> artIdToEntToWiki = null;
+
+		String AIDAPath = args[4];
+
+		if (useContext) {
+			artIdToEntToWiki = loadAidaLinked(AIDAPath);
+		}
+		System.err.println("useNamedEntities: " + shouldLink);
+
+		// Map<String, String> entToWiki = loadEntToWiki(0);
+		// System.err.println("testing " + entToWiki.get("mike smith"));
+
+		String line;
+		int lineNumbers = 0;
+		String curLine = null;
+		ArrayList<String> curPrArgs = new ArrayList<String>();
+
+		// int firstIdxToPrint = 0;
+		// int numPrintAtOnce = 1000000;
+		// ArrayList<JsonObject> jObjsToPrint = new ArrayList<JsonObject>();
+
+		while ((line = br.readLine()) != null) {
+			// System.err.println("line: " + line);
+			if (line.equals("") || line.contains("e.s.nlp.pipeline")) {
+				continue;
+			}
+			if (line.startsWith("#line:")) {
+				curLine = line.substring(7);
+				if (curLine != null) {
+					try {
+						// Add the current line
+						// First, we should read other details!
+						line = br.readLine();
+						String lineId = line.substring(9);
+						line = br.readLine();
+						String articleId = line.substring(12);
+						line = br.readLine();
+						String date = line.substring(7);
+
+						JsonObject jObj = new JsonObject();
+						jObj.addProperty("s", curLine);
+						jObj.addProperty("date", date);
+						jObj.addProperty("articleId", articleId);
+						jObj.addProperty("lineId", lineId);
+
+						// Now, let's read all the pred_arg lines
+						String prArgLine = null;
+						curPrArgs = new ArrayList<String>();
+
+						while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+							// System.out.println("pr arg line: " + prArgLine);
+							String pred = null;
+							String arg1 = null;
+							String arg2 = null;
+							int eventIdx, sentIdx;
+							String GorNE = null;
+
+							try {
+								StringTokenizer st = new StringTokenizer(prArgLine);
+								pred = st.nextToken();
+								arg1 = st.nextToken();
+								arg2 = st.nextToken();
+								eventIdx = Integer.parseInt(st.nextToken());
+								GorNE = st.nextToken();
+								sentIdx = Integer.parseInt(st.nextToken());
+								arg1 = simpleNormalize(arg1);
+								arg2 = simpleNormalize(arg2);
+
+								boolean[] isGens = new boolean[2];
+								isGens[0] = GorNE.charAt(0) == 'G';
+								isGens[1] = GorNE.charAt(1) == 'G';
+
+								if (shouldLink) {
+									if (!isGens[0]) {
+										if (!useContext) {
+											// arg1 = entToWiki.containsKey(arg1) ? entToWiki.get(arg1) : arg1;
+										} else {
+											if (artIdToEntToWiki.containsKey(articleId)) {
+												HashMap<String, String> e2w = artIdToEntToWiki.get(articleId);
+												arg1 = e2w.containsKey(arg1) ? e2w.get(arg1) : arg1;
+											}
+										}
+									}
+									if (!isGens[1]) {
+										if (!useContext) {
+											// arg2 = entToWiki.containsKey(arg2) ? entToWiki.get(arg2) : arg2;
+										} else {
+											if (artIdToEntToWiki.containsKey(articleId)) {
+												HashMap<String, String> e2w = artIdToEntToWiki.get(articleId);
+												arg2 = e2w.containsKey(arg2) ? e2w.get(arg2) : arg2;
+											}
+										}
+									}
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
+								System.err.println("exception for: " + line);
+								continue;
+							}
+
+							String prArg = "(" + pred + "::" + arg1 + "::" + arg2 + "::" + GorNE + "::" + sentIdx + "::"
+									+ eventIdx + ")";
+							curPrArgs.add(prArg);
+						}
+
+						JsonArray rels = new JsonArray();
+						for (int i = 0; i < curPrArgs.size(); i++) {
+							JsonObject rel = new JsonObject();
+							rel.addProperty("r", curPrArgs.get(i));
+							rels.add(rel);
+						}
+						jObj.add("rels", rels);
+
+						System.out.println(jObj);
+
+					} catch (Exception e) {
+						e.printStackTrace();
+						continue;
+					}
+				}
+
+				lineNumbers++;
+
+				// if (maxIdx-nextIdxToPrint>largestPossibleGap){
+				// nextIdxToPrint++;
+				// System.err.println("skipping: "+nextIdxToPrint+" "+maxIdx);
+				// }
+
+				if (lineNumbers % 10000 == 0) {
+					System.err.println(lineNumbers);
+				}
+			}
+
+			// Let's make the JSON
+		}
+
+		br.close();
+	}
+
 	static void convertPredArgsToJson(String[] args) throws IOException {
 		if (args == null || args.length == 0) {
 			args = new String[] { "predArgs_gen.txt", "true", "true", "12000000", "aida/news_linked.json" };
@@ -1697,97 +1864,6 @@ public class Util {
 		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
 
-	public static void countArgs(String[] args) throws JsonSyntaxException, IOException {
-		String fName = args[0];
-		HashMap<String, Integer> argCount = new HashMap<>();
-		HashMap<String, Integer> relCount = new HashMap<>();
-		BufferedReader br = new BufferedReader(new FileReader(fName));
-
-		int lineNumbers = 0;
-		JsonParser jsonParser = new JsonParser();
-
-		// long t0;
-		// long sharedTime = 0;
-
-		String line;
-		while ((line = br.readLine()) != null) {
-
-			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
-				continue;
-			}
-			JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
-
-			JsonArray jar = jObj.get("rels").getAsJsonArray();
-			// t0 = 0;
-
-			for (int i = 0; i < jar.size(); i++) {
-				// if (lineNumbers%100==0){
-				// t0 = System.currentTimeMillis();
-				// }
-				JsonObject relObj = jar.get(i).getAsJsonObject();
-				String relStr = relObj.get("r").getAsString();
-				relStr = relStr.substring(1, relStr.length() - 1);
-				String[] parts = relStr.split("::");
-				String pred = parts[0];
-				if (++lineNumbers % 10000 == 0) {
-					System.err.println(lineNumbers);
-				}
-
-				if (!Util.acceptablePredFormat(pred, true)) {
-					continue;
-				}
-				pred = Util.getPredicateLemma(pred, true)[0];
-				if (!relCount.containsKey(pred)) {
-					relCount.put(pred, 1);
-				} else {
-					relCount.put(pred, relCount.get(pred) + 1);
-				}
-
-				// We also remove "-" here, because sometimes, we have the type
-				// without "-". But we didn't remove
-				// "-" when we're looking in g kg, because it might help!
-
-				for (int j = 1; j < 3; j++) {
-					parts[j] = simpleNormalize(parts[j]);
-
-					if (!argCount.containsKey(parts[j])) {
-						argCount.put(parts[j], 1);
-					} else {
-						argCount.put(parts[j], argCount.get(parts[j]) + 1);
-					}
-
-				}
-			}
-		}
-
-		System.out.println("rel counts:");
-
-		ArrayList<SimpleSpot> sspots = new ArrayList<>();
-		for (String s : relCount.keySet()) {
-			sspots.add(new SimpleSpot(s, relCount.get(s)));
-		}
-
-		Collections.sort(sspots, Collections.reverseOrder());
-
-		for (SimpleSpot ss : sspots) {
-			System.out.println(ss.spot + " " + ss.count);
-		}
-
-		System.out.println("arg counts:");
-
-		sspots = new ArrayList<>();
-		for (String s : argCount.keySet()) {
-			sspots.add(new SimpleSpot(s, argCount.get(s)));
-		}
-
-		Collections.sort(sspots, Collections.reverseOrder());
-
-		for (SimpleSpot ss : sspots) {
-			System.out.println(ss.spot + " " + ss.count);
-		}
-		br.close();
-	}
-
 	// Obama: [Barack_Obama,Person]
 	// morning: [morning,time_...]
 	// stanType is already converted to Figer type
@@ -2029,7 +2105,7 @@ public class Util {
 		// System.out.println(1d);
 		// readJSONSimple();
 		// convertReleaseToRawJson();
-		convertPredArgsToJson(args);
+		convertPredArgsToJsonUnsorted(args);
 		// recordStanTypes(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));

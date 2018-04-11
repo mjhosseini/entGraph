@@ -64,7 +64,7 @@ public class EntGraphBuilderRunner implements Runnable {
 			}
 			// System.out.println("Berant's HTL finished");
 
-			else if (PGraph.transMethod == TransitiveMethod.HTL) {
+			else if (PGraph.transMethod == TransitiveMethod.HTLFRG) {
 
 				TransClUtils tnf = new TransClUtils(pgraph, op, lmbda, PGraph.checkFrgVio, null);
 				if (PGraph.shouldWrite) {
@@ -96,7 +96,7 @@ public class EntGraphBuilderRunner implements Runnable {
 
 				specILP.buildEntGraph();
 				specILP.writeEntGraph();
-				System.out.println("done specILP "+lmbda+" "+fname);
+				System.out.println("done specILP " +fname+ " "+lmbda);
 			}
 
 		}

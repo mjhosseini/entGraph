@@ -77,6 +77,7 @@ public class EntailGraph extends SimpleEntailGraph {
 		// System.out.println("nnz0: "+nnz);
 
 		// System.out.println("process: "+types+" "+writeInfo+" "+writeSims);
+//		System.out.println("write info: "+writeInfo+" "+pvecs.size());
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
@@ -120,7 +121,7 @@ public class EntailGraph extends SimpleEntailGraph {
 				id++;
 			}
 		}
-
+		
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
@@ -128,6 +129,7 @@ public class EntailGraph extends SimpleEntailGraph {
 		setPvecNorms();
 
 		try {
+			
 			if (writeInfo) {
 				this.graphOp1 = new PrintStream(new File(opFileName + "_rels.txt"));
 			}

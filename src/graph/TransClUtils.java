@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.GabowStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
 
 public class TransClUtils {
 	boolean checkFrgVio;
@@ -331,6 +333,33 @@ public class TransClUtils {
 
 	void writeSCC() {
 		writeSCC(scc, lmbda, op, pgraph);
+	}
+	
+	static List<List<Integer>> findComponents(PGraph pgraph, double lmbda) {
+		SimpleGraph<Integer, DefaultEdge> sg = new SimpleGraph<>(DefaultEdge.class);
+		for (int i = 0; i < pgraph.nodes.size(); i++) {
+			sg.addVertex(i);
+		}
+
+		for (int i = 0; i < pgraph.nodes.size(); i++) {
+			for (Oedge e : pgraph.nodes.get(i).oedges) {
+				if (e.sim >= lmbda && i != e.nIdx) {
+					sg.addEdge(i, e.nIdx);
+				}
+			}
+		}
+
+		ConnectivityInspector<Integer, DefaultEdge> ci = new ConnectivityInspector<>(sg);
+		List<Set<Integer>> connectedSets = ci.connectedSets();
+		List<List<Integer>> ret = new ArrayList<>();
+		for (Set<Integer> c : connectedSets) {
+			List<Integer> l = new ArrayList<>();
+			for (int x : c) {
+				l.add(x);
+			}
+			ret.add(l);
+		}
+		return ret;
 	}
 
 	// This is usable from outside

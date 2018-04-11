@@ -9,67 +9,80 @@ import java.util.List;
 public class SpectralClustering {
 	PGraph pgraph;
 	private int K;// initial K
+	int N;
 	List<List<Integer>> clusters;
 	int[] labels;
 	int M;
 	private double[][] w;
-
+	
 	public SpectralClustering(PGraph pgraph, int K) {
-		this.pgraph = pgraph;
-		this.K = K;
-		M = -1;
+		this(pgraph, K, -1);
 	}
 
 	public SpectralClustering(PGraph pgraph, int K, int M) {
 		this.pgraph = pgraph;
+		this.N = pgraph.nodes.size();
 		this.K = K;
 		this.M = M;
 	}
 
 	void cluster() {
 
-		if (K == 1) {
+		if (pgraph.nodes.size() > 45000) {
+			clusters = TransClUtils.findComponents(pgraph, 0.15);
+			int maxSize = 0;
+			for (List<Integer> clu:clusters) {
+				if (clu.size()>maxSize) {
+					maxSize = clu.size();
+				}
+			}
+			System.out.println("first max size: "+maxSize);
+			fillLabels();
+			K = -1;
+
+		} else {
+			// put everything in one cluster
 			clusters = new ArrayList<>();
 			List<Integer> clu = new ArrayList<>();
 			clusters.add(clu);
 			for (int i = 0; i < pgraph.nodes.size(); i++) {
 				clu.add(i);
 			}
-			this.labels = new int[pgraph.nodes.size()];
-			return;
+			fillLabels();
 		}
 
 		this.w = getAdjMatrix(pgraph);
-		smile.clustering.SpectralClustering clusterer = new smile.clustering.SpectralClustering(w, K);
-		int[] y = clusterer.getClusterLabel();
-		this.labels = y;
-		this.clusters = new ArrayList<>();
-		for (int k = 0; k < K; k++) {
-			clusters.add(new ArrayList<>());
-		}
-		for (int i = 0; i < y.length; i++) {
-			int thisK = y[i];
-			clusters.get(thisK).add(i);
-		}
+		// smile.clustering.SpectralClustering clusterer = new
+		// smile.clustering.SpectralClustering(w, K);
+		// int[] y = clusterer.getClusterLabel();
+		// this.labels = y;
+		// this.clusters = new ArrayList<>();
+		// for (int k = 0; k < K; k++) {
+		// clusters.add(new ArrayList<>());
+		// }
+		// for (int i = 0; i < y.length; i++) {
+		// int thisK = y[i];
+		// clusters.get(thisK).add(i);
+		// }
+		//
+		// System.err.println("clustering res: ");
+		// int maxSize = 0;
+		// for (int k = 0; k < clusters.size(); k++) {
+		// int thisSize = clusters.get(k).size();
+		// if (thisSize > maxSize) {
+		// maxSize = thisSize;
+		// }
+		// System.out.println("cluster " + k + " size:" + thisSize);
+		// for (int i : clusters.get(k)) {
+		// System.out.println(pgraph.nodes.get(i).id);
+		// }
+		// System.out.println();
+		// }
+		// System.out.println("maxSize: " + maxSize);
 
-		System.err.println("clustering res: ");
-		int maxSize = 0;
-		for (int k = 0; k < clusters.size(); k++) {
-			int thisSize = clusters.get(k).size();
-			if (thisSize > maxSize) {
-				maxSize = thisSize;
-			}
-			System.out.println("cluster " + k + " size:" + thisSize);
-			for (int i : clusters.get(k)) {
-				System.out.println(pgraph.nodes.get(i).id);
-			}
-			System.out.println();
-		}
-		System.out.println("maxSize: " + maxSize);
-
-		if (maxSize > M) {
-			reClusterAll();
-		}
+		// if (maxSize > M) {
+		reClusterAll(K);
+		// }
 
 		// remove empty cluster
 		removeEmptyClus();
@@ -84,17 +97,10 @@ public class SpectralClustering {
 		}
 		this.clusters = newClusters;
 
-		this.labels = new int[w.length];
-		int k = 0;
-		for (List<Integer> clu : this.clusters) {
-			for (int i : clu) {
-				this.labels[i] = k;
-			}
-			k++;
-		}
+		fillLabels();
 
 		System.err.println("final clustering res ");
-		for (k = 0; k < clusters.size(); k++) {
+		for (int k = 0; k < clusters.size(); k++) {
 			int thisSize = clusters.get(k).size();
 
 			System.out.println("cluster " + k + " size:" + thisSize);
@@ -106,18 +112,30 @@ public class SpectralClustering {
 
 	}
 
+	void fillLabels() {
+		this.labels = new int[N];
+		int k = 0;
+		for (List<Integer> clu : this.clusters) {
+			for (int i : clu) {
+				this.labels[i] = k;
+			}
+			k++;
+		}
+	}
+
 	// reclusters the clusters that are larger than K elemen
-	void reClusterAll() {
+	void reClusterAll(int firstK) {
 
 		boolean Msatisfied = false;
 		while (!Msatisfied) {
-			System.out.println("reclustering");
+			System.out.println("reclustering" + pgraph.name);
 			Msatisfied = true;// unless we realize later!
 			List<List<Integer>> newClusters = new ArrayList<>();
 			for (List<Integer> clu : clusters) {
-				if (clu.size() > M) {
+				if (clu.size() > M || firstK != -1) {
 					// recluster a certain cluster
-					List<List<Integer>> thisClusters = reCluster(clu);
+					List<List<Integer>> thisClusters = reCluster(clu, firstK);
+					firstK = -1;// because that's only for the first time!
 					for (List<Integer> newClu : thisClusters) {
 						if (newClu.size() > M) {
 							Msatisfied = false;
@@ -131,18 +149,11 @@ public class SpectralClustering {
 			this.clusters = newClusters;
 		}
 
-		this.labels = new int[w.length];
-		int k = 0;
-		for (List<Integer> clu : this.clusters) {
-			for (int i : clu) {
-				this.labels[i] = k;
-			}
-			k++;
-		}
+		fillLabels();
 
 		System.err.println("Msatistied clustering res: ");
 		int maxSize = 0;
-		for (k = 0; k < clusters.size(); k++) {
+		for (int k = 0; k < clusters.size(); k++) {
 			int thisSize = clusters.get(k).size();
 			if (thisSize > maxSize) {
 				maxSize = thisSize;
@@ -156,7 +167,7 @@ public class SpectralClustering {
 		System.out.println("Msatistied maxSize: " + maxSize + " num clusters: " + clusters.size());
 	}
 
-	private List<List<Integer>> reCluster(List<Integer> clu) {
+	private List<List<Integer>> reCluster(List<Integer> clu, int firstK) {
 
 		List<List<Integer>> thisClusters = new ArrayList<>();
 
@@ -184,9 +195,16 @@ public class SpectralClustering {
 		clu = clup;
 
 		double[][] thisW = getSubsetW(clu, this.w);
+		System.out.println("thisW size: " + thisW.length);
 
-		int thisK = (int) Math.ceil((double) (clu.size()) / PGraph.specILPMaxClusterAllowed);
-		if (thisK != 1) {
+		int thisK;
+		if (firstK != -1) {
+			thisK = firstK;
+		} else {
+			thisK = (int) Math.ceil((double) (clu.size()) / PGraph.specILPMaxClusterAllowed);
+
+		}
+		if (thisK != 1 && thisK != 0) {
 			smile.clustering.SpectralClustering clusterer = new smile.clustering.SpectralClustering(thisW, thisK);
 			int[] y = clusterer.getClusterLabel();
 

@@ -221,9 +221,8 @@ public class EntailGraphFactory implements Runnable {
 						continue;
 					}
 					
-					
 					String[] predicateLemma;
-					if (!EntailGraphFactoryAggregator.rawExtractions && !EntailGraphFactoryAggregator.isGerman) {
+					if (!EntailGraphFactoryAggregator.rawExtractions && !EntailGraphFactoryAggregator.isForeign) {
 						predicateLemma = Util.getPredicateLemma(pred, EntailGraphFactoryAggregator.isCCG);
 					} else {
 						predicateLemma = new String[] { pred, "false" };
@@ -233,6 +232,10 @@ public class EntailGraphFactory implements Runnable {
 					if (EntailGraphFactoryAggregator.onlyDSPreds
 							&& !EntailGraphFactoryAggregator.dsPreds.contains(pred)) {
 						// System.out.println("continue: " + pred);
+						continue;
+					}
+					
+					if (EntailGraphFactoryAggregator.removeStopPreds && Util.stopPreds.contains(pred)) {
 						continue;
 					}
 
@@ -270,10 +273,17 @@ public class EntailGraphFactory implements Runnable {
 
 					String type1 = null, type2 = null;
 
-					if (EntailGraphFactoryAggregator.isGerman) {
-						type1 = parts[3].substring(1);
-						type2 = parts[4].substring(1);
-						System.out.println("types german: " + type1 + " " + type2);
+					if (EntailGraphFactoryAggregator.isForeign) {
+						if (EntailGraphFactoryAggregator.isTyped) {
+							type1 = parts[3];//.substring(1);
+							type2 = parts[4];//.substring(1);
+							System.out.println("types foreign: " + type1 + " " + type2);
+						}
+						else {
+							type1 = "thing";
+							type2 = "thing";
+						}
+						
 					} else if (!EntailGraphFactoryAggregator.useTimeEx) {
 						try {
 							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
@@ -300,7 +310,7 @@ public class EntailGraphFactory implements Runnable {
 					 * 
 					 * 
 					 */
-					if (!EntailGraphFactoryAggregator.isGerman
+					if (!EntailGraphFactoryAggregator.isForeign
 							&& EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
 							&& !acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
@@ -338,6 +348,8 @@ public class EntailGraphFactory implements Runnable {
 						type1 = type2;
 						type2 = tmp;
 					}
+					
+//					System.out.println("pred args: "+pred+" "+arg1+" "+arg2);//TODO: remove
 
 					// Now we have pred, arg1 and arg2 and type1 and type2
 
@@ -553,7 +565,7 @@ public class EntailGraphFactory implements Runnable {
 
 		boolean rev = (forceRev || (!thisType.equals(type1 + "#" + type2)) && !type1.equals("") && !type2.equals(""));
 
-		if (!EntailGraphFactoryAggregator.isGerman && !acceptableTypes.contains(thisType)) {
+		if (!EntailGraphFactoryAggregator.isForeign && !acceptableTypes.contains(thisType)) {
 			// System.out.println("returning because not covered: " + thisType +
 			// " " + threadNum);
 			return rev;// this is because of
@@ -677,6 +689,7 @@ public class EntailGraphFactory implements Runnable {
 			EntailGraph entGraph = typesToGraph.get(types);
 			entGraph.writeSims = entGraph.getPvecs().size() > 1;
 			entGraph.writeInfo = entGraph.writeSims;
+//			entGraph.writeInfo = true;//TODO: remove this
 			entGraph.processGraph();
 
 			SimpleEntailGraph simpleEntGraph = entGraph;

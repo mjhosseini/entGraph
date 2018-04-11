@@ -44,7 +44,7 @@ public class LinProgTransGraphBuilder {
 			node2comp[i] = i;
 		}
 
-		List<List<Integer>> cc = findComponents(pgraph);
+		List<List<Integer>> cc = TransClUtils.findComponents(pgraph, lmbda);
 
 		for (List<Integer> c : cc) {
 			System.out.println("component: " + c.size() + " elements");
@@ -75,33 +75,6 @@ public class LinProgTransGraphBuilder {
 		this.scc = TransClUtils.updateSCC(scc, node2comp);
 		return scc;
 
-	}
-
-	List<List<Integer>> findComponents(PGraph pgraph) {
-		SimpleGraph<Integer, DefaultEdge> sg = new SimpleGraph<>(DefaultEdge.class);
-		for (int i = 0; i < pgraph.nodes.size(); i++) {
-			sg.addVertex(i);
-		}
-
-		for (int i = 0; i < pgraph.nodes.size(); i++) {
-			for (Oedge e : pgraph.nodes.get(i).oedges) {
-				if (e.sim >= lmbda && i != e.nIdx) {
-					sg.addEdge(i, e.nIdx);
-				}
-			}
-		}
-
-		ConnectivityInspector<Integer, DefaultEdge> ci = new ConnectivityInspector<>(sg);
-		List<Set<Integer>> connectedSets = ci.connectedSets();
-		List<List<Integer>> ret = new ArrayList<>();
-		for (Set<Integer> c : connectedSets) {
-			List<Integer> l = new ArrayList<>();
-			for (int x : c) {
-				l.add(x);
-			}
-			ret.add(l);
-		}
-		return ret;
 	}
 
 	public static void main(String[] args) {

@@ -2,30 +2,27 @@ package data;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 
 import com.google.gson.JsonObject;
 
-import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TrueCaseAnnotation;
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
@@ -33,8 +30,6 @@ import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
 import entailment.vector.EntailGraphFactoryAggregator;
-import graph.PGraph;
-import graph.PredSim;
 
 public class Scripts {
 	static void swapDS(String path) throws IOException {
@@ -340,9 +335,14 @@ public class Scripts {
 		File folder = new File(fpath);
 		File[] files = folder.listFiles();
 
-		HashMap<String, Integer> allPredsNeighCounts = new HashMap<>();
-		List<SimpleSpot> allPredsList = new ArrayList<>();
+		// HashMap<String, Integer> allPredsNeighCounts = new HashMap<>();
+		// List<SimpleSpot> allPredsList = new ArrayList<>();
+		
 		int numAllPreds = 0;
+		int numAllLocalEdges = 0;
+
+		Map<String, Integer> fnameToPredCount = new HashMap<>();
+		Set<String> uniqueUntypedPreds = new HashSet<>();
 
 		for (File f : files) {
 			String p = f.getPath();
@@ -353,38 +353,53 @@ public class Scripts {
 			if (!p.endsWith("_sim.txt")) {
 				continue;
 			}
-
+			int thisNumPreds = 0;
+			
 			BufferedReader br = new BufferedReader(new FileReader(p));
 
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.startsWith("predicate:")) {
+					thisNumPreds++;
+					numAllPreds++;
 					String pred = line.substring(11);
 					pred = pred.substring(0, pred.indexOf("#"));
-					numAllPreds++;
+					uniqueUntypedPreds.add(pred);
 					line = br.readLine();
 					int numNeighs = Integer.parseInt(line.substring(line.lastIndexOf(':') + 2));
-					if (!allPredsNeighCounts.containsKey(pred)) {
-						allPredsNeighCounts.put(pred, numNeighs);
-					} else {
-						allPredsNeighCounts.put(pred, allPredsNeighCounts.get(pred) + numNeighs);
-					}
+					numAllLocalEdges += numNeighs;
+					// if (!allPredsNeighCounts.containsKey(pred)) {
+					// allPredsNeighCounts.put(pred, numNeighs);
+					// } else {
+					// allPredsNeighCounts.put(pred, allPredsNeighCounts.get(pred) + numNeighs);
+					// }
 				}
+
 			}
+			fnameToPredCount.put(p, thisNumPreds);
 			br.close();
 		}
 
-		for (String s : allPredsNeighCounts.keySet()) {
-			allPredsList.add(new SimpleSpot(s, allPredsNeighCounts.get(s)));
+		// for (String s : allPredsNeighCounts.keySet()) {
+		// allPredsList.add(new SimpleSpot(s, allPredsNeighCounts.get(s)));
+		// }
+
+		// Collections.sort(allPredsList, Collections.reverseOrder());
+
+		System.out.println("num all preds: " + numAllPreds);
+		System.out.println("num all untyped preds: " + uniqueUntypedPreds.size());
+		System.out.println("num all local edges: "+numAllLocalEdges);
+
+		// System.out.println("neighbor counts: ");
+		// for (SimpleSpot ss : allPredsList) {
+		// System.out.println(ss.spot + " " + ss.count);
+		// }
+
+		System.out.println("num preds in files");
+		for (String s : fnameToPredCount.keySet()) {
+			System.out.println(s + "\t" + fnameToPredCount.get(s));
 		}
 
-		Collections.sort(allPredsList, Collections.reverseOrder());
-
-		System.out.println(numAllPreds);
-
-		for (SimpleSpot ss : allPredsList) {
-			System.out.println(ss.spot + " " + ss.count);
-		}
 	}
 
 	static void getSubCCG() throws IOException {
@@ -655,29 +670,26 @@ public class Scripts {
 	static void dumpGoodLines() throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader("predArgsC_gen.txt"));
 		String line;
-		
+
 		boolean shouldWrite = true;
 		String prevMainLine = "";
-		while ((line=br.readLine())!=null) {
+		while ((line = br.readLine()) != null) {
 			if (line.startsWith("#line: ")) {
 				prevMainLine = line;
-			}
-			else if(line.startsWith("#lineId")) {
+			} else if (line.startsWith("#lineId")) {
 				try {
 					int lineId = Integer.parseInt(line.split(" ")[1]);
-					if (lineId<110000000) {
+					if (lineId < 110000000) {
 						System.out.println(prevMainLine);
 						System.out.println(line);
 						shouldWrite = true;
-					}
-					else {
+					} else {
 						shouldWrite = false;
 					}
 				} catch (Exception e) {
 					shouldWrite = false;
 				}
-			}
-			else {
+			} else {
 				if (shouldWrite) {
 					System.out.println(line);
 				}
@@ -685,7 +697,7 @@ public class Scripts {
 		}
 		br.close();
 	}
-	
+
 	static void findLastRead() throws IOException {// because of some memory overload, I needed this function. Not
 													// important, though
 		BufferedReader br = new BufferedReader(new FileReader("predArgsC_gen.txt"));
@@ -731,7 +743,7 @@ public class Scripts {
 		// testEntTypes();
 		// trueCase();
 
-		// getAllRemainedPredicates("../../python/gfiles/typedEntGrDir_aida_figer_3_3_c/");
+		getAllRemainedPredicates("../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/");
 		// formLDAInput("../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/");
 		// String s1 = "target_rels_CCG.txt";
 		// String s2 = "all_CCG_rem.txt";
@@ -747,8 +759,8 @@ public class Scripts {
 
 		// countKeys();
 
-//		findLastRead();
-		dumpGoodLines();
+		// findLastRead();
+//		dumpGoodLines();
 
 	}
 

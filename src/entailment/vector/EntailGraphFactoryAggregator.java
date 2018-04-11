@@ -49,29 +49,29 @@ public class EntailGraphFactoryAggregator {
 	public static boolean rawExtractions = false;// gbooks original
 	public static boolean GBooksCCG = false;
 	public static boolean useTimeEx = false;
-	public static boolean isCCG = true;
-	public static boolean isTyped = true;
-	public static boolean figerTypes = true;
+	public static boolean isCCG = false;
+	public static boolean isTyped = false;
+	public static boolean figerTypes = false;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
-	public static boolean isGerman = false;
+	public static boolean isForeign = true;
 	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
 	// if it has been already lemmatized in rel extraction. Must be false.
 
 	public static final boolean normalizePredicate = true;
 	public static final boolean backupToStanNER = false;// You can make this true, but it will take some good time to
 														// run!
+	public static boolean removeStopPreds = false;
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static int minArgPairForPred = 10;
-	static int minPredForArgPair = 10;// min num of unique predicates for
+	static int minArgPairForPred = 0;// 100;
+	static int minPredForArgPair = 0;// 20;// min num of unique predicates for
 										// argpair
-	public static int maxPredsTotal = -1;
+	public static int maxPredsTotal = -1;// 35000;
 	public static HashSet<String> acceptablePreds;
 	static final int minPredForArg = -1;// min num of unique predicates for
-	
-	static final int numThreads = 16;
+
+	static final int numThreads = 1;
 
 	static final boolean writePMIorCount = false;// false:count, true: PMI
-
 
 	static final String relAddress;
 	static final String simsFolder;
@@ -80,18 +80,23 @@ public class EntailGraphFactoryAggregator {
 		if (GBooksCCG) {
 			relAddress = "gbooks_dir/gbooks_ccg.txt";
 			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
-		} else if (isGerman) {
-			relAddress = "binary_relations.json";
-			simsFolder = "typedEntGrDir_German";
+		} else if (isForeign) {
+//			relAddress = "binary_relations.json";
+//			simsFolder = "typedEntGrDir_German";
+			relAddress = "binary_rels_chinese.txt";
+			simsFolder = "typedEntGrDir_Chinese";
 		} else {
-			relAddress = "news_gen8_aida.json";
+			// relAddress = "news_gen8_aida.json";
+			relAddress = "news_genC_aida.json";
 			// simsFolder = "typedEntGrDir_aida_figer_3_3_g";
-			simsFolder = "typedEntGrDir_aida_figer_10_10";
+			// simsFolder = "typedEntGrDir_aida_figer_10_10";
+			simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
+			// simsFolder = "untypedEntGrDirC_aida_50_50_20K";
 		}
 
 		if (maxPredsTotal != -1) {// we should just look at maxPT predicates, no other cutoff
-			minArgPairForPred = 0;
-			minPredForArgPair = 0;
+			// minArgPairForPred = 0;
+			// minPredForArgPair = 0;
 
 			try {
 				formAcceptablePreds();
@@ -118,9 +123,9 @@ public class EntailGraphFactoryAggregator {
 		String line;
 		while ((line = br.readLine()) != null) {
 			lineNumbers++;
-//			if (lineNumbers == 100000) {
-//				break;
-//			}
+			// if (lineNumbers == 100000) {
+			// break;
+			// }
 			if (lineNumbers % 100000 == 0) {
 				System.out.println("quick scan: " + lineNumbers);
 			}
@@ -147,7 +152,7 @@ public class EntailGraphFactoryAggregator {
 					}
 
 					String[] predicateLemma;
-					if (!EntailGraphFactoryAggregator.isGerman) {
+					if (!EntailGraphFactoryAggregator.isForeign) {
 						predicateLemma = Util.getPredicateLemma(pred, EntailGraphFactoryAggregator.isCCG);
 					} else {
 						predicateLemma = new String[] { pred, "false" };
@@ -340,7 +345,7 @@ public class EntailGraphFactoryAggregator {
 		HashSet<String> allTypes = new HashSet<>();
 
 		allTypes.add("thing");
-		if (EntailGraphFactoryAggregator.isTyped && !EntailGraphFactoryAggregator.isGerman) {
+		if (EntailGraphFactoryAggregator.isTyped && !EntailGraphFactoryAggregator.isForeign) {
 			if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 				for (String s : Util.getEntToFigerType().values()) {
 					allTypes.add(s);

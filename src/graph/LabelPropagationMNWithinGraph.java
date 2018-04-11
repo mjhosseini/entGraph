@@ -149,7 +149,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 
 				// System.out.println("numerator 3 j: "+pgraph.nodes.get(i).id+"
 				// "+pgraph.nodes.get(j).id+" "+numerator);
-
+				
 				// TODO: added, be careful
 				// numerator/=(pgraph.nodes.get(i).getNumNeighs()+pgraph.nodes.get(j).getNumNeighs());
 
@@ -302,7 +302,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 						// w = pgraph.g0.getEdgeWeight(e0);
 
 						System.err.println("g0 has the edge, but it hasn't been propagated!!!");
-//						System.exit(1);
+						// System.exit(1);
 					}
 					gMN.setEdgeWeight(ee, w);
 					TypePropagateMN.allPropEdges++;

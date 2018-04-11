@@ -506,12 +506,14 @@ public class PredicateArgumentExtractor implements Runnable {
 					// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 					// true);
 					relInfos.add(relInfo0);
+//					System.out.println("adding rel info0: "+relInfo0.mainStr);
 					if (!modifierStr.equals("")) {
-						predArgStr = getPredArgString("", leftPred, rightPred, arg1, arg2, negated, eventIndex);
+						predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIndex);
 						relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index, eventIndex,
 								accepted, dsStr.length() > 0, idx2Node, sentIdx);
 						// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 						// true);
+//						System.out.println("adding rel info1: "+relInfo0.mainStr);
 						relInfos.add(relInfo0);
 					}
 
@@ -681,6 +683,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
 			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 			// false);
+//			System.out.println("adding relinfo4: "+relInfo0.mainStr);
 			relInfos.add(relInfo0);
 			// System.out.println("added relInfo twohop vp: "+relInfo0.mainStr);
 
@@ -691,6 +694,7 @@ public class PredicateArgumentExtractor implements Runnable {
 						accepted, dsStr.length() > 0, idx2Node, sentIdx);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
+//				System.out.println("adding relinfo5: "+relInfo0.mainStr);
 				relInfos.add(relInfo0);
 			}
 		}
@@ -771,6 +775,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 			// false);
 			if (shouldAdd) {
+//				System.out.println("adding relinfo2: "+relInfo0.mainStr);
 				relInfos.add(relInfo0);
 				// System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
 				// System.out.println(edge2.getMediator().getLemma() + " " +
@@ -787,6 +792,7 @@ public class PredicateArgumentExtractor implements Runnable {
 						accepted, dsStr.length() > 0, idx2Node, sentIdx);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
+//				System.out.println("adding relinfo3: "+relInfo0.mainStr);
 				relInfos.add(relInfo0);
 			}
 
@@ -1165,7 +1171,8 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
 		// String s = "Barack Obama is not against all wars.";
-		String s = "John picked up the book.";
+//		String s = "John picked up the book.";
+		String s = "Elsewhere in the starting lineup, Nik Stauskas (12.1 points, 47 percent from 3) and Glenn Robinson III (11.3 points, 5.5 rebounds) have slowed recently. It could be a freshman wall, it could be just better competition. I see Harris and Stauskas guarding each other and shooting 3s over each other. MSU would like to have the edge in this area. Robinson III will be matched up with Payne and could have a very tough time. Robinson seems to have disappeared in recent games, but Payne will be a completely different matchup.";
 		// String s = "location_1 be combined with location_2";
 		// String s = "drug_1 should be taken by drug_2";
 		// String s = "disease is increasing in country";

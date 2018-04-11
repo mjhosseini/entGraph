@@ -23,7 +23,6 @@ import eu.excitementproject.eop.globalgraphoptimizer.score.MapLocalScorer;
 
 public class EOPTNF {
 
-
 	static void formEntGraph(PGraph pgraph, double lmbda, PrintStream op) {
 
 		// build the local graph
@@ -71,7 +70,7 @@ public class EOPTNF {
 			EfficientlyCorrectHtlLearner edgeLearner = null;
 
 			try {
-				edgeLearner = new EfficientlyCorrectHtlLearner(nodeGraph, mapLocalScorer, lmbda);
+				edgeLearner = new EfficientlyCorrectHtlLearner(nodeGraph, mapLocalScorer, lmbda, pgraph.name);
 				edgeLearner.learn();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -94,12 +93,10 @@ public class EOPTNF {
 		// }
 		// }
 
-		System.out.println("learned graph!");
+		System.out.println("learned graph! " + pgraph.name);
 		writeGraph(pgraph, graph, lmbda, op);
-		
+
 	}
-	
-	
 
 	static void writeGraph(PGraph pgraph, DirectedOntologyGraph graph, double lmbda, PrintStream op) {
 		int N = graph.getNodeCount();
@@ -122,8 +119,8 @@ public class EOPTNF {
 
 		scc = TransClUtils.updateSCC(scc, node2comp);
 		TransClUtils.writeSCC(scc, lmbda, op, pgraph);
-		
-		System.out.println("obj: "+TransClUtils.computeObj(scc, pgraph, lmbda));
+
+		System.out.println("obj: " + TransClUtils.computeObj(scc, pgraph, lmbda));
 
 	}
 

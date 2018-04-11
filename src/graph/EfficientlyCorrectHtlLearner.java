@@ -34,10 +34,14 @@ import eu.excitementproject.eop.globalgraphoptimizer.score.MapLocalScorer;
  */
 public class EfficientlyCorrectHtlLearner extends HighToLowEdgeLearner {
 	
-	private Logger logger = Logger.getLogger(EfficientlyCorrectHtlLearner.class);
+	final static double convergeConst = 1;
 	
-	public EfficientlyCorrectHtlLearner(NodeGraph ioGraph,MapLocalScorer iLocalModel, double edgeCost) throws Exception {
+	private Logger logger = Logger.getLogger(EfficientlyCorrectHtlLearner.class);
+	String gName;
+	public EfficientlyCorrectHtlLearner(NodeGraph ioGraph,MapLocalScorer iLocalModel, double edgeCost, String gName) throws Exception {
 		super(ioGraph, iLocalModel, edgeCost);
+		
+		this.gName = gName;
 	}
 	
 	public EfficientlyCorrectHtlLearner(double edgeCost){
@@ -90,7 +94,7 @@ public class EfficientlyCorrectHtlLearner extends HighToLowEdgeLearner {
 		//keep going while did there are changes to the graph 
 		boolean converge = false;
 		double currentObjValue = m_nodeGraph.getGraph().sumOfEdgeWeights()-m_edgeCost*m_nodeGraph.getGraph().getEdgeCount();
-		logger.warn("OBJECTIVE-FUNCTION-VALUE: " + currentObjValue);	
+		logger.warn("OBJECTIVE-FUNCTION-VALUE: " + currentObjValue+" "+gName);	
 		while(!converge) {
 			int idx = 0;
 			for(Integer currNodeId: graph.getNodeIds()) {
@@ -106,7 +110,7 @@ public class EfficientlyCorrectHtlLearner extends HighToLowEdgeLearner {
 			double objectiveValue = m_nodeGraph.getGraph().sumOfEdgeWeights()-m_edgeCost*m_nodeGraph.getGraph().getEdgeCount();
 			if(objectiveValue+0.00001<currentObjValue)
 				throw new LearningException("objective function value can not decrease. Current value: " + currentObjValue + " new value: " + objectiveValue);
-			else if(objectiveValue-currentObjValue < Constants.CONVERGENCE)
+			else if(objectiveValue-currentObjValue < convergeConst)//
 				converge = true;
 			currentObjValue = objectiveValue;
 			logger.warn("OBJECTIVE-FUNCTION-VALUE: " + currentObjValue);	

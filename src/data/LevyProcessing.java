@@ -936,16 +936,6 @@ public class LevyProcessing {
 
 	}
 
-	static void countUniques(String f) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(f));
-		String line = null;
-		Set<String> allLines = new HashSet<>();
-		while ((line = br.readLine()) != null) {
-			allLines.add(line);
-		}
-		System.out.println(allLines.size());
-	}
-
 	public static void main(String[] args) throws IOException {
 		// countUniques(root + "re-annotated-full.tsv");
 		// makeCandEnts();

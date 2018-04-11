@@ -20,8 +20,8 @@ public class LinProgCplex {
 	IloNumVar[] x;
 	
 	static {
-		ParameterSet parameterSet = new IloCplex.ParameterSet();
-		parameterSet.setParam(IloCplex.Param.Threads, 8);
+//		ParameterSet parameterSet = new IloCplex.ParameterSet();
+//		parameterSet.setParam(IloCplex.Param.Threads, 8);
 				
 	}
 
