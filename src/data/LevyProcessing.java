@@ -17,10 +17,13 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.api.client.util.Types;
+
 import entailment.PredicateArgumentExtractor;
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.vector.EntailGraphFactoryAggregator;
+import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 
 public class LevyProcessing {
@@ -574,9 +577,9 @@ public class LevyProcessing {
 
 				// no backup for figerTypes
 				String lt1 = Util.linkAndType(rel1ss[1], rel1ss[4].charAt(0) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes,tokenToType1);
+						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER,tokenToType1);
 				String lt2 = Util.linkAndType(rel1ss[2], rel1ss[4].charAt(1) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes,tokenToType1);
+						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER,tokenToType1);
 
 				System.out.println(line + " " + lt1 + " " + lt2);
 
@@ -598,9 +601,9 @@ public class LevyProcessing {
 				rel2ss[0] = lemmas[0];
 
 				String lt1 = Util.linkAndType(rel2ss[1], rel2ss[4].charAt(0) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes, tokenToType2);
+						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER, tokenToType2);
 				String lt2 = Util.linkAndType(rel2ss[2], rel2ss[4].charAt(1) == 'E',
-						!EntailGraphFactoryAggregator.figerTypes, tokenToType2);
+						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER, tokenToType2);
 
 				System.out.println(line + " " + lt1 + " " + lt2);
 
@@ -819,7 +822,7 @@ public class LevyProcessing {
 	// no typing, no arg checking
 	static void normalizeOIESimple(String fpath) throws IOException {
 		EntailGraphFactoryAggregator.isTyped = true;
-		EntailGraphFactoryAggregator.figerTypes = true;
+		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
 		BufferedReader br = new BufferedReader(new FileReader(fpath));
 		int dotIdx = fpath.lastIndexOf('.');
 		String opath = fpath.substring(0, dotIdx) + "_norm" + fpath.substring(dotIdx);
@@ -858,7 +861,7 @@ public class LevyProcessing {
 		// String[] fileNames = new String[] { "dev1", "train1", "test1" };//
 		// String[] fileNames = new String[] { "all_new" };//
 		EntailGraphFactoryAggregator.isTyped = true;
-		EntailGraphFactoryAggregator.figerTypes = true;
+		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
 		EntailGraphFactoryAggregator.isCCG = true;
 		
 		// String[] fileNames = new String[] { "all_new", "all_new_dir" };//

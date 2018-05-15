@@ -250,7 +250,7 @@ public class EntailGraphFactory implements Runnable {
 					
 					//Now, we might need to to backuptoStan. We do this down here to prevent unnecessary overhead!
 					// let's see if we have NER ed the line, otherwise, do it
-					if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.figerTypes
+					if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.typeScheme==TypeScheme.FIGER
 							&& lineIdSeen.get(lineId) == 1) {
 						// System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
 						Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
@@ -689,7 +689,6 @@ public class EntailGraphFactory implements Runnable {
 			EntailGraph entGraph = typesToGraph.get(types);
 			entGraph.writeSims = entGraph.getPvecs().size() > 1;
 			entGraph.writeInfo = entGraph.writeSims;
-//			entGraph.writeInfo = true;//TODO: remove this
 			entGraph.processGraph();
 
 			SimpleEntailGraph simpleEntGraph = entGraph;

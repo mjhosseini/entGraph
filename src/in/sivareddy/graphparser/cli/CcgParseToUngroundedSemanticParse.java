@@ -26,7 +26,7 @@ public class CcgParseToUngroundedSemanticParse {
     String[] argumentLexicalIdenfiers = {"lemma"};
     String[] relationTypingIdentifiers = {};
     boolean ignorePronouns = false;
-
+    
     CcgParser ccgParser =
         new CcgParser(lexicon, relationLexicalIdentifiers,
             argumentLexicalIdenfiers, relationTypingIdentifiers, ignorePronouns);

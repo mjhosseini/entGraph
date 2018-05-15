@@ -26,7 +26,8 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static HashSet<String> acceptableGEStrs;
 
 	static {
-		String[] accepteds = new String[] { "GE", "EG", "EE" };//
+		// String[] accepteds = new String[] { "GE", "EG", "EE" };//
+		String[] accepteds = new String[] { "GE", "EG", "EE", "GG" };// TODO: remove this!
 		acceptableGEStrs = new HashSet<>();
 		for (String s : accepteds) {
 			acceptableGEStrs.add(s);
@@ -34,6 +35,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	}
 
 	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
+	public static boolean useQuestionMod = true;// Always set if to false!
 
 	String line;
 	public static CcgParseToUngroundedGraphs parser;
@@ -324,6 +326,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// System.out.println("before: " + text);
 
 		// // long t0 = System.currentTimeMillis();
+
 		if (allGraphs == null) {
 			text = Util.preprocess(text);
 			String sentence = text;
@@ -362,6 +365,18 @@ public class PredicateArgumentExtractor implements Runnable {
 				// mainStr += ungroundedGraph+"\n";
 				// mainStr += ungroundedGraph.getSyntacticParse() + "\n";
 				String syntacticParse = ungroundedGraph.getSyntacticParse();
+
+				Set<String> semanticParse = ungroundedGraph.getSemanticParse();
+				// System.out.println(syntacticParse);
+				// System.out.println(semanticParse);
+
+				// TODO: remove below
+				mainStr += "\nSyntactic Parse:\n";
+				mainStr += syntacticParse + "\n\n";
+				mainStr += "Semantic Parse:\n";
+				mainStr += semanticParse + "\n\n";
+
+				boolean first = true;
 
 				// System.out.println(syntacticParse);
 
@@ -506,14 +521,15 @@ public class PredicateArgumentExtractor implements Runnable {
 					// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 					// true);
 					relInfos.add(relInfo0);
-//					System.out.println("adding rel info0: "+relInfo0.mainStr);
+					// System.out.println("adding rel info0: "+relInfo0.mainStr);
 					if (!modifierStr.equals("")) {
-						predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIndex);
+						predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated,
+								eventIndex);
 						relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index, eventIndex,
 								accepted, dsStr.length() > 0, idx2Node, sentIdx);
 						// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 						// true);
-//						System.out.println("adding rel info1: "+relInfo0.mainStr);
+						// System.out.println("adding rel info1: "+relInfo0.mainStr);
 						relInfos.add(relInfo0);
 					}
 
@@ -556,6 +572,12 @@ public class PredicateArgumentExtractor implements Runnable {
 						// }
 
 						if (relInfo.foundInteresting || !notReallyInteresting(relInfo.mainStr)) {
+							// TODO: remove below
+							if (first) {
+								mainStr += "binary rels:\n";
+							}
+							first = false;
+
 							mainStr += relInfo.mainStr;
 							mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
 						}
@@ -635,6 +657,12 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (eventIdx2 != eventIndex) {
 				continue;
 			}
+
+			// Added on 27 Apr 2018
+			String pos = idx2Node.get(arg2Index).getPos();
+
+			// Added on 27 Apr 2018
+
 			int lidx = edge2.getLeft().getWordPosition();
 			int ridx = edge2.getRight().getWordPosition();
 
@@ -674,6 +702,12 @@ public class PredicateArgumentExtractor implements Runnable {
 			boolean swapped = !(leftPred.compareTo(rightPred) < 0);
 
 			String predArgStr = getPredArgString("", leftPred, rightPred, arg1, arg2, negated, eventIdx2);
+
+			if (pos.startsWith("NNP")) {
+				System.out.println("bad pos VP: " + pos + " " + predArgStr + " " + idx2Node.get(arg2Index).getWord());
+				continue;
+			}
+
 			if (addedPredArgStrs.contains(predArgStr)) {
 				continue;
 			}
@@ -683,9 +717,9 @@ public class PredicateArgumentExtractor implements Runnable {
 					eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
 			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 			// false);
-//			System.out.println("adding relinfo4: "+relInfo0.mainStr);
+			// System.out.println("adding relinfo4: "+relInfo0.mainStr);
 			relInfos.add(relInfo0);
-			// System.out.println("added relInfo twohop vp: "+relInfo0.mainStr);
+			System.out.println("added relInfo twohop vp: " + relInfo0.mainStr);
 
 			if (!modifierStr.equals("")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIdx2);
@@ -694,7 +728,7 @@ public class PredicateArgumentExtractor implements Runnable {
 						accepted, dsStr.length() > 0, idx2Node, sentIdx);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
-//				System.out.println("adding relinfo5: "+relInfo0.mainStr);
+				// System.out.println("adding relinfo5: "+relInfo0.mainStr);
 				relInfos.add(relInfo0);
 			}
 		}
@@ -722,6 +756,11 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (eventIdx2 != arg2Index) {
 				continue;
 			}
+
+			// Added on 27 Apr 2018
+			String pos = edge2.getMediator().getPos(); // idx2Node.get(arg2Index).getPos();
+			// Added on 27 Apr 2018
+
 			String thisRightPred = rightPred;
 			int lastRightDot = thisRightPred.lastIndexOf('.');
 			thisRightPred = thisRightPred.substring(0, lastRightDot + 1);
@@ -732,7 +771,8 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (edge2.getLeft().getWordPosition() == arg2Index) {
 				thisRightPred += lr[1];
 				try {
-					if (Util.prepositions.contains(lr[1].split("\\.")[0])) {
+					if (Util.prepositions.contains(lr[1].split("\\.")[0]) || lr[1].contains(".'s.") || lr[1].contains(".'.")) {
+						System.out.println("shouldCont: "+lr[1]);
 						shouldAdd = false;
 					}
 				} catch (Exception e) {
@@ -743,7 +783,8 @@ public class PredicateArgumentExtractor implements Runnable {
 			} else if (edge2.getRight().getWordPosition() == arg2Index) {
 				thisRightPred += lr[0];
 				try {
-					if (Util.prepositions.contains(lr[0].split("\\.")[0])) {
+					if (Util.prepositions.contains(lr[0].split("\\.")[0]) || lr[0].contains("'s.") || lr[0].contains("'.") ) {
+						System.out.println("shouldCont: "+lr[0]);
 						shouldAdd = false;
 					}
 				} catch (Exception e) {
@@ -765,6 +806,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			boolean swapped = !(leftPred.compareTo(thisRightPred) < 0);
 
 			String predArgStr = getPredArgString("", leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
+
 			if (addedPredArgStrs.contains(predArgStr)) {
 				continue;
 			}
@@ -775,25 +817,31 @@ public class PredicateArgumentExtractor implements Runnable {
 			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 			// false);
 			if (shouldAdd) {
-//				System.out.println("adding relinfo2: "+relInfo0.mainStr);
+				// System.out.println("adding relinfo2: "+relInfo0.mainStr);
+				if (pos.startsWith("NNP")) {
+					System.out
+							.println("bad pos NP: " + pos + " " + predArgStr + " " + idx2Node.get(arg2Index).getWord());
+					continue;
+				}
+
 				relInfos.add(relInfo0);
-				// System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
-				// System.out.println(edge2.getMediator().getLemma() + " " +
-				// edge2.getMediator().getPos() + " "
-				// + lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+				System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
+				System.out.println(edge2.getMediator().getLemma() + " " + edge2.getMediator().getPos() + " "
+						+ lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+
+				if (!modifierStr.equals("")) {
+					predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
+					// System.out.println("added new relation: " + predArgStr);
+					relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
+							accepted, dsStr.length() > 0, idx2Node, sentIdx);
+					// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+					// false);
+					// System.out.println("adding relinfo3: "+relInfo0.mainStr);
+					relInfos.add(relInfo0);
+				}
+
 			} else {
 				// System.out.println("not adding: "+relInfo0.mainStr);
-			}
-
-			if (!modifierStr.equals("")) {
-				predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
-				// System.out.println("added new relation: " + predArgStr);
-				relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
-						accepted, dsStr.length() > 0, idx2Node, sentIdx);
-				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
-				// false);
-//				System.out.println("adding relinfo3: "+relInfo0.mainStr);
-				relInfos.add(relInfo0);
 			}
 
 		}
@@ -1171,11 +1219,18 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
 		// String s = "Barack Obama is not against all wars.";
-//		String s = "John picked up the book.";
-		String s = "Elsewhere in the starting lineup, Nik Stauskas (12.1 points, 47 percent from 3) and Glenn Robinson III (11.3 points, 5.5 rebounds) have slowed recently. It could be a freshman wall, it could be just better competition. I see Harris and Stauskas guarding each other and shooting 3s over each other. MSU would like to have the edge in this area. Robinson III will be matched up with Payne and could have a very tough time. Robinson seems to have disappeared in recent games, but Payne will be a completely different matchup.";
+		// String s = "Every European can travel freely within Europe.";
+//		String s = "Cleveland works at The White House.";
+		String s = "Cleveland works at The White House.";
+		// String s = "Tom managed to pass the exam.";
+		// String s = "John picked up the book.";
+		// String s = "What county is Heathrow airport in?";
+		// String s = "what is the first book Sherlock Holmes appeared in?";
+		// String s = "what type of car does michael weston drive?";
 		// String s = "location_1 be combined with location_2";
 		// String s = "drug_1 should be taken by drug_2";
 		// String s = "disease is increasing in country";
+
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);

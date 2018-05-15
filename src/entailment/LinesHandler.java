@@ -506,6 +506,7 @@ public class LinesHandler {
 			InterruptedException {
 		// breakFile();
 		// testDexter();
+		PredicateArgumentExtractor.useQuestionMod = false;
 		long t0 = System.currentTimeMillis();
 		// convertPredArgsToJson(args);
 		// teshashMap();

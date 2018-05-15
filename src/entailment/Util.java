@@ -60,6 +60,7 @@ import edu.stanford.nlp.util.logging.RedwoodConfiguration;
 import entailment.entityLinking.SimpleSpot;
 import entailment.stringUtils.RelationString;
 import entailment.vector.EntailGraphFactoryAggregator;
+import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 public class Util {
 
@@ -867,6 +868,55 @@ public class Util {
 		}
 		br.close();
 	}
+	
+	public static void convertSampleToRawJson() throws ParseException, IOException {
+		// Scanner sc = new Scanner(new File(
+		// "/Users/hosseini/Desktop/D/research/release/crawl"));
+		// BufferedReader br = new BufferedReader(new InputStreamReader(
+		// new FileInputStream("data/release/crawl"), "UTF-8"));
+		BufferedReader br = new BufferedReader(
+				new InputStreamReader(new FileInputStream("in4.txt"), "UTF-8"));
+		int lineId = 0;
+		int lineNumber = 0;
+		String line;
+		while ((line = br.readLine()) != null) {
+			JsonObject obj = null;
+			if (lineNumber % 10000 == 0) {
+				System.err.println(lineNumber);
+			}
+			lineNumber++;
+			try {
+				
+				String text = line;
+				String date = "NA";
+				long articleId = 1l;
+				String[] lines = text.split("\\n");
+				// System.out.println("text is: "+text);
+				// System.out.println(text);
+				for (String l : lines) {
+					JsonObject myObj = new JsonObject();
+
+					myObj.addProperty("s", l);
+					myObj.addProperty("date", date);
+					myObj.addProperty("articleId", articleId);
+					myObj.addProperty("lineId", lineId);
+					System.out.println(myObj);
+					// System.out.println(l);
+					lineId++;
+					// if (lineId%100000==0){
+					// System.err.println(lineId);
+					// }
+				}
+				if (text.endsWith("\n")) {
+					System.out.println();
+				}
+			} catch (Exception e) {
+				// e.printStackTrace();
+				continue;
+			}
+		}
+		br.close();
+	}
 
 	public static String[] getLeftRightTimes(String timeInterval) {
 		String[] ss = timeInterval.split(",");
@@ -882,7 +932,7 @@ public class Util {
 		if (!EntailGraphFactoryAggregator.isTyped) {
 			return "thing";
 		}
-		if (EntailGraphFactoryAggregator.figerTypes) {
+		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 			if (entToFigerType == null) {
 				try {
 					loadFigerTypes(defaultEntToFigerType);
@@ -1914,7 +1964,7 @@ public class Util {
 				}
 			}
 		} else {
-			if (EntailGraphFactoryAggregator.figerTypes) {
+			if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 				arg = simpleNormalize(arg);
 			}
 			type = getType(arg, false, tokenToStanType);
@@ -2105,7 +2155,8 @@ public class Util {
 		// System.out.println(1d);
 		// readJSONSimple();
 		// convertReleaseToRawJson();
-		convertPredArgsToJsonUnsorted(args);
+//		convertPredArgsToJsonUnsorted(args);
+		convertSampleToRawJson();
 		// recordStanTypes(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));

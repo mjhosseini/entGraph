@@ -37,7 +37,7 @@ public class PGraph implements Comparable<PGraph> {
 	public static boolean checkFrgVio = true;
 	// public static boolean origBerantFRG = true;
 	public static boolean fullTNF = false;// Must be true. false means HTL(-FRG)
-	public static TransitiveMethod transMethod = TransitiveMethod.HTLFRG;
+	public static TransitiveMethod transMethod = TransitiveMethod.BerantTNF;
 	public static int specILPMaxClusterAllowed = 100;// for SpectralILP
 	public static int specILPMaxClusterSizeAllowed = 100;// for SpectralILPWithin (just an approximation)
 	public static boolean shouldReplaceOutputs = true;// if true, will solve everything, otherwise ignores the files it
@@ -45,20 +45,20 @@ public class PGraph implements Comparable<PGraph> {
 
 	public static boolean removeStopPreds = false;// TODO: be careful!
 	public static boolean shouldWrite = true;
-	public static boolean formBinaryGraph = true;
-	public static boolean transitive = true;
+	public static boolean formBinaryGraph = false;
+	public static boolean transitive = false;
 	public static int numTNFThreads = 16;
 
-	public static boolean emb = false;
+	public static boolean emb = true;
 	public static boolean weightEdgeSimilarities = true;
 	public static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
-	static String embSuffix = "_embsims25.txt";
-	static String fpath = "../../python/gfiles/ent/ccg5.sim";
+	static String embSuffix = "_embsimsTransE.txt";
+	static String fpath = "../../python/gfiles/ent/ccg7.sim";
 
-	// public static String suffix = "_sim.txt";
-	public static FeatName featName = FeatName.Iter;
-	public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
+	 public static String suffix = "_sim.txt";
+	public static FeatName featName = FeatName.BINC;
+//	public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	public static String graphPostFix = "_" + transMethod + ".txt";
 	// static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";//
 	static String allExamplesPath = "../../python/gfiles/ent/all_new_comb_rels.txt";
@@ -68,7 +68,7 @@ public class PGraph implements Comparable<PGraph> {
 
 	// static final String root =
 	// "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
-	static int maxEmbIter = 1;
+	static int maxEmbIter = 3;
 	int sortIdx = -1;// the index of the graph after sorting all the graphs based on their sizes. 0
 						// is the largets.
 

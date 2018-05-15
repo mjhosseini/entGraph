@@ -46,24 +46,23 @@ public class EntailGraphFactoryAggregator {
 	// arg
 
 	public static boolean onlyDSPreds = false;
-	public static boolean rawExtractions = false;// gbooks original
+	public static boolean rawExtractions = false;// gbooks original (or gbooks in general?)
 	public static boolean GBooksCCG = false;
 	public static boolean useTimeEx = false;
-	public static boolean isCCG = false;
+	public static boolean isCCG = true;
 	public static boolean isTyped = false;
-	public static boolean figerTypes = false;
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
-	public static boolean isForeign = true;
+	public static boolean isForeign = false;
 	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
-	// if it has been already lemmatized in rel extraction. Must be false.
+	// if it has been already lemmatized in rel extraction, must be false.
 
-	public static final boolean normalizePredicate = true;
+	public static final boolean normalizePredicate = true;// if rawExtraction, wouldn't matter.
 	public static final boolean backupToStanNER = false;// You can make this true, but it will take some good time to
 														// run!
 	public static boolean removeStopPreds = false;
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static int minArgPairForPred = 0;// 100;
-	static int minPredForArgPair = 0;// 20;// min num of unique predicates for
+	static int minArgPairForPred = 40;// 100;
+	static int minPredForArgPair = 40;// 20;// min num of unique predicates for
 										// argpair
 	public static int maxPredsTotal = -1;// 35000;
 	public static HashSet<String> acceptablePreds;
@@ -81,16 +80,21 @@ public class EntailGraphFactoryAggregator {
 			relAddress = "gbooks_dir/gbooks_ccg.txt";
 			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
 		} else if (isForeign) {
-//			relAddress = "binary_relations.json";
-//			simsFolder = "typedEntGrDir_German";
+			// relAddress = "binary_relations.json";
+			// simsFolder = "typedEntGrDir_German";
 			relAddress = "binary_rels_chinese.txt";
 			simsFolder = "typedEntGrDir_Chinese";
 		} else {
-			// relAddress = "news_gen8_aida.json";
-			relAddress = "news_genC_aida.json";
+			relAddress = "news_gen8_aida.json";
+			// relAddress = "news_genC_aida.json";
+			// relAddress = "gbooks_norm.txt";
 			// simsFolder = "typedEntGrDir_aida_figer_3_3_g";
 			// simsFolder = "typedEntGrDir_aida_figer_10_10";
-			simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
+			// simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
+			// simsFolder = "typedEntGrDir_gbooks_onlyLevy";
+			// simsFolder = "typedEntGrDir_NS_onlyLevy";
+			simsFolder = "typedEntGrDir_aida_untyped_40_40";
+			// simsFolder = "typedEntGrDir_gbooks_all_20_20";
 			// simsFolder = "untypedEntGrDirC_aida_50_50_20K";
 		}
 
@@ -202,11 +206,12 @@ public class EntailGraphFactoryAggregator {
 			if (isCCG) {
 				// dsPaths = new String[] { root + "train1_rels.txt", root + "dev1_rels.txt",
 				// root + "test1_rels.txt" };
-				dsPaths = new String[] { root + "train_new_rels_l5.txt", root + "dev_new_rels_l5.txt",
-						root + "test_new_rels_l5.txt" };
+				dsPaths = new String[] { root + "all_new_rels_l8.txt" };
 			} else {
-				dsPaths = new String[] { root + "train1_rels_oie.txt", root + "dev1_rels_oie.txt",
-						root + "test1_rels_oie.txt" };
+				// dsPaths = new String[] { root + "train1_rels_oie.txt", root +
+				// "dev1_rels_oie.txt",
+				// root + "test1_rels_oie.txt" };
+				dsPaths = new String[] { root + "all_new_rels_oie.txt" };
 			}
 
 			for (String dsPath : dsPaths) {

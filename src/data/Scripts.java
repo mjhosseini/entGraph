@@ -30,6 +30,7 @@ import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
 import entailment.vector.EntailGraphFactoryAggregator;
+import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 public class Scripts {
 	static void swapDS(String path) throws IOException {
@@ -214,7 +215,7 @@ public class Scripts {
 
 	static void testEntTypes() throws IOException {
 		PrintStream op = new PrintStream("entToFigerTypes.txt");
-		EntailGraphFactoryAggregator.figerTypes = true;
+		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
 		EntailGraphFactoryAggregator.isTyped = true;
 		BufferedReader br = new BufferedReader(new FileReader("entTypes.txt"));
 		String line;

@@ -6,7 +6,9 @@ import in.sivareddy.graphparser.parsing.LexicalGraph;
 import in.sivareddy.graphparser.util.GroundedLexicon;
 import in.sivareddy.graphparser.util.Schema;
 import in.sivareddy.graphparser.util.knowledgebase.KnowledgeBaseCached;
+import in.sivareddy.others.CcgSyntacticParserCli;
 import in.sivareddy.others.EasyCcgCli;
+import in.sivareddy.others.EasySRLCli;
 import in.sivareddy.others.StanfordCoreNlpDemo;
 
 import java.io.BufferedReader;
@@ -31,10 +33,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import entailment.PredicateArgumentExtractor;
+
 public class CcgParseToUngroundedGraphs {
 	JsonParser jsonParser;
 	Gson gson;
-	EasyCcgCli ccgParser = null;
+	CcgSyntacticParserCli ccgParser = null;
 	EasyCcgCli ccgParserQuestions = null;
 	StanfordCoreNlpDemo nlpPipeline;
 	GroundedGraphs graphCreator;
@@ -46,12 +50,20 @@ public class CcgParseToUngroundedGraphs {
 		jsonParser = new JsonParser();
 		gson = new Gson();
 		logger = Logger.getLogger(CcgParseToUngroundedGraphs.class);
-		nbestParses = 1;
+		nbestParses = 10;
 		
 		String ccgModelDir = Paths.get(dataFolder, "easyccg_model").toString();
 
 		// ccgParser = new EasyCcgCli(ccgModelDir, nbestParses);
-		ccgParser = new EasyCcgCli(ccgModelDir + " -r S[dcl] S[pss] S[pt] S[b] S[ng] S NP", nbestParses);
+		
+		//Changed, 30 Apr, 2018
+//		ccgParser = new EasyCcgCli(ccgModelDir + " -r S[dcl] S[pss] S[pt] S[b] S[ng] S NP", nbestParses);
+//		ccgModelDir =
+//		          Paths.get("lib_data", "model_ccgbank_questions").toString();
+		ccgParser =
+		          new EasySRLCli(ccgModelDir + " --rootCategories S[q] S[qem] S[wq]",nbestParses);
+		
+		//Changed, 30 Apr, 2018
 		// Too much: NP S[to] S[em] S[frg] S[for] S[intj] S[inv] N N[b] S[dcl]
 		// S[pss] S[pt] S[b] S[ng] S
 		// S[em] S[frg] S[for] S[intj] S[inv]
@@ -104,15 +116,25 @@ public class CcgParseToUngroundedGraphs {
 		for (String processedSentence : processedText) {
 			// System.out.println(processedSentence);
 			// We don't need questions for our application
-			if (processedSentence.endsWith("?|.|O")) {
+			if (!PredicateArgumentExtractor.useQuestionMod && processedSentence.endsWith("?|.|O")) {
 				continue;
 			}
-			// List<String> ccgParseStrings = ccgParserQuestions != null
-			// && processedSentence.endsWith("?|.|O") ? ccgParserQuestions
-			// .parse(processedSentence) : ccgParser
-			// .parse(processedSentence);
+			
+			List<String> ccgParseStrings;
+			
+//			System.out.println("processed sentence: "+processedSentence);
+			if (PredicateArgumentExtractor.useQuestionMod) {
+				ccgParseStrings = ccgParserQuestions != null && processedSentence.endsWith("?|.|O")
+						? ccgParserQuestions.parse(processedSentence)
+						: ccgParser.parse(processedSentence);
+			}
+			else {
+				ccgParseStrings = ccgParser.parse(processedSentence);
+			}
+			
+			
 //			System.out.println("pr sen: " + processedSentence);
-			List<String> ccgParseStrings = ccgParser.parse(processedSentence);
+			
 			// System.out.println("ccgparser time:
 			// "+(System.currentTimeMillis()-t0));
 			List<Map<String, String>> ccgParses = new ArrayList<>();
