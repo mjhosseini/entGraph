@@ -26,8 +26,9 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static HashSet<String> acceptableGEStrs;
 
 	static {
-		// String[] accepteds = new String[] { "GE", "EG", "EE" };//
-		String[] accepteds = new String[] { "GE", "EG", "EE", "GG" };// TODO: remove this!
+		String[] accepteds = new String[] { "GE", "EG", "EE" };//
+		// String[] accepteds = new String[] { "GE", "EG", "EE", "GG" };// TODO: remove
+		// this!
 		acceptableGEStrs = new HashSet<>();
 		for (String s : accepteds) {
 			acceptableGEStrs.add(s);
@@ -114,7 +115,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-		System.out.println(mainStr);
+//		System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {
@@ -371,10 +372,10 @@ public class PredicateArgumentExtractor implements Runnable {
 				// System.out.println(semanticParse);
 
 				// TODO: remove below
-				mainStr += "\nSyntactic Parse:\n";
-				mainStr += syntacticParse + "\n\n";
-				mainStr += "Semantic Parse:\n";
-				mainStr += semanticParse + "\n\n";
+//				mainStr += "\nSyntactic Parse:\n";
+//				mainStr += syntacticParse + "\n\n";
+//				mainStr += "Semantic Parse:\n";
+//				mainStr += semanticParse + "\n\n";
 
 				boolean first = true;
 
@@ -573,9 +574,9 @@ public class PredicateArgumentExtractor implements Runnable {
 
 						if (relInfo.foundInteresting || !notReallyInteresting(relInfo.mainStr)) {
 							// TODO: remove below
-							if (first) {
-								mainStr += "binary rels:\n";
-							}
+//							if (first) {
+//								mainStr += "binary rels:\n";
+//							}
 							first = false;
 
 							mainStr += relInfo.mainStr;
@@ -771,8 +772,9 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (edge2.getLeft().getWordPosition() == arg2Index) {
 				thisRightPred += lr[1];
 				try {
-					if (Util.prepositions.contains(lr[1].split("\\.")[0]) || lr[1].contains(".'s.") || lr[1].contains(".'.")) {
-						System.out.println("shouldCont: "+lr[1]);
+					if (Util.prepositions.contains(lr[1].split("\\.")[0]) || lr[1].contains(".'s.")
+							|| lr[1].contains(".'.")) {
+						System.out.println("shouldCont: " + lr[1]);
 						shouldAdd = false;
 					}
 				} catch (Exception e) {
@@ -783,8 +785,9 @@ public class PredicateArgumentExtractor implements Runnable {
 			} else if (edge2.getRight().getWordPosition() == arg2Index) {
 				thisRightPred += lr[0];
 				try {
-					if (Util.prepositions.contains(lr[0].split("\\.")[0]) || lr[0].contains("'s.") || lr[0].contains("'.") ) {
-						System.out.println("shouldCont: "+lr[0]);
+					if (Util.prepositions.contains(lr[0].split("\\.")[0]) || lr[0].contains("'s.")
+							|| lr[0].contains("'.")) {
+						System.out.println("shouldCont: " + lr[0]);
 						shouldAdd = false;
 					}
 				} catch (Exception e) {
@@ -1220,7 +1223,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
 		// String s = "Barack Obama is not against all wars.";
 		// String s = "Every European can travel freely within Europe.";
-//		String s = "Cleveland works at The White House.";
+		// String s = "Cleveland works at The White House.";
 		String s = "Cleveland works at The White House.";
 		// String s = "Tom managed to pass the exam.";
 		// String s = "John picked up the book.";

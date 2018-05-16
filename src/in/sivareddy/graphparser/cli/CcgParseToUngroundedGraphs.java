@@ -50,18 +50,19 @@ public class CcgParseToUngroundedGraphs {
 		jsonParser = new JsonParser();
 		gson = new Gson();
 		logger = Logger.getLogger(CcgParseToUngroundedGraphs.class);
-		nbestParses = 10;
+		nbestParses = 1;
 		
 		String ccgModelDir = Paths.get(dataFolder, "easyccg_model").toString();
 
 		// ccgParser = new EasyCcgCli(ccgModelDir, nbestParses);
 		
 		//Changed, 30 Apr, 2018
-//		ccgParser = new EasyCcgCli(ccgModelDir + " -r S[dcl] S[pss] S[pt] S[b] S[ng] S NP", nbestParses);
-//		ccgModelDir =
-//		          Paths.get("lib_data", "model_ccgbank_questions").toString();
-		ccgParser =
-		          new EasySRLCli(ccgModelDir + " --rootCategories S[q] S[qem] S[wq]",nbestParses);
+		ccgParser = new EasyCcgCli(ccgModelDir + " -r S[dcl] S[pss] S[pt] S[b] S[ng] S NP", nbestParses);
+		ccgModelDir =
+		          Paths.get("lib_data", "model_ccgbank_questions").toString();
+		//TODO: remove this
+//		ccgParser =
+//		          new EasySRLCli(ccgModelDir + " --rootCategories S[q] S[qem] S[wq]",nbestParses);
 		
 		//Changed, 30 Apr, 2018
 		// Too much: NP S[to] S[em] S[frg] S[for] S[intj] S[inv] N N[b] S[dcl]

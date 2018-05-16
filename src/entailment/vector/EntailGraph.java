@@ -16,7 +16,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	HashMap<Integer, Float> argPairIdxToCount = new HashMap<>();
 	private ArrayList<PredicateVector> pvecs = new ArrayList<PredicateVector>();
 
-	int numTuples;
+	float numTuples;
 	int nnz;
 	PrintStream graphOp1;// This is for writing the predicate vectors
 	String opFileName;
@@ -78,6 +78,7 @@ public class EntailGraph extends SimpleEntailGraph {
 
 		// System.out.println("process: "+types+" "+writeInfo+" "+writeSims);
 //		System.out.println("write info: "+writeInfo+" "+pvecs.size());
+		
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
@@ -97,17 +98,17 @@ public class EntailGraph extends SimpleEntailGraph {
 			occToCount.replace(occ, occToCount.get(occ) + 1);
 		}
 
-		int sumCount = 0;
-		for (int i = 0; i < 100; i++) {
-			if (!occToCount.containsKey(i)) {
-				continue;
-			}
-			// System.err.println("num preds with " + i + " args: " +
-			// occToCount.get(i));
-			sumCount += occToCount.get(i);
-			// System.err.println("num preds with more args: " + (pvecs.size() -
-			// sumCount));
-		}
+//		int sumCount = 0;
+//		for (int i = 0; i < 100; i++) {
+//			if (!occToCount.containsKey(i)) {
+//				continue;
+//			}
+//			// System.err.println("num preds with " + i + " args: " +
+//			// occToCount.get(i));
+//			sumCount += occToCount.get(i);
+//			// System.err.println("num preds with more args: " + (pvecs.size() -
+//			// sumCount));
+//		}
 
 		ArrayList<PredicateVector> pvecsTmp = pvecs;
 		pvecs = new ArrayList<PredicateVector>();
@@ -239,8 +240,8 @@ public class EntailGraph extends SimpleEntailGraph {
 
 	void setAllPMIs() {
 
-		int allOccurrences1 = 0;
-		int allOccurrences2 = 0;
+		float allOccurrences1 = 0;
+		float allOccurrences2 = 0;
 		for (InvertedIdx invIdx : invertedIdxes) {
 			allOccurrences1 += invIdx.norm1;
 		}
@@ -266,7 +267,9 @@ public class EntailGraph extends SimpleEntailGraph {
 				float probArgPair = invIdx.norm1 / this.numTuples;
 				int arrIdx = pvec.argIdxToArrayIdx.get(argIdx);
 				float pRel = (float) pvec.vals.get(arrIdx) / numTuples;
-				float PMI = (float) Math.log(pRel / (probPred * probArgPair));
+//				float PMI = (float) Math.log(pRel / (probPred * probArgPair));
+				float PMI = (float) (Math.log(pRel) - Math.log(probPred) -Math.log(probArgPair));
+//				System.out.println("pmi: "+PMI);
 
 				pvec.PMIs.set(arrIdx, PMI);
 				invIdx.PMIs.set(invIdx.sampleIdxToArrIdx.get(pvec.uniqueId), PMI);
@@ -487,8 +490,75 @@ public class EntailGraph extends SimpleEntailGraph {
 		}
 
 		int pairIdx = argPairToIdx.get(featName);
+		
+		//If embBasedScore, then change count to count*score here! (instead of the default count*1)
+		if (EntailGraphFactoryAggregator.embBasedScores || EntailGraphFactoryAggregator.anchorBasedScores) {
+			count *= getScore(pred, featName);
+		}
+		
 		pvec.addArgPair(pairIdx, timeInterval, count);
 
+	}
+	
+	float getScore(String pred, String featName) {
+		//(visit.1,visit.2)#person#location e1 e2 => s = -|e_1 + r - e_2 |_1
+		//(visit.1,visit.2)#person_1#person_2 e1 e2 => ditto
+		//(visit.1,visit.2)#person_2#person_1 e1 e2 => swap e1 and e2
+		
+		String[] ss = pred.split("#");
+		String[] args = featName.split("#");
+		
+		if (ss.length!=3 || args.length!=2) {
+			return 1e-40f;
+		}
+		
+		String rawPred = ss[0];
+		if (ss[1].endsWith("_2") && ss[2].endsWith("_1")) {
+			//swap args
+			String tmp = args[0];
+			args[0] = args[1];
+			args[1] = tmp;
+		}
+		
+//		System.out.println(args[0]+" "+ rawPred+" "+args[1]);
+		if (EntailGraphFactoryAggregator.anchorBasedScores) {
+			if (EntailGraphFactoryAggregator.anchorArgPairs.contains(args[0]+"#"+args[1])) {
+				return 1f;
+			}
+			else {
+				return 1e-40f;
+			}
+		}
+		else {//embBased
+			float[] e1Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[0]);
+			float[] e2Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[1]);
+			float[] rEmb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred);
+			
+//			System.out.println("embeds null? "+ e1Emb+" "+e2Emb+" "+rEmb);
+			
+			float ret = 0;
+			
+			//now, compute the score
+			try {
+				float sum = 0;
+				for (int i=0; i<e1Emb.length; i++) {
+					sum += Math.abs(e1Emb[i] + rEmb[i] - e2Emb[i]);
+				}
+				
+				sum *= -1;
+				//sigmoid
+				float s = (float)(1.0/(1.0+Math.exp(-sum)));
+				ret = s;
+				
+			} catch (Exception e) {
+			}
+			if (ret!=0) {
+//				System.out.println(rawPred +" # "+args[0]+ " # "+ args[1]+" "+ret);
+			}
+			return (float)Math.max(ret, 1e-40);
+		}
+		
+		
 	}
 
 	void buildInvertedIdx() {

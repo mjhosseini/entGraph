@@ -816,37 +816,37 @@ public class EntailGraphFactory implements Runnable {
 	//
 	// }
 
-	void processEntGraphs(HashMap<String, EntailGraph> typesToGraph,
-			HashMap<String, SimpleEntailGraph> typesToSimpleGraph, boolean shouldWrite) {
-		int i = 0;
-		long usedMb;
-		int mb = 1024 * 1024;
-		for (String types : typesToGraph.keySet()) {
-			System.out.println("processing: " + types + " " + threadNum);
-			EntailGraph entGraph = typesToGraph.get(types);
-			entGraph.writeSims = shouldWrite && entGraph.getPvecs().size() > 1;
-			entGraph.writeInfo = entGraph.writeSims;
-			entGraph.processGraph();
-
-			// Now, let's summarize the info!
-			SimpleEntailGraph simpleEntGraph = new SimpleEntailGraph(entGraph);
-			typesToSimpleGraph.put(types, simpleEntGraph);
-			typesToGraph.put(types, null);
-			// typesToGraph.remove(types);
-
-			if (i % 20 == 0) {
-				System.err.println("typed count: " + i);
-				usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
-				System.err.println("usedMB: " + usedMb + " allEdges: " + EntailGraphFactoryAggregator.allEdgeCounts);
-			}
-			i++;
-		}
-		usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
-		if (usedMb > 10000) {
-			usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
-			System.err.println("usedMb: " + usedMb);
-		}
-	}
+//	void processEntGraphs(HashMap<String, EntailGraph> typesToGraph,
+//			HashMap<String, SimpleEntailGraph> typesToSimpleGraph, boolean shouldWrite) {
+//		int i = 0;
+//		long usedMb;
+//		int mb = 1024 * 1024;
+//		for (String types : typesToGraph.keySet()) {
+//			System.out.println("processing: " + types + " " + threadNum);
+//			EntailGraph entGraph = typesToGraph.get(types);
+//			entGraph.writeSims = shouldWrite && entGraph.getPvecs().size() > 1;
+//			entGraph.writeInfo = entGraph.writeSims;
+//			entGraph.processGraph();
+//
+//			// Now, let's summarize the info!
+//			SimpleEntailGraph simpleEntGraph = new SimpleEntailGraph(entGraph);
+//			typesToSimpleGraph.put(types, simpleEntGraph);
+//			typesToGraph.put(types, null);
+//			// typesToGraph.remove(types);
+//
+//			if (i % 20 == 0) {
+//				System.err.println("typed count: " + i);
+//				usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
+//				System.err.println("usedMB: " + usedMb + " allEdges: " + EntailGraphFactoryAggregator.allEdgeCounts);
+//			}
+//			i++;
+//		}
+//		usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
+//		if (usedMb > 10000) {
+//			usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
+//			System.err.println("usedMb: " + usedMb);
+//		}
+//	}
 
 	void writeSimilaritiesBinary(SimpleEntailGraph entGraph, SimpleEntailGraph entGraphX, SimpleEntailGraph entGraphY) {
 

@@ -4,15 +4,19 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -22,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.ibm.icu.util.StringTokenizer;
 
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
@@ -34,6 +39,9 @@ public class EntailGraphFactoryAggregator {
 
 	EntailGraphFactory[] entGrFacts;
 	public static HashSet<String> dsPreds = new HashSet<>();
+	public static Map<String,float[]> relsToEmbed;
+	public static Map<String,float[]>  entsToEmbed;
+	public static Set<String> anchorArgPairs;
 
 	// All parameters:
 
@@ -67,6 +75,10 @@ public class EntailGraphFactoryAggregator {
 	public static int maxPredsTotal = -1;// 35000;
 	public static HashSet<String> acceptablePreds;
 	static final int minPredForArg = -1;// min num of unique predicates for
+	
+	//embeddinb parameters
+	public static boolean embBasedScores = false;
+	public static boolean anchorBasedScores = true;
 
 	static final int numThreads = 1;
 
@@ -93,7 +105,9 @@ public class EntailGraphFactoryAggregator {
 			// simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
 			// simsFolder = "typedEntGrDir_gbooks_onlyLevy";
 			// simsFolder = "typedEntGrDir_NS_onlyLevy";
-			simsFolder = "typedEntGrDir_aida_untyped_40_40";
+//			simsFolder = "typedEntGrDir_aida_untyped_40_40";
+//			simsFolder = "typedEntGrDir_aida_untyped_40_40_transE";
+			simsFolder = "typedEntGrDir_aida_untyped_40_40_anchor";
 			// simsFolder = "typedEntGrDir_gbooks_all_20_20";
 			// simsFolder = "untypedEntGrDirC_aida_50_50_20K";
 		}
@@ -107,9 +121,71 @@ public class EntailGraphFactoryAggregator {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
+		}
+		
+		if (embBasedScores) {
+			//TODO: read the embeddings of relations and args
+			relsToEmbed = new HashMap<>();
+			entsToEmbed = new HashMap<>();
+			try {
+				relsToEmbed = loadEmbeddings("embs/rels2embed_NS_10_10_transE.txt");
+				entsToEmbed = loadEmbeddings("embs/ents2embed_NS_10_10_transE.txt");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if (anchorBasedScores) {
+			try {
+				anchorArgPairs = loadAnchors();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
+	}
+	
+	static Set<String> loadAnchors() throws IOException{
+		BufferedReader br = new BufferedReader(new FileReader("anchors/anchors_NS_untyped_40_40.txt"));
+		Set<String> ret = new HashSet<>();
+		String line = null;
+		while ((line=br.readLine())!=null) {
+			if (line.startsWith("hidden state ") || line.equals("")) {
+				continue;
+			}
+			int firstIdx = line.indexOf(" ")+1;
+			String anchor = line.substring(firstIdx);
+			ret.add(anchor);
+		}
+		br.close();
+		return ret;
+	}
+	
+	static Map<String,float[]> loadEmbeddings(String fname) throws IOException {
+		Map<String,float[]> x2emb = new HashMap<>();
+		BufferedReader br = new BufferedReader(new FileReader(new File(fname)));
+		String line = null;
+		while ((line=br.readLine())!=null) {
+			String[] ss = line.split("\t");
+			String x = ss[0];
+			String embVec = ss[1].substring(1, ss[1].length()-1);
+			
+			Scanner sc = new Scanner(embVec);
+			List<Float> embs = new ArrayList<>();
+			while (sc.hasNext()) {
+				embs.add(sc.nextFloat());
+			}
+			sc.close();
+			float[] embsArr = new float[embs.size()];
+			for (int i=0; i<embsArr.length; i++) {
+				embsArr[i] = embs.get(i);
+			}
+			x2emb.put(x, embsArr);
+//			System.out.println(x+" "+embsArr[0]);
+//			System.out.println("emb size: "+embsArr.length);
+		}
+		br.close();
+		return x2emb;
 	}
 
 	// a quick scan over the corpus and find the highest counts

@@ -223,6 +223,7 @@ public class PredicateVector extends SimplePredicateVector {
 			n += v * v;
 		}
 		this.norm2 = (float) Math.sqrt(n);
+//		System.out.println("norm2: "+norm2);
 	}
 
 	void setNorm1() {
@@ -234,6 +235,7 @@ public class PredicateVector extends SimplePredicateVector {
 		if (n == 0) {
 			System.err.println("norm1 is zero");
 		}
+//		System.out.println("norm1: "+norm1);
 	}
 
 	void setSumPMIs() {
@@ -279,8 +281,17 @@ public class PredicateVector extends SimplePredicateVector {
 			SimilaritiesInfo simInfo2 = pvec2.similarityInfos.get(this.uniqueId);
 
 			// add cos similarity
-			float cosSim = simInfo.basics.dotProd;
-			cosSim /= (norm2 * pvec2.norm2);
+			float cosSim;
+			if (!EntailGraphFactoryAggregator.embBasedScores && !EntailGraphFactoryAggregator.anchorBasedScores) {
+				cosSim = simInfo.basics.dotProd;
+				cosSim /= (norm2 * pvec2.norm2);
+			}
+			else {
+				cosSim = 0;
+			}
+			
+			
+			
 			// if (entGraph.writeSims) {
 			// cosSimList.add(new Similarity(pvec2.predicate, cosSim));
 			// }

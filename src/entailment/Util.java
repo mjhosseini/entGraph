@@ -158,7 +158,7 @@ public class Util {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		stopPreds = new HashSet<>();
 		Scanner sc = null;
 		;
@@ -170,7 +170,7 @@ public class Util {
 		while (sc.hasNext()) {
 			stopPreds.add(sc.nextLine());
 		}
-		
+
 	}
 
 	public static Map<String, String> getEntToFigerType() {
@@ -819,13 +819,17 @@ public class Util {
 		return ret.trim();
 	}
 
-	public static void convertReleaseToRawJson() throws ParseException, IOException {
+	public static void convertReleaseToRawJson(String[] args) throws ParseException, IOException {
 		// Scanner sc = new Scanner(new File(
 		// "/Users/hosseini/Desktop/D/research/release/crawl"));
 		// BufferedReader br = new BufferedReader(new InputStreamReader(
 		// new FileInputStream("data/release/crawl"), "UTF-8"));
-		BufferedReader br = new BufferedReader(
-				new InputStreamReader(new FileInputStream("data/release/crawlbatched"), "UTF-8"));
+		String fileName = "data/release/crawlbatched";
+		if (args.length > 1) {
+			fileName = args[0];
+		}
+
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
 		JsonParser parser = new JsonParser();
 		int lineId = 0;
 		int lineNumber = 0;
@@ -868,14 +872,13 @@ public class Util {
 		}
 		br.close();
 	}
-	
+
 	public static void convertSampleToRawJson() throws ParseException, IOException {
 		// Scanner sc = new Scanner(new File(
 		// "/Users/hosseini/Desktop/D/research/release/crawl"));
 		// BufferedReader br = new BufferedReader(new InputStreamReader(
 		// new FileInputStream("data/release/crawl"), "UTF-8"));
-		BufferedReader br = new BufferedReader(
-				new InputStreamReader(new FileInputStream("in4.txt"), "UTF-8"));
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("in4.txt"), "UTF-8"));
 		int lineId = 0;
 		int lineNumber = 0;
 		String line;
@@ -886,7 +889,7 @@ public class Util {
 			}
 			lineNumber++;
 			try {
-				
+
 				String text = line;
 				String date = "NA";
 				long articleId = 1l;
@@ -1100,7 +1103,7 @@ public class Util {
 		HashMap<String, HashMap<String, String>> artIdToEntToWiki = new HashMap<>();
 		int lineNumber = 0;
 		while ((line = br.readLine()) != null) {
-//			System.err.println(line);
+			// System.err.println(line);
 			JsonObject jo = null;
 			try {
 				jo = jsonParser.parse(line).getAsJsonObject();
@@ -2154,9 +2157,9 @@ public class Util {
 
 		// System.out.println(1d);
 		// readJSONSimple();
-		// convertReleaseToRawJson();
-//		convertPredArgsToJsonUnsorted(args);
-		convertSampleToRawJson();
+		convertReleaseToRawJson(args);
+		// convertPredArgsToJsonUnsorted(args);
+//		convertSampleToRawJson();
 		// recordStanTypes(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));
