@@ -78,7 +78,7 @@ public class EntailGraphFactoryAggregator {
 	
 	//embeddinb parameters
 	public static boolean embBasedScores = false;
-	public static boolean anchorBasedScores = true;
+	public static boolean anchorBasedScores = false;
 
 	static final int numThreads = 1;
 
