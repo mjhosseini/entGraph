@@ -5,19 +5,20 @@ public class SimilaritiesInfo {
 
 	SimilarityInfoBasics basics;
 
-	float cosSim;
-	float WeedsProbSim;
-	float WeedsPMISim;
-	float LinSim;
-	float BIncSim;
-//	float SRSim;// from Sherlocks's paper
-//	float SRBinarySim;
-	float timeSim;
-	float weedPMIPr;
+	double cosSim;
+	double WeedsProbSim;
+	double WeedsPMISim;
+	double LinSim;
+	double BIncSim;
+//	double SRSim;// from Sherlocks's paper
+//	double SRBinarySim;
+	double timeSim;
+	double weedPMIPr;
+	double probELSim;
 
-	// void setSims(float cosSim, float WeedsProbSim, float WeedsPMISim, float
-	// LinSim, float BIncSim, float SRSim, float SRBinarySim, float timeSim){
-	void setSims(float cosSim, float WeedsProbSim, float WeedsPMISim, float LinSim, float BIncSim, float timeSim, float weedPMIPr) {
+	// void setSims(double cosSim, double WeedsProbSim, double WeedsPMISim, double
+	// LinSim, double BIncSim, double SRSim, double SRBinarySim, double timeSim){
+	void setSims(double cosSim, double WeedsProbSim, double WeedsPMISim, double LinSim, double BIncSim, double timeSim, double weedPMIPr, double probELSim) {
 		this.cosSim = cosSim;
 		this.WeedsProbSim = WeedsProbSim;
 		this.WeedsPMISim = WeedsPMISim;
@@ -27,6 +28,7 @@ public class SimilaritiesInfo {
 //		this.SRBinarySim = SRBinarySim;
 		this.timeSim = timeSim;
 		this.weedPMIPr = weedPMIPr;
+		this.probELSim = probELSim;
 	}
 
 	public SimilaritiesInfo(String predicate) {
@@ -34,21 +36,21 @@ public class SimilaritiesInfo {
 		this.basics = new SimilarityInfoBasics();
 	}
 
-	public void addSims(float dot, float freq, float PMI, float minFreq, float timePreceding) {
+	public void addSims(double dot, double freq, double PMI, double minFreq, double timePreceding) {
 		this.basics.addSims(dot, freq, PMI, minFreq, timePreceding);
 	}
 
 }
 
 class SimilarityInfoBasics {
-	float dotProd = 0;
-	float sumFreq = 0;
-	float sumPMI = 0;
+	double dotProd = 0;
+	double sumFreq = 0;
+	double sumPMI = 0;
 //	int SR = 0;
 //	int SRBinary = 0;
-	float timePreceding = 0;
+	double timePreceding = 0;
 
-	void addSims(float dot, float freq, float PMI, float minFreq, float timePreceding) {
+	void addSims(double dot, double freq, double PMI, double minFreq, double timePreceding) {
 		this.dotProd += dot;
 		this.sumFreq += freq;
 		if (sumFreq==0){

@@ -9,16 +9,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.ibm.icu.util.StringTokenizer;
 
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
@@ -38,9 +38,11 @@ public class EntailGraphFactoryAggregator {
 	ThreadPoolExecutor threadPool;
 
 	EntailGraphFactory[] entGrFacts;
-	public static HashSet<String> dsPreds = new HashSet<>();
-	public static Map<String,float[]> relsToEmbed;
-	public static Map<String,float[]>  entsToEmbed;
+	public static Set<String> dsPreds = new HashSet<>();
+	public static Set<String> dsRawPredPairs = new LinkedHashSet<>();
+	public static Map<String, Map<String, Double>> dsPredToPredToScore = new ConcurrentHashMap<String, Map<String,Double>>();
+	public static Map<String, double[]> relsToEmbed;
+	public static Map<String, double[]> entsToEmbed;
 	public static Set<String> anchorArgPairs;
 
 	// All parameters:
@@ -53,7 +55,7 @@ public class EntailGraphFactoryAggregator {
 	// static final int minPredForArg = 30;// min num of unique predicates for
 	// arg
 
-	public static boolean onlyDSPreds = false;
+	public static boolean onlyDSPreds = true;
 	public static boolean rawExtractions = false;// gbooks original (or gbooks in general?)
 	public static boolean GBooksCCG = false;
 	public static boolean useTimeEx = false;
@@ -67,20 +69,33 @@ public class EntailGraphFactoryAggregator {
 	public static final boolean normalizePredicate = true;// if rawExtraction, wouldn't matter.
 	public static final boolean backupToStanNER = false;// You can make this true, but it will take some good time to
 														// run!
+	public static boolean removeEventEventModifiers = false;
 	public static boolean removeStopPreds = false;
 	public static final int smoothParam = 0;// 0 means no smoothing
-	static int minArgPairForPred = 40;// 100;
-	static int minPredForArgPair = 40;// 20;// min num of unique predicates for
+	static int minArgPairForPred = 0;// 100;
+	static int minPredForArgPair = 0;// 20;// min num of unique predicates for
 										// argpair
 	public static int maxPredsTotal = -1;// 35000;
 	public static HashSet<String> acceptablePreds;
 	static final int minPredForArg = -1;// min num of unique predicates for
-	
-	//embeddinb parameters
-	public static boolean embBasedScores = false;
-	public static boolean anchorBasedScores = false;
 
-	static final int numThreads = 1;
+	// embeddinb parameters
+	public static boolean embBasedScores = false;// use sigmoid(transE score) instead of counts
+	public static boolean anchorBasedScores = false;// add anchor-based args to the prev args
+	// public static boolean iterateAllArgPairs = true
+
+	public static double sigmoidLocParameter = 10;
+	public static double sigmoidScaleParameter = .25;
+	// public static double sigmoidLocParameter = 0;
+	// public static double sigmoidScaleParameter = 1.0;
+
+	// public static double linkPredThreshold = 1e-12f;
+	public static double linkPredThreshold = -1;
+
+	static final int numThreads = 20;
+	public static int dsPredNumThreads = 15;
+	
+	public static ProbModel probModel = ProbModel.Cos;
 
 	static final boolean writePMIorCount = false;// false:count, true: PMI
 
@@ -88,6 +103,7 @@ public class EntailGraphFactoryAggregator {
 	static final String simsFolder;
 
 	static {
+		// assert iterateAllArgPairs != anchorBasedScores;
 		if (GBooksCCG) {
 			relAddress = "gbooks_dir/gbooks_ccg.txt";
 			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
@@ -100,14 +116,17 @@ public class EntailGraphFactoryAggregator {
 			relAddress = "news_gen8_aida.json";
 			// relAddress = "news_genC_aida.json";
 			// relAddress = "gbooks_norm.txt";
-			// simsFolder = "typedEntGrDir_aida_figer_3_3_g";
+			// simsFolder = "typedEntGrDir_aida_figer_5_5_a";
 			// simsFolder = "typedEntGrDir_aida_figer_10_10";
 			// simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
 			// simsFolder = "typedEntGrDir_gbooks_onlyLevy";
-			// simsFolder = "typedEntGrDir_NS_onlyLevy";
-//			simsFolder = "typedEntGrDir_aida_untyped_40_40";
-//			simsFolder = "typedEntGrDir_aida_untyped_40_40_transE";
-			simsFolder = "typedEntGrDir_aida_untyped_40_40_anchor";
+			// simsFolder = "typedEntGrDir_NS_onlyLevy_san";
+			// simsFolder = "typedEntGrDir_aida_untyped_40_40";
+			// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel";
+//			simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel_10_.25_T1";
+			simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_cos";
+			// simsFolder = "typedEntGrDir_aida_untyped_40_40_transE_Anchor2";
+			// simsFolder = "typedEntGrDir_aida_untyped_40_40_anchor";
 			// simsFolder = "typedEntGrDir_gbooks_all_20_20";
 			// simsFolder = "untypedEntGrDirC_aida_50_50_20K";
 		}
@@ -122,19 +141,18 @@ public class EntailGraphFactoryAggregator {
 				e.printStackTrace();
 			}
 		}
-		
-		if (embBasedScores) {
-			//TODO: read the embeddings of relations and args
-			relsToEmbed = new HashMap<>();
-			entsToEmbed = new HashMap<>();
-			try {
-				relsToEmbed = loadEmbeddings("embs/rels2embed_NS_10_10_transE.txt");
-				entsToEmbed = loadEmbeddings("embs/ents2embed_NS_10_10_transE.txt");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+
+		// if (embBasedScores) {
+		relsToEmbed = new HashMap<>();
+		entsToEmbed = new HashMap<>();
+		try {
+			relsToEmbed = loadEmbeddings("embs/rels2embed_NS_10_10_unique_transE.txt");
+			entsToEmbed = loadEmbeddings("embs/ents2embed_NS_10_10_unique_transE.txt");
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		
+		// }
+
 		if (anchorBasedScores) {
 			try {
 				anchorArgPairs = loadAnchors();
@@ -142,47 +160,56 @@ public class EntailGraphFactoryAggregator {
 				e.printStackTrace();
 			}
 		}
-
 	}
-	
-	static Set<String> loadAnchors() throws IOException{
+
+	static Set<String> loadAnchors() throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader("anchors/anchors_NS_untyped_40_40.txt"));
-		Set<String> ret = new HashSet<>();
+		Set<String> ret = new LinkedHashSet<>();
 		String line = null;
-		while ((line=br.readLine())!=null) {
+		boolean shouldAdd = false;
+		while ((line = br.readLine()) != null) {
 			if (line.startsWith("hidden state ") || line.equals("")) {
+				shouldAdd = true;
 				continue;
 			}
-			int firstIdx = line.indexOf(" ")+1;
-			String anchor = line.substring(firstIdx);
-			ret.add(anchor);
+			if (shouldAdd) {
+				int firstIdx = line.indexOf(" ") + 1;
+				String anchor = line.substring(firstIdx);
+				ret.add(anchor);
+			}
+			shouldAdd = false;
 		}
 		br.close();
+		System.out.println("anchors:");
+		for (String s : ret) {
+			System.out.println(s);
+		}
+		System.out.println();
 		return ret;
 	}
-	
-	static Map<String,float[]> loadEmbeddings(String fname) throws IOException {
-		Map<String,float[]> x2emb = new HashMap<>();
+
+	static Map<String, double[]> loadEmbeddings(String fname) throws IOException {
+		Map<String, double[]> x2emb = new HashMap<>();
 		BufferedReader br = new BufferedReader(new FileReader(new File(fname)));
 		String line = null;
-		while ((line=br.readLine())!=null) {
+		while ((line = br.readLine()) != null) {
 			String[] ss = line.split("\t");
 			String x = ss[0];
-			String embVec = ss[1].substring(1, ss[1].length()-1);
-			
+			String embVec = ss[1].substring(1, ss[1].length() - 1);
+
 			Scanner sc = new Scanner(embVec);
-			List<Float> embs = new ArrayList<>();
+			List<Double> embs = new ArrayList<>();
 			while (sc.hasNext()) {
-				embs.add(sc.nextFloat());
+				embs.add(sc.nextDouble());
 			}
 			sc.close();
-			float[] embsArr = new float[embs.size()];
-			for (int i=0; i<embsArr.length; i++) {
+			double[] embsArr = new double[embs.size()];
+			for (int i = 0; i < embsArr.length; i++) {
 				embsArr[i] = embs.get(i);
 			}
 			x2emb.put(x, embsArr);
-//			System.out.println(x+" "+embsArr[0]);
-//			System.out.println("emb size: "+embsArr.length);
+			// System.out.println(x+" "+embsArr[0]);
+			// System.out.println("emb size: "+embsArr.length);
 		}
 		br.close();
 		return x2emb;
@@ -291,19 +318,22 @@ public class EntailGraphFactoryAggregator {
 			}
 
 			for (String dsPath : dsPaths) {
-				HashSet<String> rels = Util.loadAllDSPreds(dsPath);
-				for (String r : rels) {
-					dsPreds.add(r);
-				}
+				Util.fillDSPredsandPairs(dsPath, dsPreds, dsRawPredPairs);
 			}
 
 			System.err.println("num dspreds: " + dsPreds.size());
 
 			if (onlyDSPreds) {
-				System.err.println("all DS Rels");
+				System.err.println("all DS Rels" + dsPreds.size());
 				for (String s : dsPreds) {
 					System.err.println(s);
 				}
+
+				System.err.println("all DS pairs: " + dsRawPredPairs.size());
+				for (String s : dsRawPredPairs) {
+					System.err.println(s);
+				}
+
 			}
 
 		} catch (IOException e) {
@@ -515,18 +545,16 @@ public class EntailGraphFactoryAggregator {
 	// }
 
 	public static void main(String[] args) throws InterruptedException, FileNotFoundException {
+		System.out.println("sigmoid params: "+ sigmoidScaleParameter+ " "+ sigmoidLocParameter);
 		String fileName;
-		String entTypesFName;
-		String genTypesFName;
 		String typedEntGrDir;
-		int numThreads;
 		System.out.println("here");
 		if (args.length == 5) {
 			fileName = args[0];
-			entTypesFName = args[1];
-			genTypesFName = args[2];
+//			entTypesFName = args[1];
+//			genTypesFName = args[2];
 			typedEntGrDir = args[3];
-			numThreads = Integer.parseInt(args[4]);
+//			numThreads = Integer.parseInt(args[4]);
 		} else {
 			// fileName = "test.json";
 			// fileName = "news_gen5_unlinked.txt";
@@ -545,7 +573,7 @@ public class EntailGraphFactoryAggregator {
 			// typedEntGrDir = "typedEntGrDir_aida_untyped_20_20";
 			typedEntGrDir = simsFolder;
 			// typedEntGrDir = "typedEntGrDir_gbooks_all";
-			numThreads = EntailGraphFactoryAggregator.numThreads;
+//			numThreads = EntailGraphFactoryAggregator.numThreads;
 		}
 
 		EntailGraphFactoryAggregator agg = new EntailGraphFactoryAggregator();
@@ -559,5 +587,9 @@ public class EntailGraphFactoryAggregator {
 
 	public enum TypeScheme {
 		GKG, FIGER, LDA
+	}
+	
+	public enum ProbModel {
+		PE, PEL, PL, Cos;
 	}
 }

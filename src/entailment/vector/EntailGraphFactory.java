@@ -132,10 +132,11 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
-//			if (lineNumbers == 100000) {
-//				break;
-//			}
 			
+			if (lineNumbers == 2000000) {
+				break;// TODO: remove this
+			}
+//			
 			if (lineNumbers%1000000==0 && EntailGraphFactoryAggregator.backupToStanNER) {
 				Util.renewStanfordParser();
 			}
@@ -609,7 +610,7 @@ public class EntailGraphFactory implements Runnable {
 
 		// System.out.println("adding: " + pred + " " + thisArg + " t: " +
 		// thisType + " " + rev);
-		thisEntailGraph.addBinaryRelation(typedPred, thisArg, timeInterval, count);
+		thisEntailGraph.addBinaryRelation(typedPred, thisArg, timeInterval, count, -1, -1);
 
 		return rev;
 	}
@@ -891,6 +892,7 @@ public class EntailGraphFactory implements Runnable {
 			// ArrayList<Similarity> LinListSep = new ArrayList<Similarity>();
 			// ArrayList<Similarity> BIncListSep = new ArrayList<Similarity>();
 			ArrayList<Similarity> timeSimList = new ArrayList<Similarity>();
+			ArrayList<Similarity> probELList = new ArrayList<Similarity>();
 
 			for (SimilaritiesInfo simInfo : pvec.similarityInfos.values()) {
 				String neighPred = simInfo.predicate;
@@ -904,6 +906,7 @@ public class EntailGraphFactory implements Runnable {
 				LinList.add(new Similarity(neighPred, simInfo.LinSim));
 				BIncList.add(new Similarity(neighPred, simInfo.BIncSim));
 				timeSimList.add(new Similarity(neighPred, simInfo.timeSim));
+				probELList.add(new Similarity(neighPred,simInfo.probELSim));
 
 				// Now, let's compute LinSeparate, BIncSeparate, LinUnary,
 				// BIncUnary for pred, neighPred
@@ -953,6 +956,10 @@ public class EntailGraphFactory implements Runnable {
 			PredicateVector.writeSims(entGraph.graphOp2, LinList, "Lin sims");
 			PredicateVector.writeSims(entGraph.graphOp2, BIncList, "BInc sims");
 			PredicateVector.writeSims(entGraph.graphOp2, WeedsPMIPrList, "Weed's PMI Precision sim");
+			
+			if (EntailGraphFactoryAggregator.onlyDSPreds) {
+				PredicateVector.writeSims(entGraph.graphOp2, probELList, "probEL sim");
+			}
 			// PredicateVector.writeSims(entGraph.graphOp2, LinListSep, "DIRT
 			// SEP sims");
 			// PredicateVector.writeSims(entGraph.graphOp2, BIncListSep, "BINC

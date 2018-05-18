@@ -995,6 +995,7 @@ public class GroundedGraphs {
       // event-event edges should be explored.
       for (Integer eventIndex : eventEventModifiers.keySet()) {
         for (Pair<String, Integer> type : eventEventModifiers.get(eventIndex)) {
+        	
           Integer modifierIndex = type.getRight();
           String entityTypeString = type.getLeft();
 

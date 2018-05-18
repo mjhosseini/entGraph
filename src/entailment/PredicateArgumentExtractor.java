@@ -26,17 +26,11 @@ public class PredicateArgumentExtractor implements Runnable {
 	public static HashSet<String> acceptableGEStrs;
 
 	static {
-		String[] accepteds = new String[] { "GE", "EG", "EE" };//
-		// String[] accepteds = new String[] { "GE", "EG", "EE", "GG" };// TODO: remove
-		// this!
 		acceptableGEStrs = new HashSet<>();
-		for (String s : accepteds) {
+		for (String s : LinesHandler.accepteds) {
 			acceptableGEStrs.add(s);
 		}
 	}
-
-	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
-	public static boolean useQuestionMod = true;// Always set if to false!
 
 	String line;
 	public static CcgParseToUngroundedGraphs parser;
@@ -97,9 +91,12 @@ public class PredicateArgumentExtractor implements Runnable {
 			long lineId = obj.get("lineId").getAsLong();
 
 			mainStr += "#line: " + text + "\n";
-			mainStr += "#lineId: " + lineId + "\n";
-			mainStr += "#articleId: " + articleId + "\n";
-			mainStr += "#date: " + date + "\n";
+			
+			if (!LinesHandler.writeDebugString) {
+				mainStr += "#lineId: " + lineId + "\n";
+				mainStr += "#articleId: " + articleId + "\n";
+				mainStr += "#date: " + date + "\n";
+			}
 
 			mainStrOnlyNEs = mainStr;
 
@@ -115,7 +112,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-//		System.out.println(mainStr);
+		// System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {
@@ -162,6 +159,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		boolean partlyMatched = false;
 
 		text = Util.preprocess(text);
+		System.out.println("preprocessed text: " + text);
 		String sentence = text;
 		String mySent = "{\"sentence\" : \"" + sentence + "\"}";
 		List<List<LexicalGraph>> allGraphs = parser.processText(mySent);
@@ -290,12 +288,12 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public String[] extractPredArgsStrs(String text)
 			throws ArgumentValidationException, IOException, InterruptedException {
-		return extractPredArgsStrs(text, 0, false, false, null);
+		return extractPredArgsStrs(text, 0, false, acceptableGEStrs.contains("GG"), null);
 	}
 
 	String[] getLeftRightPred(Edge<LexicalItem> edge) {
 		String leftPred = edge.getRelation().getLeft().toString();
-		if (lemmatizePred) {
+		if (LinesHandler.lemmatizePred) {
 			leftPred = leftPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 		}
 
@@ -303,7 +301,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// + leftPred.replaceFirst(edge.getMediator().getWord(),
 		// edge.getMediator().getLemma()));
 		String rightPred = edge.getRelation().getRight().toString();
-		if (lemmatizePred) {
+		if (LinesHandler.lemmatizePred) {
 			rightPred = rightPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 		}
 
@@ -343,6 +341,12 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		int relCount = 0;
 		int sentIdx = 0;
+		
+		List<String> sentences = null;
+		if (LinesHandler.writeDebugString) {
+			sentences = Util.getSentences(text);
+		}
+		
 		for (List<LexicalGraph> graphs : allGraphs) {
 			if (graphs.size() > 0) {
 				// System.out.println("syn ind: "+syntaxIdx + " "+
@@ -371,11 +375,14 @@ public class PredicateArgumentExtractor implements Runnable {
 				// System.out.println(syntacticParse);
 				// System.out.println(semanticParse);
 
-				// TODO: remove below
-//				mainStr += "\nSyntactic Parse:\n";
-//				mainStr += syntacticParse + "\n\n";
-//				mainStr += "Semantic Parse:\n";
-//				mainStr += semanticParse + "\n\n";
+				if (LinesHandler.writeDebugString) {
+					 mainStr += sentences.get(sentIdx);
+					mainStr += "\nSyntactic Parse:\n";
+					mainStr += syntacticParse + "\n\n";
+					mainStr += "Semantic Parse:\n";
+					mainStr += semanticParse + "\n\n";
+
+				}
 
 				boolean first = true;
 
@@ -450,7 +457,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					}
 					if (!eventTypeStrParticle.equals("")) {
 						String eventStr = edge.getMediator().getWord();
-						if (lemmatizePred) {
+						if (LinesHandler.lemmatizePred) {
 							eventStr = edge.getMediator().getLemma();
 						}
 
@@ -573,10 +580,12 @@ public class PredicateArgumentExtractor implements Runnable {
 						// }
 
 						if (relInfo.foundInteresting || !notReallyInteresting(relInfo.mainStr)) {
-							// TODO: remove below
-//							if (first) {
-//								mainStr += "binary rels:\n";
-//							}
+							if (LinesHandler.writeDebugString) {
+								if (first) {
+									mainStr += "binary rels:\n";
+								}
+							}
+
 							first = false;
 
 							mainStr += relInfo.mainStr;
@@ -705,7 +714,8 @@ public class PredicateArgumentExtractor implements Runnable {
 			String predArgStr = getPredArgString("", leftPred, rightPred, arg1, arg2, negated, eventIdx2);
 
 			if (pos.startsWith("NNP")) {
-				System.out.println("bad pos VP: " + pos + " " + predArgStr + " " + idx2Node.get(arg2Index).getWord());
+				// System.out.println("bad pos VP: " + pos + " " + predArgStr + " " +
+				// idx2Node.get(arg2Index).getWord());
 				continue;
 			}
 
@@ -720,7 +730,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			// false);
 			// System.out.println("adding relinfo4: "+relInfo0.mainStr);
 			relInfos.add(relInfo0);
-			System.out.println("added relInfo twohop vp: " + relInfo0.mainStr);
+			// System.out.println("added relInfo twohop vp: " + relInfo0.mainStr);
 
 			if (!modifierStr.equals("")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIdx2);
@@ -774,7 +784,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				try {
 					if (Util.prepositions.contains(lr[1].split("\\.")[0]) || lr[1].contains(".'s.")
 							|| lr[1].contains(".'.")) {
-						System.out.println("shouldCont: " + lr[1]);
+						// System.out.println("shouldCont: " + lr[1]);
 						shouldAdd = false;
 					}
 				} catch (Exception e) {
@@ -787,7 +797,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				try {
 					if (Util.prepositions.contains(lr[0].split("\\.")[0]) || lr[0].contains("'s.")
 							|| lr[0].contains("'.")) {
-						System.out.println("shouldCont: " + lr[0]);
+						// System.out.println("shouldCont: " + lr[0]);
 						shouldAdd = false;
 					}
 				} catch (Exception e) {
@@ -828,9 +838,10 @@ public class PredicateArgumentExtractor implements Runnable {
 				}
 
 				relInfos.add(relInfo0);
-				System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
-				System.out.println(edge2.getMediator().getLemma() + " " + edge2.getMediator().getPos() + " "
-						+ lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+				// System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
+				// System.out.println(edge2.getMediator().getLemma() + " " +
+				// edge2.getMediator().getPos() + " "
+				// + lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
 
 				if (!modifierStr.equals("")) {
 					predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
@@ -938,7 +949,7 @@ public class PredicateArgumentExtractor implements Runnable {
 						eventTypeStrParticle = type.getEntityType().toString();
 						eventTypeStrParticle = eventTypeStrParticle.substring(0, eventTypeStrParticle.length() - 4);
 
-						if (lemmatizePred) {
+						if (LinesHandler.lemmatizePred) {
 							eventTypeStrParticle = eventTypeStrParticle
 									.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 						}
@@ -1224,7 +1235,11 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Barack Obama is not against all wars.";
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
-		String s = "Cleveland works at The White House.";
+		// String s = "Cleveland works at The White House.";
+//		String s = "MINNEAPOLIS -- President Barack Obama intends to nominate B. Todd Jones as his choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms and Explosives.";
+//		String s = "Cameron said the coalition's main aim was to stay ahead in the \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
+		String s = "A woman is walking across the street.";
+
 		// String s = "Tom managed to pass the exam.";
 		// String s = "John picked up the book.";
 		// String s = "What county is Heathrow airport in?";
@@ -1233,6 +1248,9 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "location_1 be combined with location_2";
 		// String s = "drug_1 should be taken by drug_2";
 		// String s = "disease is increasing in country";
+
+		s = Util.preprocess(s);
+		// System.out.println("pre processed s: " + s);
 
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
 		String mainRels = exPrss[0];

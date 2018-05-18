@@ -12,17 +12,17 @@ public class PredicateVector extends SimplePredicateVector {
 	// Don't store a HashMap here so that after the pvecs are formed, the speed
 	// will be high.
 	ArrayList<Integer> argIdxes;// we store in sparse format
-	ArrayList<Float> vals;
+	ArrayList<Double> vals;
 	ArrayList<String> minRightIntervals;
 	ArrayList<String> maxLeftIntervals;
-	ArrayList<Float> PMIs;
+	ArrayList<Double> PMIs;
 	HashMap<Integer, Integer> argIdxToArrayIdx;
 	// HashSet<String> ents;
 	EntailGraph entGraph;
 
-	float norm2 = 0;
-	float sumPMIs = 0;
-	float norm1 = 0;
+	double norm2 = 0;
+	double sumPMIs = 0;
+	double norm1 = 0;
 
 	void clean() {
 		this.argIdxes = null;
@@ -38,7 +38,7 @@ public class PredicateVector extends SimplePredicateVector {
 		this.uniqueId = uniqueId;
 		this.argIdxes = new ArrayList<Integer>();
 		this.argIdxToArrayIdx = new HashMap<Integer, Integer>();
-		this.vals = new ArrayList<Float>();
+		this.vals = new ArrayList<Double>();
 		this.minRightIntervals = new ArrayList<>();
 		this.maxLeftIntervals = new ArrayList<>();
 		this.similarityInfos = new HashMap<Integer, SimilaritiesInfo>();
@@ -48,11 +48,11 @@ public class PredicateVector extends SimplePredicateVector {
 
 	// adds the idx of an arg-pair. It returns whether this idx has been added
 	// for the first time
-	void addArgPair(int idx, String timeInterval, float count) {
+	void addArgPair(int idx, String timeInterval, double count) {
 		if (!argIdxToArrayIdx.containsKey(idx)) {
 			argIdxToArrayIdx.put(idx, argIdxToArrayIdx.size());
 			argIdxes.add(idx);
-			vals.add(0.0f);
+			vals.add(0.0);
 			if (EntailGraphFactoryAggregator.useTimeEx) {
 				minRightIntervals.add("3000-01-01");
 				maxLeftIntervals.add("1000-01-01");
@@ -61,8 +61,9 @@ public class PredicateVector extends SimplePredicateVector {
 				maxLeftIntervals.add(null);
 			}
 
-			float prevCount = entGraph.argPairIdxToCount.get(idx);
+			double prevCount = entGraph.argPairIdxToCount.get(idx);
 			
+
 			if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
 				entGraph.argPairIdxToCount.put(idx, prevCount + 1);// TODO:
 																	// should we
@@ -70,6 +71,7 @@ public class PredicateVector extends SimplePredicateVector {
 																	// about
 																	// this in
 																	// cutoffs?
+				
 			} else {
 				entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
 																		// should
@@ -84,16 +86,19 @@ public class PredicateVector extends SimplePredicateVector {
 		}
 		int arrIdx = argIdxToArrayIdx.get(idx);
 		vals.set(arrIdx, vals.get(arrIdx) + count);
-
-//		if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
-//			float prevCount = entGraph.argPairIdxToCount.get(idx);
-//			entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
-//																	// should we
-//																	// care
-//																	// about
-//																	// this in
-//																	// cutoffs?
-//		}
+		
+		double prevOcc = entGraph.argPairIdxToOcc.get(idx);
+		entGraph.argPairIdxToOcc.put(idx, prevOcc + count);
+		// if (EntailGraphFactoryAggregator.typeScheme !=
+		// EntailGraphFactoryAggregator.TypeScheme.LDA) {
+		// double prevCount = entGraph.argPairIdxToCount.get(idx);
+		// entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
+		// // should we
+		// // care
+		// // about
+		// // this in
+		// // cutoffs?
+		// }
 
 		if (EntailGraphFactoryAggregator.useTimeEx) {
 
@@ -125,10 +130,10 @@ public class PredicateVector extends SimplePredicateVector {
 			// "+entGraph.argPairIdxToCount.get(argIdxes.get(i)));
 			// }
 		}
-		
+
 		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
 														// format
-		ArrayList<Float> vals = new ArrayList<>();
+		ArrayList<Double> vals = new ArrayList<>();
 		HashMap<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
 
 		for (int i = 0; i < this.argIdxes.size(); i++) {
@@ -144,17 +149,17 @@ public class PredicateVector extends SimplePredicateVector {
 		this.argIdxToArrayIdx = argIdxToArrayIdx;
 	}
 
-	// float dotProd(PredicateVector pvec2) {
-	// float ret = 0;
+	// double dotProd(PredicateVector pvec2) {
+	// double ret = 0;
 	// int arrIdx = 0;
 	// for (int idx : argIdxes) {
 	// if (!pvec2.argIdxToArrayIdx.containsKey((idx))) {
 	// arrIdx++;
 	// continue;
 	// }
-	// float val = vals.get(arrIdx);
+	// double val = vals.get(arrIdx);
 	// int arrIdx2 = pvec2.argIdxToArrayIdx.get(idx);
-	// float val2 = pvec2.vals.get(arrIdx2);
+	// double val2 = pvec2.vals.get(arrIdx2);
 	// ret += val * val2;
 	// arrIdx++;
 	// }
@@ -167,14 +172,13 @@ public class PredicateVector extends SimplePredicateVector {
 		for (int argIdx : argIdxes) {
 			String argPairStr = entGraph.argPairs.get(argIdx);
 			int arrIdx = argIdxToArrayIdx.get(argIdx);
-			float count;
+			double count;
 			if (EntailGraphFactoryAggregator.writePMIorCount) {
 				count = PMIs.get(arrIdx);
-			}
-			else {
+			} else {
 				count = vals.get(arrIdx);
 			}
-			 
+
 			ArgPair argPair = new ArgPair(argPairStr, count);
 			thisArgPairs.add(argPair);
 		}
@@ -195,7 +199,7 @@ public class PredicateVector extends SimplePredicateVector {
 	// if (pred.equals(this.predicate)) {
 	// continue;
 	// }
-	// float dotProd = dotProd(predToVec.get(pred));
+	// double dotProd = dotProd(predToVec.get(pred));
 	// if (dotProd > 0) {
 	// dotProds.add(new DotProd(pred, dotProd));
 	// //
@@ -218,29 +222,29 @@ public class PredicateVector extends SimplePredicateVector {
 	}
 
 	void setNorm2() {
-		float n = 0;
-		for (float v : vals) {
+		double n = 0;
+		for (double v : vals) {
 			n += v * v;
 		}
-		this.norm2 = (float) Math.sqrt(n);
-//		System.out.println("norm2: "+norm2);
+		this.norm2 = (double) Math.sqrt(n);
+		// System.out.println("norm2: "+norm2);
 	}
 
 	void setNorm1() {
-		float n = 0;
-		for (float v : vals) {
+		double n = 0;
+		for (double v : vals) {
 			n += v;
 		}
 		this.norm1 = n;
 		if (n == 0) {
 			System.err.println("norm1 is zero");
 		}
-//		System.out.println("norm1: "+norm1);
+		// System.out.println("norm1: "+norm1);
 	}
 
 	void setSumPMIs() {
-		float n = 0;
-		for (float v : PMIs) {
+		double n = 0;
+		for (double v : PMIs) {
 			if (v > 0) {
 				n += v;
 			}
@@ -281,28 +285,25 @@ public class PredicateVector extends SimplePredicateVector {
 			SimilaritiesInfo simInfo2 = pvec2.similarityInfos.get(this.uniqueId);
 
 			// add cos similarity
-			float cosSim;
+			double cosSim;
 			if (!EntailGraphFactoryAggregator.embBasedScores && !EntailGraphFactoryAggregator.anchorBasedScores) {
 				cosSim = simInfo.basics.dotProd;
 				cosSim /= (norm2 * pvec2.norm2);
-			}
-			else {
+			} else {
 				cosSim = 0;
 			}
-			
-			
-			
+
 			// if (entGraph.writeSims) {
 			// cosSimList.add(new Similarity(pvec2.predicate, cosSim));
 			// }
 
 			// add time sims
-			float timeSim;
+			double timeSim;
 			if (!EntailGraphFactoryAggregator.useTimeEx) {
 				timeSim = 0;
 				// timeSims.add(new Similarity(pvec2.predicate, 0));
 			} else {
-				timeSim = (float) (simInfo.basics.timePreceding) / this.argIdxes.size();
+				timeSim = (double) (simInfo.basics.timePreceding) / this.argIdxes.size();
 				// timeSims.add(new Similarity(pvec2.predicate, timeSim));
 			}
 
@@ -313,12 +314,12 @@ public class PredicateVector extends SimplePredicateVector {
 			if (simInfo2.basics.sumFreq == 0) {
 				System.err.println("simInfo2 is zero");
 			}
-			float weedProbPr = (float) (simInfo.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam)
+			double weedProbPr = (double) (simInfo.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam)
 					/ (this.norm1 + 2 * EntailGraphFactoryAggregator.smoothParam);
-			float weedProbRec = (float) (simInfo2.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam)
+			double weedProbRec = (double) (simInfo2.basics.sumFreq + EntailGraphFactoryAggregator.smoothParam)
 					/ (pvec2.norm1 + 2 * EntailGraphFactoryAggregator.smoothParam);
-			float weedProbSim = (2 * weedProbPr * weedProbRec) / (weedProbPr + weedProbRec);
-			if (new Float(weedProbPr).isNaN()) {
+			double weedProbSim = (2 * weedProbPr * weedProbRec) / (weedProbPr + weedProbRec);
+			if (new Double(weedProbPr).isNaN()) {
 				System.err.println(this.predicate + " " + pvec2.predicate);
 				System.err.println("Nan: " + weedProbPr + " " + weedProbPr + " " + weedProbRec + " "
 						+ simInfo.basics.sumFreq + simInfo2.basics.sumFreq + " " + this.norm1 + " " + pvec2.norm2);
@@ -327,13 +328,13 @@ public class PredicateVector extends SimplePredicateVector {
 			// WeedsProbList.add(new Similarity(pvec2.predicate, weedProbSim));
 			// }
 
-			// float SRSim = 0;
-			// float SRBinarySim = 0;
+			// double SRSim = 0;
+			// double SRBinarySim = 0;
 			//
 			// if (this.norm1 != 0 && pvec2.norm1 != 0) {
-			// float SR = simInfo.basics.SR;
-			// float p = (SR / this.norm1);
-			// float pp = 1 - p;
+			// double SR = simInfo.basics.SR;
+			// double p = (SR / this.norm1);
+			// double pp = 1 - p;
 			// if (p < 0) {
 			// throw new RuntimeException("serious problem!");
 			// }
@@ -348,25 +349,25 @@ public class PredicateVector extends SimplePredicateVector {
 			// }
 			//
 			// if (this.argIdxes.size() != 0 && pvec2.argIdxes.size() != 0) {
-			// float SRBinary = simInfo.basics.SRBinary;
-			// float p = SRBinary / this.argIdxes.size();
-			// float pp = 1 - p;
+			// double SRBinary = simInfo.basics.SRBinary;
+			// double p = SRBinary / this.argIdxes.size();
+			// double pp = 1 - p;
 			// if (p != 0) {
-			// SRBinarySim = p * (float) Math.log((p * entGraph.nnz) /
+			// SRBinarySim = p * (double) Math.log((p * entGraph.nnz) /
 			// pvec2.argIdxes.size());
 			// }
 			// if (pp != 0) {
-			// SRBinarySim += pp * (float) Math.log((pp * entGraph.nnz) /
+			// SRBinarySim += pp * (double) Math.log((pp * entGraph.nnz) /
 			// pvec2.argIdxes.size());
 			// }
 			// SRBinarySim *= SRBinary;
 			// }
 
-			float weedPMIPr = 0;
-			float weedPMIRec;
-			float weedPMISim = 0;
-			float LinSim = 0;
-			float BIncSim = 0;
+			double weedPMIPr = 0;
+			double weedPMIRec;
+			double weedPMISim = 0;
+			double LinSim = 0;
+			double BIncSim = 0;
 
 			// add Weed's PMI similarity
 			// The conditions says if there is any feature in the intersection!
@@ -387,13 +388,26 @@ public class PredicateVector extends SimplePredicateVector {
 				// LinList.add(new Similarity(pvec2.predicate, LinSim));
 				// }
 
-				BIncSim = (float) Math.sqrt(LinSim * weedPMIPr);
+				BIncSim = (double) Math.sqrt(LinSim * weedPMIPr);
 				// if (entGraph.writeSims) {
 				// BIncList.add(new Similarity(pvec2.predicate, BIncSim));
 				// }
 			}
 
-			simInfo.setSims(cosSim, weedProbSim, weedPMISim, LinSim, BIncSim, timeSim, weedPMIPr);
+			// add cos similarity
+			double probELSim = 0;
+			if (EntailGraphFactoryAggregator.onlyDSPreds) {
+				if (EntailGraphFactoryAggregator.dsPredToPredToScore.containsKey(this.predicate)) {
+					if (EntailGraphFactoryAggregator.dsPredToPredToScore.get(this.predicate)
+							.containsKey(pvec2.predicate)) {
+						probELSim = EntailGraphFactoryAggregator.dsPredToPredToScore.get(predicate).get(pvec2.predicate);
+					}
+				}
+			} else {
+				cosSim = 0;
+			}
+
+			simInfo.setSims(cosSim, weedProbSim, weedPMISim, LinSim, BIncSim, timeSim, weedPMIPr, probELSim);
 
 		}
 
@@ -437,15 +451,15 @@ public class PredicateVector extends SimplePredicateVector {
 
 class Similarity implements Comparable<Similarity> {
 	String pred;
-	float sim;
+	double sim;
 
-	public Similarity(String pred, float sim) {
+	public Similarity(String pred, double sim) {
 		this.pred = pred;
 		this.sim = sim;
 	}
 
 	public int compareTo(Similarity dp2) {
-		return (new Float(sim)).compareTo(new Float(dp2.sim));
+		return (new Double(sim)).compareTo(new Double(dp2.sim));
 		// if (sim > dp2.sim) {
 		// return 1;
 		// } else if (sim < dp2.sim) {
@@ -459,9 +473,9 @@ class Similarity implements Comparable<Similarity> {
 
 class ArgPair implements Comparable<ArgPair> {
 	String argPairStr;
-	float count;
+	double count;
 
-	public ArgPair(String argPairStr, float count) {
+	public ArgPair(String argPairStr, double count) {
 		this.argPairStr = argPairStr;
 		this.count = count;
 	}

@@ -33,6 +33,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import entailment.LinesHandler;
 import entailment.PredicateArgumentExtractor;
 
 public class CcgParseToUngroundedGraphs {
@@ -50,26 +51,26 @@ public class CcgParseToUngroundedGraphs {
 		jsonParser = new JsonParser();
 		gson = new Gson();
 		logger = Logger.getLogger(CcgParseToUngroundedGraphs.class);
-		nbestParses = 1;
+		nbestParses = LinesHandler.nbestParses;
 		
 		String ccgModelDir = Paths.get(dataFolder, "easyccg_model").toString();
 
 		// ccgParser = new EasyCcgCli(ccgModelDir, nbestParses);
 		
-		//Changed, 30 Apr, 2018
+		
 		ccgParser = new EasyCcgCli(ccgModelDir + " -r S[dcl] S[pss] S[pt] S[b] S[ng] S NP", nbestParses);
 		ccgModelDir =
 		          Paths.get("lib_data", "model_ccgbank_questions").toString();
-		//TODO: remove this
+		
 //		ccgParser =
 //		          new EasySRLCli(ccgModelDir + " --rootCategories S[q] S[qem] S[wq]",nbestParses);
 		
-		//Changed, 30 Apr, 2018
 		// Too much: NP S[to] S[em] S[frg] S[for] S[intj] S[inv] N N[b] S[dcl]
 		// S[pss] S[pt] S[b] S[ng] S
 		// S[em] S[frg] S[for] S[intj] S[inv]
 		// S[dcl] S[pss] S[pt] S[b] S[ng] S
 		// lib_data/easyccg_model -r S[dcl] S[pss] S[pt] S[b] S[ng] S
+		
 		if (useQuestionsModel) {
 			String ccgModelDirQuestions = Paths.get(dataFolder, "easyccg_model_questions").toString();
 			ccgParserQuestions = new EasyCcgCli(ccgModelDirQuestions + " -s -r S[q] S[qem] S[wq]", nbestParses);
@@ -117,14 +118,14 @@ public class CcgParseToUngroundedGraphs {
 		for (String processedSentence : processedText) {
 			// System.out.println(processedSentence);
 			// We don't need questions for our application
-			if (!PredicateArgumentExtractor.useQuestionMod && processedSentence.endsWith("?|.|O")) {
+			if (!LinesHandler.useQuestionMod && processedSentence.endsWith("?|.|O")) {
 				continue;
 			}
 			
 			List<String> ccgParseStrings;
 			
 //			System.out.println("processed sentence: "+processedSentence);
-			if (PredicateArgumentExtractor.useQuestionMod) {
+			if (LinesHandler.useQuestionMod) {
 				ccgParseStrings = ccgParserQuestions != null && processedSentence.endsWith("?|.|O")
 						? ccgParserQuestions.parse(processedSentence)
 						: ccgParser.parse(processedSentence);

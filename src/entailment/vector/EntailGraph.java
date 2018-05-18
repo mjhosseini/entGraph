@@ -6,17 +6,29 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import entailment.vector.EntailGraphFactoryAggregator.ProbModel;
+import graph.LabelPropagationMNWithinGraph;
 
 public class EntailGraph extends SimpleEntailGraph {
 
 	// static final int numSimilarsToShow = 40;
 	static final int numSimilarsToShow = 1000000000;// inf!
-	ArrayList<String> argPairs = new ArrayList<String>();
-	HashMap<String, Integer> argPairToIdx = new HashMap<>();
-	HashMap<Integer, Float> argPairIdxToCount = new HashMap<>();
+	ArrayList<String> argPairs = new ArrayList<String>();// when we cutoff, we don't change this, but some won't be used
+	HashMap<String, Integer> argPairToIdx = new HashMap<>();// same as above when we cutoff
+	HashMap<Integer, Double> argPairIdxToCount = new HashMap<>();// number of predicates
+	HashMap<Integer, Double> argPairIdxToOcc = new HashMap<>();// number of seen times
+
 	private ArrayList<PredicateVector> pvecs = new ArrayList<PredicateVector>();
 
-	float numTuples;
+	double numTuples;
 	int nnz;
 	PrintStream graphOp1;// This is for writing the predicate vectors
 	String opFileName;
@@ -33,13 +45,6 @@ public class EntailGraph extends SimpleEntailGraph {
 			ret.add(pvec);
 		}
 		return ret;
-	}
-
-	public void setPvecs(ArrayList<SimplePredicateVector> pvecs) {
-		this.pvecs = new ArrayList<>();
-		for (SimplePredicateVector pvec : pvecs) {
-			this.pvecs.add((PredicateVector) pvec);
-		}
 	}
 
 	// deletes unnecessary objects!!!
@@ -77,8 +82,8 @@ public class EntailGraph extends SimpleEntailGraph {
 		// System.out.println("nnz0: "+nnz);
 
 		// System.out.println("process: "+types+" "+writeInfo+" "+writeSims);
-//		System.out.println("write info: "+writeInfo+" "+pvecs.size());
-		
+		// System.out.println("write info: "+writeInfo+" "+pvecs.size());
+
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
@@ -89,26 +94,26 @@ public class EntailGraph extends SimpleEntailGraph {
 			pvec.cutoffInfreqArgPairs();
 		}
 
-		HashMap<Integer, Integer> occToCount = new HashMap<Integer, Integer>();
-		for (PredicateVector pvec : pvecs) {
-			int occ = pvec.argIdxes.size();
-			if (!occToCount.containsKey(occ)) {
-				occToCount.put(occ, 0);
-			}
-			occToCount.replace(occ, occToCount.get(occ) + 1);
-		}
+		// HashMap<Integer, Integer> occToCount = new HashMap<Integer, Integer>();
+		// for (PredicateVector pvec : pvecs) {
+		// int occ = pvec.argIdxes.size();
+		// if (!occToCount.containsKey(occ)) {
+		// occToCount.put(occ, 0);
+		// }
+		// occToCount.replace(occ, occToCount.get(occ) + 1);
+		// }
 
-//		int sumCount = 0;
-//		for (int i = 0; i < 100; i++) {
-//			if (!occToCount.containsKey(i)) {
-//				continue;
-//			}
-//			// System.err.println("num preds with " + i + " args: " +
-//			// occToCount.get(i));
-//			sumCount += occToCount.get(i);
-//			// System.err.println("num preds with more args: " + (pvecs.size() -
-//			// sumCount));
-//		}
+		// int sumCount = 0;
+		// for (int i = 0; i < 100; i++) {
+		// if (!occToCount.containsKey(i)) {
+		// continue;
+		// }
+		// // System.err.println("num preds with " + i + " args: " +
+		// // occToCount.get(i));
+		// sumCount += occToCount.get(i);
+		// // System.err.println("num preds with more args: " + (pvecs.size() -
+		// // sumCount));
+		// }
 
 		ArrayList<PredicateVector> pvecsTmp = pvecs;
 		pvecs = new ArrayList<PredicateVector>();
@@ -122,15 +127,26 @@ public class EntailGraph extends SimpleEntailGraph {
 				id++;
 			}
 		}
-		
+
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
+		}
+
+		if (EntailGraphFactoryAggregator.onlyDSPreds) {
+			computeAllDSPredScores();
+		}
+
+		// if (EntailGraphFactoryAggregator.iterateAllArgPairs) {
+		//// addAllMissingLinks();
+		// }
+		if (EntailGraphFactoryAggregator.anchorBasedScores) {// now, let's add the interesting missing links
+			addAnchorMissingLinks();
 		}
 
 		setPvecNorms();
 
 		try {
-			
+
 			if (writeInfo) {
 				this.graphOp1 = new PrintStream(new File(opFileName + "_rels.txt"));
 			}
@@ -213,6 +229,219 @@ public class EntailGraph extends SimpleEntailGraph {
 		// this.clean();
 	}
 
+	void computeAllDSPredScores() {
+		String[] typess = types.split("#");
+		if (typess[0].equals(typess[1])) {
+			typess[0] += "_1";
+			typess[1] += "_2";
+		}
+		int idx = 0;
+
+		int numThreads = EntailGraphFactoryAggregator.dsPredNumThreads;
+
+		List<String> currentArgPairs = new ArrayList<>();
+		for (String s : argPairs) {
+			currentArgPairs.add(s);
+		}
+
+		double NTuples = 0;
+		for (double x : argPairIdxToOcc.values()) {
+			NTuples += x;
+		}
+
+		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreads);
+		ThreadPoolExecutor threadPool = new ThreadPoolExecutor(numThreads, numThreads, 10, TimeUnit.HOURS, queue);
+		// to silently discard rejected tasks. :add new
+		// ThreadPoolExecutor.DiscardPolicy()
+
+		threadPool.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+			@Override
+			public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+				// this will block if the queue is full
+				try {
+					executor.getQueue().put(r);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		for (String predPair : EntailGraphFactoryAggregator.dsRawPredPairs) {
+			// if (idx == 400) {
+			// break;// TODO: remove this
+			// }
+
+			ProbLRunner pelRunner = new ProbLRunner(this, predPair, idx, typess, currentArgPairs, NTuples);
+
+			threadPool.execute(pelRunner);
+
+			idx++;
+		}
+
+		threadPool.shutdown();
+		// Wait hopefully all threads are finished. If not, forget about it!
+		try {
+			threadPool.awaitTermination(200, TimeUnit.HOURS);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	double computeProbL(String rel1, String rel2, double preComputedProb, List<String> currentArgPairs,
+			double NTuples) {
+		double probL = preComputedProb;
+		if (preComputedProb == -1) {
+			
+			if (EntailGraphFactoryAggregator.probModel == ProbModel.Cos) {
+				probL = getCosPreds(rel1, rel2);
+				
+			}
+			else {
+				double numerator = 0;
+				double denominator = 0;
+				int idx = 0;
+
+				for (String argPair : currentArgPairs) {
+					// System.out.println(argPair);
+					double nArgPair = argPairIdxToOcc.get(idx);
+//					double pr_ArgPair = nArgPair / NTuples;//TODO: be careful
+					double pr_ArgPair = 1;
+					// System.out.println("narg nnz: "+nArgPair+" "+nnz);
+					double pr1 = 0;
+					double pr2 = 0;
+					if (EntailGraphFactoryAggregator.probModel == ProbModel.PL) {
+						pr1 = getScore(rel1, argPair);
+						pr2 = getScore(rel2, argPair);
+					} else {
+						if (predToIdx.containsKey(rel1)) {
+							PredicateVector pvec1 = pvecs.get(predToIdx.get(rel1));
+							if (pvec1.argIdxToArrayIdx.containsKey(idx)) {
+
+								if (EntailGraphFactoryAggregator.probModel == ProbModel.PEL) {
+									pr1 = getScore(rel1, argPair);//TODO: be careful
+								} else if (EntailGraphFactoryAggregator.probModel == ProbModel.PE) {
+									int arrIdx = pvec1.argIdxToArrayIdx.get(idx);
+									pr1 = pvec1.vals.get(arrIdx) / nArgPair;
+									// System.out.println("count: "+pvec1.vals.get(arrIdx));
+									// System.out.println("pr1: "+pr1);
+								}
+
+							}
+						}
+						if (predToIdx.containsKey(rel2)) {
+							PredicateVector pvec2 = pvecs.get(predToIdx.get(rel2));
+							if (pvec2.argIdxToArrayIdx.containsKey(idx)) {
+								if (EntailGraphFactoryAggregator.probModel == ProbModel.PEL) {
+									pr2 = getScore(rel2, argPair);//TODO: be careful
+								} else if (EntailGraphFactoryAggregator.probModel == ProbModel.PE) {
+									int arrIdx = pvec2.argIdxToArrayIdx.get(idx);
+									pr2 = pvec2.vals.get(arrIdx) / nArgPair;
+									// System.out.println("count: "+pvec2.vals.get(arrIdx));
+									// System.out.println("pr2: "+pr2);
+								}
+
+							}
+						}
+					}
+					
+					numerator += pr_ArgPair * pr1 * pr2;
+
+					denominator += pr1 * pr_ArgPair;
+					if (pr1 > 0) {
+//						System.out.println("count: " + argPair + " " + argPairIdxToCount.get(idx));
+//						System.out.println("pred and arg pair: " + rel1 + " " + rel2 + " " + argPair + " " + pr1 + " " + pr2
+//								+ " " + pr_ArgPair);
+//						if (pr2>0) {
+//							System.out.println("both positive");
+//						}
+					}
+
+					idx++;
+				}
+				if (denominator == 0) {
+					probL = 0;
+				} else {
+					probL = numerator / denominator;
+				}
+			}
+			
+			
+		}
+
+		if (!EntailGraphFactoryAggregator.dsPredToPredToScore.containsKey(rel1)) {
+			EntailGraphFactoryAggregator.dsPredToPredToScore.put(rel1, new HashMap<>());
+		}
+
+		EntailGraphFactoryAggregator.dsPredToPredToScore.get(rel1).put(rel2, probL);
+		System.out.println(rel1 + " => " + rel2 + " " + probL);
+		return probL;
+	}
+	
+	double getCosPreds(String rel1, String rel2) {
+		String rawPred1 = rel1.split("#")[0];
+		String rawPred2 = rel2.split("#")[0];
+		
+		try {
+			double[] r1Emb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred1);
+			double[] r2Emb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred2);
+			return Math.max(getCos(r1Emb, r2Emb),0);
+		} catch (Exception e) {
+			return 0;
+		}
+	}
+	
+	double getCos(double[] a, double[] b) {
+		double dot = 0;
+		for (int i=0; i<a.length; i++) {
+			dot += a[i]*b[i];
+		}
+		return dot/(getNorm(a)*getNorm(b));
+	}
+	
+	double getNorm(double[] a) {
+		double ret = 0;
+		for (int i=0; i<a.length; i++) {
+			ret += Math.pow(a[i], 2);
+		}
+		return Math.sqrt(ret);
+	}
+
+	void addAllMissingLinks() {
+		System.out.println("adding all arg pairs to all remainig predicates!");
+
+		Set<String> allRemainedArgPairs = new HashSet<>();
+		for (PredicateVector pvec : pvecs) {
+			for (int i : pvec.argIdxes) {
+				allRemainedArgPairs.add(argPairs.get(i));
+			}
+		}
+
+		System.out.println("num remained args and preds: " + allRemainedArgPairs.size() + " " + pvecs.size());
+
+		for (PredicateVector pvec : pvecs) {
+			for (String argPair : allRemainedArgPairs) {
+				addBinaryRelation(pvec.predicate, argPair, null, 1, EntailGraphFactoryAggregator.linkPredThreshold, -1);
+				// String[] ss = argPair.split("#");
+				// String reverseArgPair = ss[1] + "#" + ss[0];
+				// addBinaryRelation(pvec.predicate, reverseArgPair, null, 1,
+				// EntailGraphFactoryAggregator.linkPredThreshold);
+			}
+		}
+	}
+
+	void addAnchorMissingLinks() {
+		System.out.println("adding anchor arg pairs to all remainig predicates!");
+		for (PredicateVector pvec : pvecs) {
+			for (String argPair : EntailGraphFactoryAggregator.anchorArgPairs) {
+				addBinaryRelation(pvec.predicate, argPair, null, 1, EntailGraphFactoryAggregator.linkPredThreshold, -1);
+				String[] ss = argPair.split("#");
+				String reverseArgPair = ss[1] + "#" + ss[0];
+				addBinaryRelation(pvec.predicate, reverseArgPair, null, 1,
+						EntailGraphFactoryAggregator.linkPredThreshold, -1);
+			}
+		}
+	}
+
 	// Note that when we cut-off the predicates, some of the NEs that we
 	// had in our entTowiki.txt previously, will not appear anymore!
 	// Let's just save the ones that appear
@@ -240,8 +469,8 @@ public class EntailGraph extends SimpleEntailGraph {
 
 	void setAllPMIs() {
 
-		float allOccurrences1 = 0;
-		float allOccurrences2 = 0;
+		double allOccurrences1 = 0;
+		double allOccurrences2 = 0;
 		for (InvertedIdx invIdx : invertedIdxes) {
 			allOccurrences1 += invIdx.norm1;
 		}
@@ -255,21 +484,21 @@ public class EntailGraph extends SimpleEntailGraph {
 		this.numTuples = allOccurrences1;
 
 		for (PredicateVector pvec : pvecs) {
-			pvec.PMIs = new ArrayList<Float>();
+			pvec.PMIs = new ArrayList<Double>();
 			for (int i = 0; i < pvec.argIdxes.size(); i++) {
-				pvec.PMIs.add(-1.0f);
+				pvec.PMIs.add(-1.0);
 			}
 			for (int argIdx : pvec.argIdxes) {
 
-				float probPred = pvec.norm1 / this.numTuples;
+				double probPred = pvec.norm1 / this.numTuples;
 				InvertedIdx invIdx = invertedIdxes.get(argIdx);
 
-				float probArgPair = invIdx.norm1 / this.numTuples;
+				double probArgPair = invIdx.norm1 / this.numTuples;
 				int arrIdx = pvec.argIdxToArrayIdx.get(argIdx);
-				float pRel = (float) pvec.vals.get(arrIdx) / numTuples;
-//				float PMI = (float) Math.log(pRel / (probPred * probArgPair));
-				float PMI = (float) (Math.log(pRel) - Math.log(probPred) -Math.log(probArgPair));
-//				System.out.println("pmi: "+PMI);
+				double pRel = pvec.vals.get(arrIdx) / numTuples;
+				// double PMI = (double) Math.log(pRel / (probPred * probArgPair));
+				double PMI = (Math.log(pRel) - Math.log(probPred) - Math.log(probArgPair));
+				// System.out.println("pmi: "+PMI);
 
 				pvec.PMIs.set(arrIdx, PMI);
 				invIdx.PMIs.set(invIdx.sampleIdxToArrIdx.get(pvec.uniqueId), PMI);
@@ -320,9 +549,9 @@ public class EntailGraph extends SimpleEntailGraph {
 			}
 			for (int i = 0; i < invIdx.samplesIdxes.size(); i++) {
 				int pvecIdx1 = invIdx.samplesIdxes.get(i);
-				float val1 = invIdx.vals.get(i);
+				double val1 = invIdx.vals.get(i);
 
-				float PMI1 = invIdx.PMIs.get(i);
+				double PMI1 = invIdx.PMIs.get(i);
 				String leftInterval1 = invIdx.maxLeftTimes.get(i);
 				String rightInterval1 = invIdx.minRightTimes.get(i);
 				PredicateVector pvec1 = pvecs.get(pvecIdx1);
@@ -335,8 +564,8 @@ public class EntailGraph extends SimpleEntailGraph {
 				// leftInterval1+" "+rightInterval1);
 				for (int j = i + 1; j < invIdx.samplesIdxes.size(); j++) {
 					int pvecIdx2 = invIdx.samplesIdxes.get(j);
-					float val2 = invIdx.vals.get(j);
-					float PMI2 = invIdx.PMIs.get(j);
+					double val2 = invIdx.vals.get(j);
+					double PMI2 = invIdx.PMIs.get(j);
 					String leftInterval2 = invIdx.maxLeftTimes.get(j);
 					String rightInterval2 = invIdx.minRightTimes.get(j);
 					PredicateVector pvec2 = pvecs.get(pvecIdx2);
@@ -470,7 +699,8 @@ public class EntailGraph extends SimpleEntailGraph {
 		}
 	}
 
-	void addBinaryRelation(String pred, String featName, String timeInterval, float count) {
+	void addBinaryRelation(String pred, String featName, String timeInterval, double count, double threshold,
+			double preComputedScore) {
 		if (!predToIdx.containsKey(pred)) {
 			PredicateVector pvec = new PredicateVector(pred, predToIdx.size(), this);
 			predToIdx.put(pred, pvec.uniqueId);
@@ -486,79 +716,95 @@ public class EntailGraph extends SimpleEntailGraph {
 			argPairToIdx.put(featName, idx);
 			argPairs.add(featName);
 
-			argPairIdxToCount.put(idx, 0.0f);
+			argPairIdxToCount.put(idx, 0.0);
+			argPairIdxToOcc.put(idx, 0.0);
 		}
 
 		int pairIdx = argPairToIdx.get(featName);
-		
-		//If embBasedScore, then change count to count*score here! (instead of the default count*1)
-		if (EntailGraphFactoryAggregator.embBasedScores || EntailGraphFactoryAggregator.anchorBasedScores) {
-			count *= getScore(pred, featName);
-		}
-		
-		pvec.addArgPair(pairIdx, timeInterval, count);
 
+		// If embBasedScore, then change count to count*score here! (instead of the
+		// default count*1)
+		if (EntailGraphFactoryAggregator.embBasedScores || EntailGraphFactoryAggregator.anchorBasedScores) {
+
+			if (pvec.argIdxToArrayIdx.containsKey(pairIdx)) {
+				return;// TODO: you might want to remove this
+			}
+
+			double score = preComputedScore;
+			if (score == -1) {
+
+				score = getScore(pred, featName);
+				if (score < threshold) {
+					return;
+				}
+			}
+
+			count *= score;
+		}
+
+		pvec.addArgPair(pairIdx, timeInterval, count);
 	}
-	
-	float getScore(String pred, String featName) {
-		//(visit.1,visit.2)#person#location e1 e2 => s = -|e_1 + r - e_2 |_1
-		//(visit.1,visit.2)#person_1#person_2 e1 e2 => ditto
-		//(visit.1,visit.2)#person_2#person_1 e1 e2 => swap e1 and e2
-		
+
+	double getScore(String pred, String featName) {
+		// (visit.1,visit.2)#person#location e1 e2 => s = -|e_1 + r - e_2 |_1
+		// (visit.1,visit.2)#person_1#person_2 e1 e2 => ditto
+		// (visit.1,visit.2)#person_2#person_1 e1 e2 => swap e1 and e2
+
 		String[] ss = pred.split("#");
 		String[] args = featName.split("#");
-		
-		if (ss.length!=3 || args.length!=2) {
+
+		if (ss.length != 3 || args.length != 2) {
 			return 1e-40f;
 		}
-		
+
 		String rawPred = ss[0];
 		if (ss[1].endsWith("_2") && ss[2].endsWith("_1")) {
-			//swap args
+			// swap args
 			String tmp = args[0];
 			args[0] = args[1];
 			args[1] = tmp;
 		}
-		
-//		System.out.println(args[0]+" "+ rawPred+" "+args[1]);
-		if (EntailGraphFactoryAggregator.anchorBasedScores) {
-			if (EntailGraphFactoryAggregator.anchorArgPairs.contains(args[0]+"#"+args[1])) {
-				return 1f;
+
+		// System.out.println(args[0]+" "+ rawPred+" "+args[1]);
+		// if (EntailGraphFactoryAggregator.anchorBasedScores) {
+		// if (EntailGraphFactoryAggregator.anchorArgPairs.contains(args[0] + "#" +
+		// args[1])) {
+		// return 1f;
+		// } else {
+		// return 1e-40f;
+		// }
+		// } else {// embBased
+		double[] e1Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[0]);
+		double[] e2Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[1]);
+		double[] rEmb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred);
+
+		// System.out.println("embeds null? "+ e1Emb+" "+e2Emb+" "+rEmb);
+
+		double ret = 0;
+
+		// now, compute the score
+		try {
+			double sum = 0;
+			for (int i = 0; i < e1Emb.length; i++) {
+				sum += Math.abs(e1Emb[i] + rEmb[i] - e2Emb[i]);
 			}
-			else {
-				return 1e-40f;
-			}
+
+			sum *= -1;
+
+			sum *= EntailGraphFactoryAggregator.sigmoidScaleParameter;
+			sum += EntailGraphFactoryAggregator.sigmoidLocParameter;
+
+			// sigmoid
+			double s = (double) (1.0 / (1.0 + Math.exp(-sum)));
+			ret = s;
+
+		} catch (Exception e) {
 		}
-		else {//embBased
-			float[] e1Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[0]);
-			float[] e2Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[1]);
-			float[] rEmb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred);
-			
-//			System.out.println("embeds null? "+ e1Emb+" "+e2Emb+" "+rEmb);
-			
-			float ret = 0;
-			
-			//now, compute the score
-			try {
-				float sum = 0;
-				for (int i=0; i<e1Emb.length; i++) {
-					sum += Math.abs(e1Emb[i] + rEmb[i] - e2Emb[i]);
-				}
-				
-				sum *= -1;
-				//sigmoid
-				float s = (float)(1.0/(1.0+Math.exp(-sum)));
-				ret = s;
-				
-			} catch (Exception e) {
-			}
-			if (ret!=0) {
-//				System.out.println(rawPred +" # "+args[0]+ " # "+ args[1]+" "+ret);
-			}
-			return (float)Math.max(ret, 1e-40);
-		}
-		
-		
+		// if (ret != 0) {
+		// System.out.println(rawPred + " # " + args[0] + " # " + args[1] + " " + ret);
+		// }
+		return (double) Math.max(ret, 1e-40);// TODO: you really shouldn't need this!
+		// }
 	}
 
 	void buildInvertedIdx() {

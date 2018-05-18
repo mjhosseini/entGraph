@@ -32,37 +32,39 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import entailment.Util;
 
+//entry point for running transitive graph making methods + iterative embedding (which never worked well)
 public class PGraph implements Comparable<PGraph> {
 
-	public static boolean checkFrgVio = true;
+	public static boolean checkFrgVio = false;
 	// public static boolean origBerantFRG = true;
 	public static boolean fullTNF = false;// Must be true. false means HTL(-FRG)
-	public static TransitiveMethod transMethod = TransitiveMethod.BerantTNF;
+	public static TransitiveMethod transMethod = TransitiveMethod.HTLFRG;
 	public static int specILPMaxClusterAllowed = 100;// for SpectralILP
 	public static int specILPMaxClusterSizeAllowed = 100;// for SpectralILPWithin (just an approximation)
 	public static boolean shouldReplaceOutputs = true;// if true, will solve everything, otherwise ignores the files it
 														// already has!
 
-	public static boolean removeStopPreds = false;// TODO: be careful!
+	public static boolean removeStopPreds = false;
 	public static boolean shouldWrite = true;
-	public static boolean formBinaryGraph = false;
-	public static boolean transitive = false;
+	public static boolean formBinaryGraph = true;
+	public static boolean transitive = true;
 	public static int numTNFThreads = 16;
 
-	public static boolean emb = true;
+	public static boolean emb = false;
 	public static boolean weightEdgeSimilarities = true;
 	public static int maxNeighs = 1000;// more than 30!
 	public static float relMinSim = -1f;// -1 if don't want to
 	static String embSuffix = "_embsimsTransE.txt";
 	static String fpath = "../../python/gfiles/ent/ccg7.sim";
 
-	 public static String suffix = "_sim.txt";
+	public static String suffix = "_sim.txt";
 	public static FeatName featName = FeatName.BINC;
-//	public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
-	public static String graphPostFix = "_" + transMethod + ".txt";
+	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
+	public static String graphPostFix = "_" + transMethod + "NOFRG.txt";
 	// static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";//
 	static String allExamplesPath = "../../python/gfiles/ent/all_new_comb_rels.txt";
-	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
+//	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
+	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
 	// public static String root =
 	// "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
 
@@ -77,7 +79,7 @@ public class PGraph implements Comparable<PGraph> {
 												// really worth it! .05 reduces edges by half, but not worth it
 
 	static Map<FeatName, String> featNameToStr;
-	
+
 	static {
 		featNameToStr = new HashMap<>();
 		featNameToStr.put(FeatName.Cos, "cos");
@@ -682,11 +684,7 @@ public class PGraph implements Comparable<PGraph> {
 				}
 				if (line.endsWith("sims") || line.endsWith("sim")) {
 					simName = line.toLowerCase();
-				} else {// TODO: be careful
-					// if (!simName.contains("binc") || simName.contains("unary") ||
-					// simName.contains("sep")) {
-					// continue;
-					// }
+				} else {
 
 					if (!simName.contains(featNameToStr.get(PGraph.featName)) || simName.contains("unary")
 							|| simName.contains("sep")) {
@@ -792,7 +790,7 @@ public class PGraph implements Comparable<PGraph> {
 		List<Float> lmbdas = new ArrayList<>();
 		float maxLmbda = .05f;
 		int numLmbdas = 10;
-		float minLambda = maxLmbda / numLmbdas;// TODO: change this back!
+		float minLambda = maxLmbda / numLmbdas;
 		for (float lmbda = minLambda; lmbda <= maxLmbda; lmbda += (maxLmbda - minLambda) / (numLmbdas - 1)) {
 			lmbdas.add(lmbda);
 		}
@@ -819,45 +817,15 @@ public class PGraph implements Comparable<PGraph> {
 		return lmbdas;
 	}
 
-	// static List<Float> getLambdas2() {
-	// float maxLmbda = .05f;
-	// // int numLmbdas = 10;
-	// int numLmbdas = 3;
-	// // float minLambda = maxLmbda / numLmbdas;// TODO: change this back!
-	// float minLambda = .01f;
-	// List<Float> lmbdas = new ArrayList<>();
-	// for (float lmbda = minLambda; lmbda <= maxLmbda; lmbda += (maxLmbda -
-	// minLambda) / (numLmbdas - 1)) {
-	// lmbdas.add(lmbda);
-	// }
-	// lmbdas.add(.06f);
-	// lmbdas.add(.1f);
-	// lmbdas.add(.2f);
-	// }
-
 	public static void main(String[] args) {
 		System.err.println("start!");
 		BasicConfigurator.configure();
 		Logger.getRootLogger().setLevel(Level.WARN);
 		// String root = "../../python/gfiles/typedEntGrDir_aida/";
 		// PGraph pgraph = new PGraph(root+"location#person_sim.txt");
-		// TODO: be careful
-		// float maxLmbda = .05f;
-		// // int numLmbdas = 10;
-		// int numLmbdas = 3;
-		// // float minLambda = maxLmbda / numLmbdas;// TODO: change this back!
-		// float minLambda = .01f;
-		// List<Float> lmbdas = new ArrayList<>();
-		// for (float lmbda = minLambda; lmbda <= maxLmbda; lmbda += (maxLmbda -
-		// minLambda) / (numLmbdas - 1)) {
-		// lmbdas.add(lmbda);
-		// }
-		// lmbdas.add(.06f);
-		// lmbdas.add(.1f);
-		// lmbdas.add(.2f);
 
 		// TODO: be careful
-		List<Float> lmbdas = getLambdas1();// (.08f);
+		List<Float> lmbdas = getLambdas2();// (.08f);
 
 		// List<Float> lmbdas = new ArrayList<>();
 		// // lmbdas.add(.04f);
@@ -925,10 +893,14 @@ public class PGraph implements Comparable<PGraph> {
 				String fname2 = PGraph.root + fname;
 				int lastDotIdx = fname2.lastIndexOf('.');
 				outPath = fname2.substring(0, lastDotIdx) + PGraph.graphPostFix;
-				// System.out.println("out: " + outPath);
+				System.out.println("out: " + outPath);
 				File candF = new File(outPath);
 				if (candF.exists() && candF.length() > 0) {
 					continue;
+				}
+				else {
+					System.out.println("not exist");
+					
 				}
 			}
 

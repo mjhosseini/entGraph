@@ -78,6 +78,14 @@ public class Util {
 	// public static Map<String, String> entToWiki = null;
 	private static Map<String, String> entToFigerType = null;
 	private static Map<String, Boolean> entToFigerONLYNE = null;
+	static String[] goodPart2s = new String[] { "1", "2", "3" };
+	
+	static HashSet<String> goodPart2sSet = new HashSet<String>();
+	static {
+		for (String s : goodPart2s) {
+			goodPart2sSet.add(s);
+		}
+	}
 
 	static HashMap<String, String[]> predToLemma = new HashMap<>();;
 
@@ -161,15 +169,15 @@ public class Util {
 
 		stopPreds = new HashSet<>();
 		Scanner sc = null;
-		;
 		try {
 			sc = new Scanner(new File("stops.txt"));
+			while (sc.hasNext()) {
+				stopPreds.add(sc.nextLine());
+			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		while (sc.hasNext()) {
-			stopPreds.add(sc.nextLine());
-		}
+		
 
 	}
 
@@ -491,7 +499,7 @@ public class Util {
 
 	public static String removeHeader(String text) {
 		int maxAcceptableIdx = 40;
-		String[] headerIdentifiers = new String[] { ": ", " - ", " -- " };
+		String[] headerIdentifiers = new String[] { ": ", " - ", " -- ", " — " };
 
 		int maxIdx = -1;
 		String splitter = "";
@@ -507,7 +515,7 @@ public class Util {
 			// System.out.println("header: "+header);
 			// System.out.println(text);
 			String candText = text.substring(maxIdx);
-
+			
 			// for cases like blah - blah - blah
 			if (splitter.equals(" - ")) {
 				int idx = candText.indexOf(" - ");
@@ -516,6 +524,9 @@ public class Util {
 				} else {
 					text = candText;
 				}
+			}
+			else {
+				text = candText;
 			}
 
 		}
@@ -616,6 +627,21 @@ public class Util {
 			ret.put(tokensList[i], posList[i]);
 		}
 
+		return ret;
+	}
+	
+	public static List<String> getSentences(String s){
+		Annotation document = new Annotation(s);
+		stanPipelineSimple2.annotate(document);
+		List<String> ret = new ArrayList<>();
+
+		// Iterate over all of the sentences found
+		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+		for (CoreMap sentence : sentences) {
+			// System.out.println(sentence);
+			String sent = sentence.toString();
+			ret.add(sent);
+		}
 		return ret;
 	}
 
@@ -1683,6 +1709,12 @@ public class Util {
 		if (Util.isCoordination(pred)) {
 			return false;
 		}
+		if (EntailGraphFactoryAggregator.removeEventEventModifiers) {
+			if (pred.contains("__") && !pred.toLowerCase().startsWith("neg")) {
+//				System.out.println("not acceptable: "+pred);
+				return false;
+			}
+		}
 		pred = pred.substring(1, pred.length() - 1);
 		String[] parts = pred.split(",");
 		if (parts.length != 2) {
@@ -1696,14 +1728,8 @@ public class Util {
 		return acceptablePredPartFormat(parts[0]) || acceptablePredPartFormat(parts[1]);
 	}
 
-	static String[] goodPart2s = new String[] { "1", "2", "3" };
-	static HashSet<String> goodPart2sSet = new HashSet<String>();
-	static {
-		for (String s : goodPart2s) {
-			goodPart2sSet.add(s);
-		}
-	}
-
+	
+	//basically doesn't do much, because everything ends with .1, .2 or .3!
 	public static boolean acceptablePredPartFormat(String pred) {
 		String[] parts = StringUtils.split(pred, ".");
 
@@ -2013,23 +2039,57 @@ public class Util {
 		return s;
 	}
 
-	public static HashSet<String> loadAllDSPreds(String path) throws IOException {
+	public static void fillDSPredsandPairs(String path, Set<String> preds, Set<String> predPairs) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(path));
-		HashSet<String> ret = new HashSet<>();
 		String line = null;
+		
 		while ((line = br.readLine()) != null) {
-
 			String[] parts = line.split("\t");
-			String[] ss = parts[0].split(" ");
-			String rel1 = ss[0];
-			ss = parts[1].split(" ");
-			String rel2 = ss[0];
-			ret.add(rel1);
-			ret.add(rel2);
+			if (parts[0].equals("") || parts[1].equals("")) {
+				continue;
+			}
+			String[] qall = parts[0].split(" ");
+			String rel1 = qall[0];
+			String[] pall = parts[1].split(" ");
+			String rel2 = pall[0];
+			preds.add(rel1);
+			preds.add(rel2);
+			
+			boolean isAligned = isAligned(qall, pall);
+			
+//			System.out.println(line);
+//			System.out.println(isAligned);
+//			System.out.println();
+			
+			predPairs.add(rel2+"#"+rel1+"#"+isAligned);
+			
 		}
 
 		br.close();
-		return ret;
+	}
+	
+	static boolean isAligned(String[] qall, String[] pall) {
+		String q1 = Util.getLemma(qall[1].split("::")[0].toLowerCase());
+		String q2 = Util.getLemma(qall[2].split("::")[0].toLowerCase());
+		
+		String a1 = Util.getLemma(pall[1].split("::")[0].toLowerCase());
+		String a2 = Util.getLemma(pall[1].split("::")[0].toLowerCase());
+		
+		if (q1.equals(a1)) {
+			return true;
+		}
+		if (q1.equals(a2)) {
+			return false;
+		}
+		if (q2.equals(a1)) {
+			return false;
+		}
+		if (q2.equals(a2)) {
+			return true;
+		}
+//		System.out.println("not sure if aligned: "+qall[0]+ " "+ qall[1]+ " "+ qall[2]+pall[0]+ " "+ pall[1]+ " "+ pall[2]);
+		return true;
+		
 	}
 
 	// static void convertOIEToOurFormat() {

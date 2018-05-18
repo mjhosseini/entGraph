@@ -34,15 +34,27 @@ import it.cnr.isti.hpc.dexter.rest.domain.SpottedDocument;
 
 public class LinesHandler {
 	final int maxLinesToRun = 100000;// This is because of the memory leak in
-									// easyCCG
-	final int numThreads = 70;
+										// easyCCG
+	final int numThreads = 20;
 	final int maxMBallowd = 14000;
-//	final int maxMBallowd = 140;
+	// final int maxMBallowd = 140;
+	public static boolean convToEntityLinked = false;// Must be always false, we do linking separately!
+
+	// static String[] accepteds = new String[] { "GE", "EG", "EE" };
+	static String[] accepteds = new String[] { "GE", "EG", "EE", "GG" };//
+	// TODO:// remove
+
+	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
+	public static boolean useQuestionMod = false;// Always set if to false!
+	public static boolean writeDebugString = true;
+
+	public static int nbestParses = 1;
+
 	int numPortionsToSkip;
 	BufferedReader br;
 	int lineNumber;
 	ThreadPoolExecutor threadPool;
-	public static boolean convToEntityLinked = false;//Must be always false, we do linking separately!
+
 	PrintStream opJson;
 	BufferedWriter opEnts;
 	BufferedWriter opMainStrs;
@@ -54,8 +66,8 @@ public class LinesHandler {
 	static ArrayList<String> lines;
 	static ArrayList<ArrayList<String>> spots;
 	static ArrayList<ArrayList<String>> wikiNames;
-	static Map<String, Integer> allEntities = new HashMap();
-	static Map<String, Integer> allGens = new HashMap();
+	static Map<String, Integer> allEntities = new HashMap<>();
+	static Map<String, Integer> allGens = new HashMap<>();
 	final int lineOffset;
 
 	public LinesHandler(String[] args) {
@@ -66,32 +78,33 @@ public class LinesHandler {
 		lineNumber = 0;
 		if (args == null) {
 			try {
-				br = new BufferedReader(
-						new InputStreamReader(System.in, "UTF8"));
-				opMainStrs = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("predArgs_gen.txt"),"UTF-8"));
-				opMainStrsOnlyNEs = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("predArgs_NEs.txt"),"UTF-8"));
+				br = new BufferedReader(new InputStreamReader(System.in, "UTF8"));
+				opMainStrs = new BufferedWriter(
+						new OutputStreamWriter(new FileOutputStream("predArgs_gen.txt"), "UTF-8"));
+				opMainStrsOnlyNEs = new BufferedWriter(
+						new OutputStreamWriter(new FileOutputStream("predArgs_NEs.txt"), "UTF-8"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			numPortionsToSkip = -1;
 		} else {
 			try {
-				br = new BufferedReader(new InputStreamReader(
-						new FileInputStream(args[0]), "UTF8"));
+				br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF8"));
 				String f1, f2;
-				if (args.length>2){
+				if (args.length > 2) {
 					f1 = args[2];
 					f2 = args[3];
 					numPortionsToSkip = Integer.parseInt(args[1]);
-				}
-				else{
+				} else {
 					f1 = "predArgs_gen.txt";
 					f2 = "predArgs_NEs.txt";
 					numPortionsToSkip = -1;
 				}
-				
-				opMainStrs = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f1,numPortionsToSkip>0),"UTF-8"));
-				opMainStrsOnlyNEs = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f2,numPortionsToSkip>0),"UTF-8"));
+
+				opMainStrs = new BufferedWriter(
+						new OutputStreamWriter(new FileOutputStream(f1, numPortionsToSkip > 0), "UTF-8"));
+				opMainStrsOnlyNEs = new BufferedWriter(
+						new OutputStreamWriter(new FileOutputStream(f2, numPortionsToSkip > 0), "UTF-8"));
 				if (convToEntityLinked) {
 					int dotIdx = args[0].indexOf('.');
 					String jsonName = args[0].substring(0, dotIdx) + ".json";
@@ -101,8 +114,6 @@ public class LinesHandler {
 				e.printStackTrace();
 			}
 		}
-		
-		
 
 		int ll = -1;
 		try {
@@ -118,11 +129,9 @@ public class LinesHandler {
 
 		try {
 			if (numPortionsToSkip <= 0) {
-				opEnts = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream("ents.txt")));
+				opEnts = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("ents.txt")));
 			} else {
-				opEnts = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream("ents.txt", true)));
+				opEnts = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("ents.txt", true)));
 			}
 
 		} catch (FileNotFoundException e1) {
@@ -135,17 +144,14 @@ public class LinesHandler {
 
 		}
 
-		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(
-				numThreads);
-		threadPool = new ThreadPoolExecutor(numThreads, numThreads, 600,
-				TimeUnit.SECONDS, queue);
+		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreads);
+		threadPool = new ThreadPoolExecutor(numThreads, numThreads, 600, TimeUnit.SECONDS, queue);
 		// to silently discard rejected tasks. :add new
 		// ThreadPoolExecutor.DiscardPolicy()
 
 		threadPool.setRejectedExecutionHandler(new RejectedExecutionHandler() {
 			@Override
-			public void rejectedExecution(Runnable r,
-					ThreadPoolExecutor executor) {
+			public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
 				// this will block if the queue is full
 				try {
 					executor.getQueue().put(r);
@@ -181,17 +187,16 @@ public class LinesHandler {
 				if (lineNumber < lineOffset) {
 					continue;
 				}
-				if (line.length()>100000) {
-					System.err.println("very long line, not processing: "+line);
+				if (line.length() > 100000) {
+					System.err.println("very long line, not processing: " + line);
 				}
 				if (lineNumber % 1000 == 0) {
 					System.err.println(lineNumber);
 				}
-				
+
 				// check memory and see if you wanna exit
 				if (lineNumber % 1000 == 0) {
-					long usedMb = (Runtime.getRuntime().totalMemory() - Runtime
-							.getRuntime().freeMemory()) / mb;
+					long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
 					System.err.println("usedMB: " + usedMb);
 					if (usedMb >= maxMBallowd) {
 						memoryExceed = true;
@@ -213,8 +218,7 @@ public class LinesHandler {
 				// line.startsWith("#")
 
 				// System.err.println(lineNumber);
-				
-				
+
 				if (line.trim().equals("")) {
 					continue;
 				}
@@ -235,20 +239,21 @@ public class LinesHandler {
 				}
 			}
 		}
-		
-		System.err.println("threadpool: "+threadPool.getActiveCount()+" "+threadPool.getPoolSize()+" "+threadPool.getQueue().size());
-		System.err.println("asked for run: "+numAskedForRun);
-		System.err.println("num done: "+threadPool.getCompletedTaskCount());
+
+		System.err.println("threadpool: " + threadPool.getActiveCount() + " " + threadPool.getPoolSize() + " "
+				+ threadPool.getQueue().size());
+		System.err.println("asked for run: " + numAskedForRun);
+		System.err.println("num done: " + threadPool.getCompletedTaskCount());
 		threadPool.shutdown();
 		// Wait hopefully all threads are finished. If not, forget about it!
 		threadPool.awaitTermination(200, TimeUnit.SECONDS);
-		
+
 		System.err.println("after await");
 		writeOutPut();
 		System.err.println("after write output");
 		writeEnts();
 		writeGens();
-//		System.err.println("after write enty");
+		// System.err.println("after write enty");
 		if (convToEntityLinked) {
 			writeConvertedToEntityLinked();
 		}
@@ -266,7 +271,7 @@ public class LinesHandler {
 			f.delete();
 		}
 
-		 System.exit(0);
+		System.exit(0);
 	}
 
 	private void writeEnts() {
@@ -274,8 +279,8 @@ public class LinesHandler {
 		for (String s : allEntities.keySet()) {
 			try {
 				opEnts.write(s + "::" + allEntities.get(s) + "\n");
-//				System.err.println("now writing " + s + "::"
-//						+ allEntities.get(s) + "\n");
+				// System.err.println("now writing " + s + "::"
+				// + allEntities.get(s) + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -286,26 +291,26 @@ public class LinesHandler {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void writeGens() throws FileNotFoundException {
 		System.err.println("in write gens: " + allGens.size());
-		
+
 		PrintWriter pr = new PrintWriter("gens.txt");
-		
+
 		ArrayList<SimpleSpot> sspots = new ArrayList<>();
-		
+
 		for (String s : allGens.keySet()) {
 			sspots.add(new SimpleSpot(s, allGens.get(s)));
 		}
-		
-		Collections.sort(sspots,Collections.reverseOrder());
-		
-		for (SimpleSpot ss: sspots){
-			pr.println(ss.spot+"::"+ss.count);
+
+		Collections.sort(sspots, Collections.reverseOrder());
+
+		for (SimpleSpot ss : sspots) {
+			pr.println(ss.spot + "::" + ss.count);
 		}
-		
+
 		pr.close();
-		
+
 	}
 
 	private void writeConvertedToEntityLinked() {
@@ -330,11 +335,11 @@ public class LinesHandler {
 	private void writeOutPut() throws IOException {
 		while (mainStrs.size() > 0) {
 			String s = mainStrs.remove(0);
-			opMainStrs.write(s+"\n");
+			opMainStrs.write(s + "\n");
 		}
 		while (mainStrsOnlyNEs.size() > 0) {
 			String s = mainStrsOnlyNEs.remove(0);
-			opMainStrsOnlyNEs.write(s+"\n");
+			opMainStrsOnlyNEs.write(s + "\n");
 		}
 		while (errStrs.size() > 0) {
 			String s = errStrs.remove(0);
@@ -400,8 +405,7 @@ public class LinesHandler {
 	static void testDexter() {
 		DexterRestClient client = null;
 		try {
-			client = new DexterRestClient(
-					"http://localhost:8080/dexter-webapp/api/rest");
+			client = new DexterRestClient("http://localhost:8080/dexter-webapp/api/rest");
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -431,8 +435,7 @@ public class LinesHandler {
 		Scanner sc = null;
 		DexterRestClient client = null;
 		try {
-			client = new DexterRestClient(
-					"http://localhost:8080/dexter-webapp/api/rest");
+			client = new DexterRestClient("http://localhost:8080/dexter-webapp/api/rest");
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -501,18 +504,17 @@ public class LinesHandler {
 	//
 	// }
 	// }
-	
-	public static void main(String[] args) throws IOException,
-			InterruptedException {
+
+	public static void main(String[] args) throws IOException, InterruptedException {
 		// breakFile();
 		// testDexter();
-		PredicateArgumentExtractor.useQuestionMod = false;
+		LinesHandler.useQuestionMod = false;
 		long t0 = System.currentTimeMillis();
 		// convertPredArgsToJson(args);
 		// teshashMap();
 		// convertToLinkedEntityAnnotated(args);
-		if (args.length==0){
-			args = new String[]{"news_raw.json"};
+		if (args.length == 0) {
+			args = new String[] { "news_raw.json" };
 		}
 		System.err.println("args:" + args[0]);
 		LinesHandler lineHandler = new LinesHandler(args);
