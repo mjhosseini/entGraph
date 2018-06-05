@@ -1259,8 +1259,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public static boolean isEntity(String pos) {
 		// System.out.println(node.getLemma());
-		// System.out.println(node.getPos());
-		return pos.equals("NNP") || pos.equals("NNPS");
+		return pos.equals("NNP") || pos.equals("NNPS"); 
 	}
 
 	// is noun or CD (which hopefully the CD modifies a noun).
