@@ -1259,7 +1259,6 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public static boolean isEntity(String pos) {
 		// System.out.println(node.getLemma());
-		// System.out.println(node.getPos());
 		return pos.equals("NNP") || pos.equals("NNPS"); 
 	}
 
