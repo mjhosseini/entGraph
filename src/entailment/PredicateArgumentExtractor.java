@@ -129,7 +129,6 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public String extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean debug)
 			throws ArgumentValidationException, IOException, InterruptedException {
-		// parser.nbestParses = 10;
 		String[] ret = extractPredArgsStrsForceFinding(text, arg1, arg2, true, debug);
 		// parser.nbestParses = 1;
 		// if (ret[1].equals("false")) {
