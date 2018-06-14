@@ -41,7 +41,7 @@ public class PGraph implements Comparable<PGraph> {
 	public static TransitiveMethod transMethod = TransitiveMethod.HTLFRG;
 	public static int specILPMaxClusterAllowed = 100;// for SpectralILP
 	public static int specILPMaxClusterSizeAllowed = 100;// for SpectralILPWithin (just an approximation)
-	public static boolean shouldReplaceOutputs = true;// if true, will solve everything, otherwise ignores the files it
+	public static boolean shouldReplaceOutputs = false;// if true, will solve everything, otherwise ignores the files it
 														// already has!
 
 	public static boolean removeStopPreds = false;
@@ -60,11 +60,12 @@ public class PGraph implements Comparable<PGraph> {
 	public static String suffix = "_sim.txt";
 	public static FeatName featName = FeatName.BINC;
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
-	public static String graphPostFix = "_" + transMethod + "NOFRG.txt";
+	public static String graphPostFix = "_" + transMethod + "NOFRG_san.txt";
 	// static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";//
 	static String allExamplesPath = "../../python/gfiles/ent/all_new_comb_rels.txt";
-//	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
-	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
+	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
+	// public static String root =
+	// "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
 	// public static String root =
 	// "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
 
@@ -870,9 +871,9 @@ public class PGraph implements Comparable<PGraph> {
 			// continue;
 			// }
 
-			// if (!fname.contains("location#location")) {
-			// continue;
-			// }
+			if (!fname.contains("thing#location") && !fname.contains("location#location")) {
+				continue;
+			}
 
 			// if (fname.startsWith("location#location_sim.txt")) {
 			// seenLoc = true;
@@ -897,10 +898,9 @@ public class PGraph implements Comparable<PGraph> {
 				File candF = new File(outPath);
 				if (candF.exists() && candF.length() > 0) {
 					continue;
-				}
-				else {
+				} else {
 					System.out.println("not exist");
-					
+
 				}
 			}
 

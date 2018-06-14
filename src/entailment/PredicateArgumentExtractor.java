@@ -367,6 +367,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					idx2Node.put(node.getWordPosition(), node);
 					// System.out.println(node.getPos());
 				}
+				
 				// mainStr += ungroundedGraph+"\n";
 				// mainStr += ungroundedGraph.getSyntacticParse() + "\n";
 				String syntacticParse = ungroundedGraph.getSyntacticParse();
@@ -1238,8 +1239,12 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Cleveland works at The White House.";
 //		String s = "MINNEAPOLIS -- President Barack Obama intends to nominate B. Todd Jones as his choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms and Explosives.";
 //		String s = "Cameron said the coalition's main aim was to stay ahead in the \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
-		String s = "A woman is walking across the street.";
-
+//		String s = "Two women having drinks and smoking cigarettes at the bar";
+//		String s = "A man wearing glasses and a ragged costume is playing a Jaguar electric guitar and singing with the accompaniment of a drummer.";
+//		String s = "Family members standing outside a home.";
+//		String s = "Man on bike with female standing on rear of back with arms around his neck.";
+		String s = "A man with black shirt.";
+		
 		// String s = "Tom managed to pass the exam.";
 		// String s = "John picked up the book.";
 		// String s = "What county is Heathrow airport in?";

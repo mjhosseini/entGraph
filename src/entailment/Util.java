@@ -1980,15 +1980,15 @@ public class Util {
 				String NERType = getSimpleNERType(argNER).toLowerCase();
 				if (!NERType.equals("none")) {
 					type = NERType;
-					System.out.println("backing up to NER type: " + arg + " " + NERType);
+//					System.out.println("backing up to NER type: " + arg + " " + NERType);
 				} else {
 					// Now, we have to back up to genTypes
 					arg = getLemma(arg);
 					String genType = getType(arg, false, null);
-					System.out.println("backing up to genTypes: " + mainArg + " " + arg + ": " + genType);
+//					System.out.println("backing up to genTypes: " + mainArg + " " + arg + ": " + genType);
 					type = genType;
 					if (genType.equals("thing")) {
-						System.out.println("no type found for: " + arg);
+//						System.out.println("no type found for: " + arg);
 					}
 				}
 			}
@@ -2000,7 +2000,7 @@ public class Util {
 			if (type.equals("thing")) {
 				arg = simpleNormalize(arg);
 				type = getType(getLemma(arg), false, tokenToStanType);
-				System.out.println("try lemma for: " + arg + " " + getLemma(arg) + " " + type);
+//				System.out.println("try lemma for: " + arg + " " + getLemma(arg) + " " + type);
 			}
 
 			// if it's still thing, we should back off to NEs!
@@ -2016,7 +2016,7 @@ public class Util {
 				} else {
 					type = "thing";
 				}
-				System.out.println("backing up to entTypes for " + mainArg + ": " + type);
+//				System.out.println("backing up to entTypes for " + mainArg + ": " + type);
 			}
 		}
 

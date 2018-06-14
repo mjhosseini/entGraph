@@ -22,7 +22,7 @@ public class TransClUtils {
 	int[] node2comp;
 	PrintStream op;
 	int N;
-	static boolean debug = false;
+	static boolean debug = true;
 	ConnectivityChecker connChecker;
 
 	public TransClUtils(PGraph pgraph, PrintStream op, double lmbda, boolean checkFrgVio,
@@ -246,12 +246,11 @@ public class TransClUtils {
 			int j = e.j;
 
 			if (connChecker != null && connChecker.isConnected(i, j) == 0) {// These are not supposed to be connected
-																			// due to local ILP
 				continue;
 			}
 
 			if (idx % 1000 == 0) {
-				System.out.println(idx+" "+pgraph.name+ " "+ sim);
+				System.out.println(idx + " " + pgraph.name + " " + sim);
 			}
 
 			idx++;
@@ -261,8 +260,8 @@ public class TransClUtils {
 			}
 
 			if (debug) {
-				System.out.println("checking: " + i + " " + j + " " + sim + " " + pgraph.nodes.get(i).id + " "
-						+ pgraph.nodes.get(j).id);
+				System.out.println("checking: " + idx + " " + i + "=>" + j + " " + sim + " " + pgraph.nodes.get(i).id
+						+ " " + pgraph.nodes.get(j).id);
 			}
 
 			if (debug) {
@@ -334,7 +333,7 @@ public class TransClUtils {
 	void writeSCC() {
 		writeSCC(scc, lmbda, op, pgraph);
 	}
-	
+
 	static List<List<Integer>> findComponents(PGraph pgraph, double lmbda) {
 		SimpleGraph<Integer, DefaultEdge> sg = new SimpleGraph<>(DefaultEdge.class);
 		for (int i = 0; i < pgraph.nodes.size(); i++) {
