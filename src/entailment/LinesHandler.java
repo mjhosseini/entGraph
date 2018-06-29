@@ -47,8 +47,10 @@ public class LinesHandler {
 	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
 	public static boolean useQuestionMod = false;// Always set if to false!
 	public static boolean writeDebugString = true;
+	public static boolean snli = true;//a few hacks for snli ds
 
 	public static int nbestParses = 1;
+	
 
 	int numPortionsToSkip;
 	BufferedReader br;

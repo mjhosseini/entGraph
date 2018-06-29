@@ -29,7 +29,6 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
-import entailment.PredicateArgumentExtractor;
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
@@ -277,6 +276,41 @@ public class Scripts {
 			allLines.add(line);
 			System.out.println(line);
 
+		}
+	}
+	
+	static void convertDecomposableAttentionProbsToFlat(String fname) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(fname));
+		String line = null;
+		JsonParser jsonParser = new JsonParser();
+		boolean ignore = false;
+		while ((line=br.readLine())!=null) {
+			if (line.startsWith("input:")) {
+				line = line.replace("input: ", "");
+//				System.out.println(line);
+				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
+				String label = jObj.get("gold_label").getAsString();
+//				System.out.println(label);
+				if (label.equals("-")) {
+					ignore = true;
+				}
+				continue;
+			}
+			else if(line.equals("")) {
+				continue;
+			}
+			if (ignore) {
+				ignore = false;
+				continue;
+			}
+			line = line.replace("prediction:  ","");
+//			System.out.println(line);
+			JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
+			String probs = jObj.get("label_probs")+"";
+//			System.out.println(probs);
+			probs = probs.replace("[", "").replace("]","").replace(","," ");
+			String[] ss = probs.split(" ");
+			System.out.println(ss[0]+" "+ss[2]+" "+ss[1]);
 		}
 	}
 
@@ -737,163 +771,6 @@ public class Scripts {
 		br.close();
 	}
 	
-	//just change the format to be processable by the python code
-	public static void convertSNLIExtractionsToRelsAll() throws IOException {
-		String root = "snli_1.0/";
-		String fname_dev = root + "snli_extractions_dev.txt";
-		String fname_train = root + "snli_extractions_train.txt";
-		String fname_test = root + "snli_extractions_test.txt";
-		
-		PrintStream op = new PrintStream(new File(root+"snli_rels.txt"));
-		
-		convertSNLIExtractionsToRels(fname_dev, op);
-		convertSNLIExtractionsToRels(fname_train, op);
-		convertSNLIExtractionsToRels(fname_test, op);
-	}
-	
-	public static void convertSNLIExtractionsToRels(String fname, PrintStream op) throws IOException {
-		String line = null;
-		BufferedReader br = new BufferedReader(new FileReader(fname));
-		System.out.println("here "+fname);
-		while ((line=br.readLine())!=null) {
-			System.out.println(line);
-			String[] liness = line.split("\t");
-			if (liness.length!=2) {
-				continue;
-			}
-			String[] parts0 = liness[0].split("\\$");
-			String[] parts1 = liness[1].split("\\$");
-			for (String rel1: parts0) {
-				String[] ss1 = rel1.split(" ");
-				for (String rel2:parts1) {
-					String[] ss2 = rel2.split(" ");
-					String rel2p = rel2;
-					if (ss1.length==3 && ss2.length==3) {
-						rel2p = ss2[0] + " " + ss1[1] + " " + ss1[2];  
-					}
-					op.println(rel2p+"\t"+rel1+"\t"+"False");
-				}
-			}
-		}
-		br.close();
-	}
-
-	public static void extractRelationsSNLIAll() throws ArgumentValidationException, IOException, InterruptedException {
-		String root = "snli_1.0/";
-		String fname_dev = root + "snli_1.0_dev.txt";
-		String fname_train = root + "snli_1.0_train.txt";
-		String fname_test = root + "snli_1.0_test.txt";
-
-		PrintStream op_dev = new PrintStream(new File(root+"snli_extractions_dev.txt"));
-		PrintStream op_train = new PrintStream(new File(root+"snli_extractions_train.txt"));
-		PrintStream op_test = new PrintStream(new File(root+"snli_extractions_test.txt"));
-		extractRelationsSNLI(fname_dev, op_dev);
-		extractRelationsSNLI(fname_train, op_train);
-		extractRelationsSNLI(fname_test, op_test);
-	}
-
-	public static void extractRelationsSNLI(String fname, PrintStream op)
-			throws IOException, ArgumentValidationException, InterruptedException {
-		BufferedReader br = new BufferedReader(new FileReader(fname));
-		String line;
-		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
-		br.readLine();
-		
-		EntailGraphFactoryAggregator.isTyped = true;
-		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
-		
-		while ((line = br.readLine()) != null) {
-			String opLine = "";
-			String[] ss = line.split("\t");
-
-			String sen1 = ss[5];
-			String sen2 = ss[6];
-			String label = ss[0];
-			
-			List<Map<String, String>> tokenToTypes = new ArrayList<>();
-			Map<String, String> tokenToType1 = Util.getSimpleNERTypeSent(sen1);
-			Map<String, String> tokenToType2 = Util.getSimpleNERTypeSent(sen2);
-			tokenToTypes.add(tokenToType1);
-			tokenToTypes.add(tokenToType2);
-			
-			List<String> mainRelsList = new ArrayList<>();
-
-			System.out.println(label + "##\t" + sen1 + "##\t" + sen2);
-			String mainRels;
-			try {
-				String[] exPrss = prEx.extractPredArgsStrs(sen1, 0, true, true, null);
-				mainRels = exPrss[0];
-			} catch (Exception e) {
-				mainRels = "";
-			}
-			mainRelsList.add(mainRels);
-			System.out.println(mainRels);
-			
-			try {
-				String[] exPrss = prEx.extractPredArgsStrs(sen2, 0, true, true, null);
-				mainRels = exPrss[0];
-			} catch (Exception e) {
-				mainRels = "";
-			}
-			mainRelsList.add(mainRels);
-			System.out.println(mainRels);
-			
-			boolean firstM = true;
-			int i=0;
-			for (String mainRelss : mainRelsList) {
-				boolean first = true;
-				for (String rel1 : mainRelss.split("\n")) {
-					if (rel1.equals("")) {
-						continue;
-					}
-					
-					rel1 = linkTypeExtraction(rel1, tokenToTypes.get(i));
-//					String[] sst = rel1.split(" ");
-//					String triple = sst[0] + " " + sst[1] + " " + sst[2];
-					
-					
-					if (!first) {
-						opLine += "$";
-					}
-					opLine += rel1;
-					first = false;
-				}
-				if (firstM) {
-					opLine += "\t";
-				}
-				firstM = true;
-				i++;
-			}
-			
-			op.println(opLine);
-
-			System.out.println("####################################");
-		}
-		br.close();
-	}
-	
-	static String linkTypeExtraction(String rel1, Map<String, String> tokenToType1) {
-		
-		if (!rel1.equals("")) {
-			String[] rel1ss = rel1.split(" ");
-			String[] lemmas = Util.getPredicateLemma(rel1ss[0], true);
-			rel1ss[0] = lemmas[0];
-
-			// no backup for figerTypes
-			String lt1 = Util.linkAndType(rel1ss[1], rel1ss[4].charAt(0) == 'E',
-					EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER,tokenToType1);
-			String lt2 = Util.linkAndType(rel1ss[2], rel1ss[4].charAt(1) == 'E',
-					EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER,tokenToType1);
-
-			if (lemmas[1].equals("false")) {
-				rel1 = rel1ss[0] + " " + lt1 + " " + lt2;
-			} else {
-				rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
-			}
-		}
-		return rel1;
-	}
-
 	public static void main(String[] args) throws IOException, ArgumentValidationException, InterruptedException {
 
 		// re-annotated-full.tsv was first swapped (to be the same as Levy),
@@ -905,9 +782,10 @@ public class Scripts {
 		// makeEntTypes();
 		// testEntTypes();
 		// trueCase();
+		
+		convertDecomposableAttentionProbsToFlat("out_test_probs.txt");
 
-		extractRelationsSNLIAll();
-//		convertSNLIExtractionsToRelsAll();
+//		extractRelationsSNLIAll();
 
 		// getAllRemainedPredicates("../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/");
 		// formLDAInput("../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/");

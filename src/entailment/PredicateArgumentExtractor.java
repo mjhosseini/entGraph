@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,7 +92,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			long lineId = obj.get("lineId").getAsLong();
 
 			mainStr += "#line: " + text + "\n";
-			
+
 			if (!LinesHandler.writeDebugString) {
 				mainStr += "#lineId: " + lineId + "\n";
 				mainStr += "#articleId: " + articleId + "\n";
@@ -341,14 +342,17 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		int relCount = 0;
 		int sentIdx = 0;
-		
+
 		List<String> sentences = null;
 		if (LinesHandler.writeDebugString) {
 			sentences = Util.getSentences(text);
 		}
-		
+
+		List<String> unaryRels = new ArrayList<>();
+
 		for (List<LexicalGraph> graphs : allGraphs) {
 			if (graphs.size() > 0) {
+
 				// System.out.println("syn ind: "+syntaxIdx + " "+
 				// graphs.size());
 				if (syntaxIdx >= graphs.size()) {
@@ -367,7 +371,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					idx2Node.put(node.getWordPosition(), node);
 					// System.out.println(node.getPos());
 				}
-				
+
 				// mainStr += ungroundedGraph+"\n";
 				// mainStr += ungroundedGraph.getSyntacticParse() + "\n";
 				String syntacticParse = ungroundedGraph.getSyntacticParse();
@@ -377,7 +381,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				// System.out.println(semanticParse);
 
 				if (LinesHandler.writeDebugString) {
-					 mainStr += sentences.get(sentIdx);
+					mainStr += sentences.get(sentIdx);
 					mainStr += "\nSyntactic Parse:\n";
 					mainStr += syntacticParse + "\n\n";
 					mainStr += "Semantic Parse:\n";
@@ -404,6 +408,12 @@ public class PredicateArgumentExtractor implements Runnable {
 					int eventIndex = edge.getMediator().getWordPosition();
 					int arg1Index = edge.getLeft().getWordPosition();
 					int arg2Index = edge.getRight().getWordPosition();
+
+					if (LinesHandler.writeDebugString) {
+						System.out.println(edge.getMediator());
+						System.out.println(edge.getLeft());
+						System.out.println(edge.getRight());
+					}
 
 					// if (1==1){
 					// String leftPred =
@@ -480,6 +490,10 @@ public class PredicateArgumentExtractor implements Runnable {
 
 					String arg1 = idx2Node.get(arg1Index).getLemma();
 					String arg2 = idx2Node.get(arg2Index).getLemma();
+
+					if (LinesHandler.writeDebugString) {
+						System.out.println(arg1 + " " + arg2);
+					}
 
 					// //41 shots -> shots
 					//
@@ -591,6 +605,28 @@ public class PredicateArgumentExtractor implements Runnable {
 
 							mainStr += relInfo.mainStr;
 							mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
+						} else if (LinesHandler.snli) {// TODO: maybe always have it
+
+							String rMainStr = postProcessSameIndexMainStr(relInfo.mainStr);
+							if (rMainStr.equals(relInfo.mainStr)) {
+								continue;
+							} else {
+								// System.out.println(relInfo.mainStr +" replaced with "+rMainStr);
+							}
+
+							relInfo.mainStr = rMainStr;
+
+							if (LinesHandler.writeDebugString) {
+								if (first) {
+									mainStr += "binary rels:\n";
+								}
+							}
+
+							first = false;
+
+							mainStr += relInfo.mainStr;
+							mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
+
 						}
 
 						dsStr += relInfo.dsStr + "\n";
@@ -599,8 +635,35 @@ public class PredicateArgumentExtractor implements Runnable {
 
 				} // end edge
 					// System.out.println(mainStr);
-			}
 
+				List<String[]> thisUnaryRels = new ArrayList<>();
+				Map<String, Integer> eIdx2Count = new HashMap<>();
+
+				for (String rel : semanticParse) {
+					System.out.println(rel);
+					if (!rel.contains(":e ,") || !rel.contains(":x)")) {
+						continue;
+					}
+
+					// TODO: maybe always have it
+
+					// "arms.around.2 neck G", 2
+					// where 11 is the event idx number
+					String[] unaryRel = getUnariesFromSemParse(rel, idx2Node, sentIdx);
+					thisUnaryRels.add(unaryRel);
+					eIdx2Count.putIfAbsent(unaryRel[1], 0);
+					eIdx2Count.put(unaryRel[1], eIdx2Count.get(unaryRel[1]) + 1);
+				}
+
+				// just add the ones that aren't recoverable from binaries
+				for (String[] unaryRel : thisUnaryRels) {
+					if (eIdx2Count.get(unaryRel[1]) > 1) {// we'll see this in binary rels
+						continue;
+					}
+					unaryRels.add(unaryRel[0]);
+				}
+
+			} // end one sentence
 			sentIdx++;
 		}
 
@@ -608,8 +671,93 @@ public class PredicateArgumentExtractor implements Runnable {
 		// System.out.println("relCount: "+relCount+" "+text+" \n "+mainStr);
 		// }
 
-		String[] ret = new String[] { mainStr, mainStrOnlyNEs, dsStr, foundInteresting + "" };
+		List<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
+		unaryRels.addAll(unaryRelsFromBinary);
+
+		String unaryRelsStr = "";
+
+		if (LinesHandler.writeDebugString) {
+			System.out.println("unary rels: ");
+		}
+		for (String s : unaryRels) {
+			unaryRelsStr += s + "\n";
+			if (LinesHandler.writeDebugString) {
+				System.out.println(s);
+			}
+		}
+
+		String[] ret = new String[] { mainStr, mainStrOnlyNEs, dsStr, foundInteresting + "", unaryRelsStr };
 		return ret;
+	}
+
+	List<String> getUnaryRelsFromBinary(String mainStr) {
+		String[] rels = mainStr.split("\n");
+		List<String> unaryRels = new ArrayList<>();
+		for (String rel : rels) {
+			String[] thisUnaries = getUnariesFromBinary(rel);
+			if (thisUnaries != null) {
+				unaryRels.add(thisUnaries[0]);
+				unaryRels.add(thisUnaries[1]);
+			}
+		}
+		return unaryRels;
+
+	}
+
+	// A man is running fast.
+	// [running.fast(4:s , 3:e), man(1:s , 1:x), running.1(3:e , 1:x)]
+	// => running.1 man G
+	String[] getUnariesFromSemParse(String rel, HashMap<Integer, LexicalItem> idx2Node, int sentIdx) {
+
+		String pred = rel.substring(0, rel.indexOf("("));
+
+		int firstIdx = rel.indexOf("(") + 1;
+		int lastIdx = rel.indexOf(":e ,");
+
+		int eIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
+
+		firstIdx = rel.indexOf(", ") + 2;
+		lastIdx = rel.indexOf(":x");
+
+		int argIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
+
+		String arg = idx2Node.get(argIdx).getLemma();
+		String pos = idx2Node.get(argIdx).getPos();
+		boolean isEnt = isEntity(pos);
+		String ret = pred + " " + arg + " " + eIdx + " " + (isEnt ? "E" : "G") + " " + sentIdx;
+
+		return new String[] { ret, eIdx + "" };
+	}
+
+	// (visit.1,visit.2) O H => [visit.1 O, visit.2 H]
+	String[] getUnariesFromBinary(String rel) {
+		if (rel.contains("__")) {
+			return null;
+		}
+		try {
+			// System.out.println("rel is: "+rel);
+			String[] ss = rel.split(" ");
+			String[] unaryPreds = ss[0].substring(1, ss[0].length() - 1).split(",");
+			String u1 = unaryPreds[0] + " " + ss[1] + " " + ss[3] + " " + ss[4].charAt(0) + " " + ss[5];
+			String u2 = unaryPreds[1] + " " + ss[2] + " " + ss[3] + " " + ss[4].charAt(1) + " " + ss[5];
+			return new String[] { u1, u2 };
+		} catch (Exception e) {
+			// e.printStackTrace();
+			return null;
+		}
+	}
+
+	// (man.with.1,man.with.2) man shirt => (with.1,with.2) man,shirt
+	String postProcessSameIndexMainStr(String mainStr) {
+		String[] ss = mainStr.split(" ");
+		String pred = ss[0].substring(1, ss[0].length() - 1);
+		String cand = pred.split(",")[0].split("\\.")[0];
+		if (cand.startsWith(ss[1])) {
+			mainStr = mainStr.replace(ss[1] + ".", "");
+		} else if (cand.startsWith(ss[2])) {
+			mainStr = mainStr.replace(ss[2] + ".", "");
+		}
+		return mainStr;
 	}
 
 	// (payment.in.1,payment.in.2) payment paris 3: true
@@ -833,8 +981,9 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (shouldAdd) {
 				// System.out.println("adding relinfo2: "+relInfo0.mainStr);
 				if (pos.startsWith("NNP")) {
-					System.out
-							.println("bad pos NP: " + pos + " " + predArgStr + " " + idx2Node.get(arg2Index).getWord());
+					// System.out
+					// .println("bad pos NP: " + pos + " " + predArgStr + " " +
+					// idx2Node.get(arg2Index).getWord());
 					continue;
 				}
 
@@ -1237,14 +1386,21 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-//		String s = "MINNEAPOLIS -- President Barack Obama intends to nominate B. Todd Jones as his choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms and Explosives.";
-//		String s = "Cameron said the coalition's main aim was to stay ahead in the \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
-//		String s = "Two women having drinks and smoking cigarettes at the bar";
-//		String s = "A man wearing glasses and a ragged costume is playing a Jaguar electric guitar and singing with the accompaniment of a drummer.";
-//		String s = "Family members standing outside a home.";
-//		String s = "Man on bike with female standing on rear of back with arms around his neck.";
-		String s = "A man with black shirt.";
-		
+		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
+		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
+		// and Explosives.";
+		// String s = "Cameron said the coalition's main aim was to stay ahead in the
+		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
+		// Mexico and Turkey as examples of countries that Britain would fall behind
+		// without reforms.";
+		// String s = "Two women having drinks and smoking cigarettes at the bar";
+		 String s = "A man wearing glasses and a ragged costume is playing a Jaguar electric guitar and singing with the accompaniment of a drummer.";
+		// String s = "A man is running fast.";
+//		String s = "The man is outdoors.";
+		// String s = "Man on bike with female standing on rear of back with arms around
+		// his neck.";
+		// String s = "A woman in a black coat eats dinner while her dog looks on.";
+
 		// String s = "Tom managed to pass the exam.";
 		// String s = "John picked up the book.";
 		// String s = "What county is Heathrow airport in?";
@@ -1264,7 +1420,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public static boolean isEntity(String pos) {
 		// System.out.println(node.getLemma());
-		return pos.equals("NNP") || pos.equals("NNPS"); 
+		return pos.equals("NNP") || pos.equals("NNPS");
 	}
 
 	// is noun or CD (which hopefully the CD modifies a noun).
@@ -1301,7 +1457,6 @@ public class PredicateArgumentExtractor implements Runnable {
 				return 3;
 			}
 		}
-
 	}
 
 }

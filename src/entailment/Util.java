@@ -87,7 +87,8 @@ public class Util {
 		}
 	}
 
-	static HashMap<String, String[]> predToLemma = new HashMap<>();;
+	static HashMap<String, String[]> predToLemma = new HashMap<>();
+	static HashMap<String, String> predToLemma_unary = new HashMap<>();;
 
 	static HashSet<String> modals;
 	public static Set<String> stopPreds;
@@ -423,6 +424,26 @@ public class Util {
 			ret[1] = "true";
 		}
 		predToLemma.put(pred0, ret);
+		return ret;
+	}
+	
+	public static String getPredicateLemma_unary(String pred, boolean isCCG) {
+		assert isCCG;
+		String ret = "";
+		if (!EntailGraphFactoryAggregator.normalizePredicate) {
+			return pred;
+		}
+
+		if (predToLemma_unary.containsKey(pred)) {
+			return predToLemma_unary.get(pred);
+		}
+		
+		pred = pred.toLowerCase();
+		// String[] parts = pred.split(",");
+
+		ret = getPartLemm(pred);
+		
+		predToLemma_unary.put(pred, ret);
 		return ret;
 	}
 
