@@ -409,11 +409,11 @@ public class PredicateArgumentExtractor implements Runnable {
 					int arg1Index = edge.getLeft().getWordPosition();
 					int arg2Index = edge.getRight().getWordPosition();
 
-					if (LinesHandler.writeDebugString) {
-						System.out.println(edge.getMediator());
-						System.out.println(edge.getLeft());
-						System.out.println(edge.getRight());
-					}
+//					if (LinesHandler.writeDebugString) {
+//						System.out.println(edge.getMediator());
+//						System.out.println(edge.getLeft());
+//						System.out.println(edge.getRight());
+//					}
 
 					// if (1==1){
 					// String leftPred =
@@ -491,9 +491,9 @@ public class PredicateArgumentExtractor implements Runnable {
 					String arg1 = idx2Node.get(arg1Index).getLemma();
 					String arg2 = idx2Node.get(arg2Index).getLemma();
 
-					if (LinesHandler.writeDebugString) {
-						System.out.println(arg1 + " " + arg2);
-					}
+//					if (LinesHandler.writeDebugString) {
+//						System.out.println(arg1 + " " + arg2);
+//					}
 
 					// //41 shots -> shots
 					//
@@ -640,7 +640,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				Map<String, Integer> eIdx2Count = new HashMap<>();
 
 				for (String rel : semanticParse) {
-					System.out.println(rel);
+//					System.out.println(rel);
 					if (!rel.contains(":e ,") || !rel.contains(":x)")) {
 						continue;
 					}
@@ -684,6 +684,10 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (LinesHandler.writeDebugString) {
 				System.out.println(s);
 			}
+		}
+		
+		if (LinesHandler.writeDebugString) {
+			System.out.println("\n");
 		}
 
 		String[] ret = new String[] { mainStr, mainStrOnlyNEs, dsStr, foundInteresting + "", unaryRelsStr };
