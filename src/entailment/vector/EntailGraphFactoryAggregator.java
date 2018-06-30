@@ -304,7 +304,7 @@ public class EntailGraphFactoryAggregator {
 	public EntailGraphFactoryAggregator() {
 		try {
 			dsPreds = new HashSet<>();
-			String root = "data/ent/";
+			String root = "../../python/gfiles/ent/";
 			String[] dsPaths;
 			if (isCCG) {
 				// dsPaths = new String[] { root + "train1_rels.txt", root + "dev1_rels.txt",

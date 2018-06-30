@@ -35,19 +35,19 @@ import it.cnr.isti.hpc.dexter.rest.domain.SpottedDocument;
 public class LinesHandler {
 	final int maxLinesToRun = 100000;// This is because of the memory leak in
 										// easyCCG
-	final int numThreads = 20;
+	final int numThreads = 15;
 	final int maxMBallowd = 14000;
 	// final int maxMBallowd = 140;
 	public static boolean convToEntityLinked = false;// Must be always false, we do linking separately!
 
 	// static String[] accepteds = new String[] { "GE", "EG", "EE" };
-	static String[] accepteds = new String[] { "GE", "EG", "EE", "GG" };//
+	static String[] accepteds = new String[] { "GE", "EG", "EE"};//
 	// TODO:// remove
 
 	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
 	public static boolean useQuestionMod = false;// Always set if to false!
-	public static boolean writeDebugString = true;
-	public static boolean snli = true;//a few hacks for snli ds
+	public static boolean writeDebugString = false;
+	public static boolean snli = false;//a few hacks for snli ds
 
 	public static int nbestParses = 1;
 	

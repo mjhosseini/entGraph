@@ -12,6 +12,7 @@ import java.util.TreeSet;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.hp.hpl.jena.graph.Node;
 
 import in.sivareddy.graphparser.ccg.LexicalItem;
 import in.sivareddy.graphparser.cli.CcgParseToUngroundedGraphs;
@@ -371,6 +372,15 @@ public class PredicateArgumentExtractor implements Runnable {
 					idx2Node.put(node.getWordPosition(), node);
 					// System.out.println(node.getPos());
 				}
+				
+				List<LexicalItem> actualNodes = ungroundedGraph.getActualNodes();
+				//it should be that nodes are a subset of the actualNodes, but I won't risk it since I used to work with nodes
+				//and actual nodes are only needed for lemmatizing unary relations.
+				Map<Integer,LexicalItem> idx2ActualNode = new HashMap<>();
+				
+				for (LexicalItem node: actualNodes) {
+					idx2ActualNode.put(node.getWordPosition(), node);
+				}
 
 				// mainStr += ungroundedGraph+"\n";
 				// mainStr += ungroundedGraph.getSyntacticParse() + "\n";
@@ -409,11 +419,11 @@ public class PredicateArgumentExtractor implements Runnable {
 					int arg1Index = edge.getLeft().getWordPosition();
 					int arg2Index = edge.getRight().getWordPosition();
 
-//					if (LinesHandler.writeDebugString) {
-//						System.out.println(edge.getMediator());
-//						System.out.println(edge.getLeft());
-//						System.out.println(edge.getRight());
-//					}
+					// if (LinesHandler.writeDebugString) {
+					// System.out.println(edge.getMediator());
+					// System.out.println(edge.getLeft());
+					// System.out.println(edge.getRight());
+					// }
 
 					// if (1==1){
 					// String leftPred =
@@ -491,9 +501,9 @@ public class PredicateArgumentExtractor implements Runnable {
 					String arg1 = idx2Node.get(arg1Index).getLemma();
 					String arg2 = idx2Node.get(arg2Index).getLemma();
 
-//					if (LinesHandler.writeDebugString) {
-//						System.out.println(arg1 + " " + arg2);
-//					}
+					// if (LinesHandler.writeDebugString) {
+					// System.out.println(arg1 + " " + arg2);
+					// }
 
 					// //41 shots -> shots
 					//
@@ -524,6 +534,8 @@ public class PredicateArgumentExtractor implements Runnable {
 					// }
 					//
 					// }
+					
+					
 
 					String modifierStr = getModifierStr(ungroundedGraph, idx2Node, eventIndex);
 
@@ -640,7 +652,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				Map<String, Integer> eIdx2Count = new HashMap<>();
 
 				for (String rel : semanticParse) {
-//					System.out.println(rel);
+					// System.out.println(rel);
 					if (!rel.contains(":e ,") || !rel.contains(":x)")) {
 						continue;
 					}
@@ -649,7 +661,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 					// "arms.around.2 neck G", 2
 					// where 11 is the event idx number
-					String[] unaryRel = getUnariesFromSemParse(rel, idx2Node, sentIdx);
+					String[] unaryRel = getUnariesFromSemParse(rel, idx2ActualNode, sentIdx);
 					thisUnaryRels.add(unaryRel);
 					eIdx2Count.putIfAbsent(unaryRel[1], 0);
 					eIdx2Count.put(unaryRel[1], eIdx2Count.get(unaryRel[1]) + 1);
@@ -685,7 +697,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				System.out.println(s);
 			}
 		}
-		
+
 		if (LinesHandler.writeDebugString) {
 			System.out.println("\n");
 		}
@@ -711,18 +723,22 @@ public class PredicateArgumentExtractor implements Runnable {
 	// A man is running fast.
 	// [running.fast(4:s , 3:e), man(1:s , 1:x), running.1(3:e , 1:x)]
 	// => running.1 man G
-	String[] getUnariesFromSemParse(String rel, HashMap<Integer, LexicalItem> idx2Node, int sentIdx) {
-
-		String pred = rel.substring(0, rel.indexOf("("));
+	String[] getUnariesFromSemParse(String rel, Map<Integer, LexicalItem> idx2Node, int sentIdx) {
 
 		int firstIdx = rel.indexOf("(") + 1;
 		int lastIdx = rel.indexOf(":e ,");
 
 		int eIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
+		
+		String pred = rel.substring(0, rel.indexOf("("));
+		if (LinesHandler.lemmatizePred) {
+			LexicalItem predNode = idx2Node.get(eIdx);
+			pred = pred.replace(predNode.getWord(), predNode.getLemma()).toLowerCase();
+		}
 
 		firstIdx = rel.indexOf(", ") + 2;
 		lastIdx = rel.indexOf(":x");
-
+		
 		int argIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
 
 		String arg = idx2Node.get(argIdx).getLemma();
@@ -1398,9 +1414,10 @@ public class PredicateArgumentExtractor implements Runnable {
 		// Mexico and Turkey as examples of countries that Britain would fall behind
 		// without reforms.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";
-		 String s = "A man wearing glasses and a ragged costume is playing a Jaguar electric guitar and singing with the accompaniment of a drummer.";
-		// String s = "A man is running fast.";
-//		String s = "The man is outdoors.";
+		// String s = "A man wearing glasses and a ragged costume is playing a Jaguar
+		// electric guitar and singing with the accompaniment of a drummer.";
+		String s = "A man is walking and he is talking to his friend";
+		// String s = "The man is outdoors.";
 		// String s = "Man on bike with female standing on rear of back with arms around
 		// his neck.";
 		// String s = "A woman in a black coat eats dinner while her dog looks on.";
