@@ -2,7 +2,7 @@ package entailment.vector;
 
 import java.util.List;
 
-public class ProbLRunner implements Runnable{
+public class ProbScoreRunner implements Runnable{
 	
 	EntailGraph entGraph;
 	String predPair;
@@ -11,7 +11,7 @@ public class ProbLRunner implements Runnable{
 	List<String> argPairs;
 	double nTuples;
 	
-	public ProbLRunner(EntailGraph entGraph, String predPair, int idx, String[] typess, List<String> argPairs, double nTuples){
+	public ProbScoreRunner(EntailGraph entGraph, String predPair, int idx, String[] typess, List<String> argPairs, double nTuples){
 		this.entGraph = entGraph;
 		this.predPair = predPair;
 		this.idx = idx;
@@ -42,21 +42,21 @@ public class ProbLRunner implements Runnable{
 		String rel22 = rawPred2 + "#" + typess[1] + "#" + typess[0];
 		
 		if (aligned) {
-			double p1 = entGraph.computeProbL(rel11, rel21, -1, argPairs, nTuples);
-			entGraph.computeProbL(rel12, rel22, p1, argPairs, nTuples);
+			double p1 = entGraph.computeProbScore(rel11, rel21, -1, argPairs, nTuples);
+			entGraph.computeProbScore(rel12, rel22, p1, argPairs, nTuples);
 		}
 		else {
-			double p2 = entGraph.computeProbL(rel11, rel22, -1, argPairs, nTuples);
-			entGraph.computeProbL(rel12, rel21, p2, argPairs, nTuples);
+			double p2 = entGraph.computeProbScore(rel11, rel22, -1, argPairs, nTuples);
+			entGraph.computeProbScore(rel12, rel21, p2, argPairs, nTuples);
 		}
 
 
 		//TODO: be careful
-		String dummyStr = "dummyy#dummyy" + idx;
-		entGraph.addBinaryRelation(rel11, dummyStr, null, 1e-40f, -1, 1);
-		entGraph.addBinaryRelation(rel12, dummyStr, null, 1e-40f, -1, 1);
-		entGraph.addBinaryRelation(rel21, dummyStr, null, 1e-40f, -1, 1);
-		entGraph.addBinaryRelation(rel22, dummyStr, null, 1e-40f, -1, 1);
+//		String dummyStr = "dummyy#dummyy" + idx;
+//		entGraph.addBinaryRelation(rel11, dummyStr, null, 1e-40f, -1, 1);
+//		entGraph.addBinaryRelation(rel12, dummyStr, null, 1e-40f, -1, 1);
+//		entGraph.addBinaryRelation(rel21, dummyStr, null, 1e-40f, -1, 1);
+//		entGraph.addBinaryRelation(rel22, dummyStr, null, 1e-40f, -1, 1);
 		
 	}
 

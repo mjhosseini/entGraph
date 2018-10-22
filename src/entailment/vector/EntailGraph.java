@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,10 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import constants.ConstantsAgg;
+import constants.ConstantsRWalk;
+import entailment.randWalk.RandWalkMatrix;
+import entailment.vector.EntailGraphFactoryAggregator.LinkPredModel;
 import entailment.vector.EntailGraphFactoryAggregator.ProbModel;
 import graph.LabelPropagationMNWithinGraph;
 
@@ -48,7 +53,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	}
 
 	// deletes unnecessary objects!!!
-	void clean1() {
+	void clean11() {
 		this.argPairToIdx = null;
 		this.argPairs = null;
 		this.invertedIdxes = null;
@@ -72,55 +77,95 @@ public class EntailGraph extends SimpleEntailGraph {
 		// }
 	}
 
+	void writeLinkPredPercentiles() {
+		if (EntailGraphFactoryAggregator.allPosLinkPredProbs.size() > 0) {
+			System.out.println("num probs: " + EntailGraphFactoryAggregator.allPosLinkPredProbs.size());
+			Collections.sort(EntailGraphFactoryAggregator.allPosLinkPredProbs);
+
+			for (int percentile = 0; percentile <= 100; percentile++) {
+				int index = (percentile * EntailGraphFactoryAggregator.allPosLinkPredProbs.size()) / 100;
+				index = Math.min(index, EntailGraphFactoryAggregator.allPosLinkPredProbs.size() - 1);
+				System.out.println("link pred prob percentile " + percentile + ": "
+						+ EntailGraphFactoryAggregator.allPosLinkPredProbs.get(index));
+			}
+		}
+	}
+	
+	int getNSBasedPredCutoff() {
+		if (!EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)) {
+			return -1;
+		}
+
+		List<Integer> a = new ArrayList<>();
+		for (PredicateVector pvec: pvecs) {
+			a.add(pvec.argIdxes.size());
+		}
+
+		Collections.sort(a, Collections.reverseOrder());
+		int numAllowed = EntailGraphFactoryAggregator.cutOffsNS.get(types)[0];
+		if (numAllowed >= a.size()) {
+			return -1;
+		} else {
+			int ret = a.get(numAllowed - 1);
+			System.out.println("NS pred cutoff for " + types + " " + ret);
+			return ret;
+		}
+	}
+	
+	int getNSBasedAPCutoff() {
+		if (!EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)) {
+			return -1;
+		}
+
+		List<Integer> a = new ArrayList<>();
+		for (double i : argPairIdxToCount.values()) {
+			a.add((int) i);
+		}
+
+		Collections.sort(a, Collections.reverseOrder());
+		int numAllowed = EntailGraphFactoryAggregator.cutOffsNS.get(types)[1];
+		if (numAllowed >= a.size()) {
+			return -1;
+		} else {
+			int ret = a.get(numAllowed - 1);
+			System.out.println("NS argpair cutoff for " + types + " " + ret);
+			return ret;
+		}
+
+	}
+
 	void processGraph() {
-
-		// int nnz = 0;
-		// for (PredicateVector pvec: pvecs){
-		// nnz += pvec.argIdxes.size();
-		// }
-		//
-		// System.out.println("nnz0: "+nnz);
-
-		// System.out.println("process: "+types+" "+writeInfo+" "+writeSims);
-		// System.out.println("write info: "+writeInfo+" "+pvecs.size());
 
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
 
-		// Let's count occurrences per arg-pair
-
-		for (PredicateVector pvec : pvecs) {
-			pvec.cutoffInfreqArgPairs();
+		// cutoff arg-pairs
+		int argPAirCutoff = minPredForArgPair;
+		if (ConstantsAgg.cutoffBasedonNSGraphs) {
+			argPAirCutoff = Math.max(argPAirCutoff, getNSBasedAPCutoff());
 		}
 
-		// HashMap<Integer, Integer> occToCount = new HashMap<Integer, Integer>();
-		// for (PredicateVector pvec : pvecs) {
-		// int occ = pvec.argIdxes.size();
-		// if (!occToCount.containsKey(occ)) {
-		// occToCount.put(occ, 0);
-		// }
-		// occToCount.replace(occ, occToCount.get(occ) + 1);
-		// }
-
-		// int sumCount = 0;
-		// for (int i = 0; i < 100; i++) {
-		// if (!occToCount.containsKey(i)) {
-		// continue;
-		// }
-		// // System.err.println("num preds with " + i + " args: " +
-		// // occToCount.get(i));
-		// sumCount += occToCount.get(i);
-		// // System.err.println("num preds with more args: " + (pvecs.size() -
-		// // sumCount));
-		// }
+		for (PredicateVector pvec : pvecs) {
+			pvec.cutoffInfreqArgPairs(argPAirCutoff);
+			if (ConstantsAgg.cutoffBasedonNSGraphs) {
+				pvec.cutoffInfreqArgPairsPredBased();
+			}
+		}
+		
+		// cutoff preds
+		
+		int predCutoff = ConstantsAgg.minArgPairForPred;
+		if (ConstantsAgg.cutoffBasedonNSGraphs) {
+			predCutoff = Math.max(predCutoff, getNSBasedPredCutoff());
+		}
 
 		ArrayList<PredicateVector> pvecsTmp = pvecs;
 		pvecs = new ArrayList<PredicateVector>();
 		predToIdx = new HashMap<String, Integer>();
 		int id = 0;
 		for (PredicateVector pvec : pvecsTmp) {
-			if (pvec.argIdxes.size() >= EntailGraphFactoryAggregator.minArgPairForPred) {
+			if (pvec.argIdxes.size() >= predCutoff) {
 				pvecs.add(pvec);
 				pvec.uniqueId = id;
 				predToIdx.put(pvec.predicate, pvec.uniqueId);
@@ -132,9 +177,7 @@ public class EntailGraph extends SimpleEntailGraph {
 			return;// not interested in graphs with one node!!!
 		}
 
-		if (EntailGraphFactoryAggregator.onlyDSPreds) {
-			computeAllDSPredScores();
-		}
+		// cutoffs done
 
 		// if (EntailGraphFactoryAggregator.iterateAllArgPairs) {
 		//// addAllMissingLinks();
@@ -172,7 +215,7 @@ public class EntailGraph extends SimpleEntailGraph {
 			String thisPred = pvec.predicate.substring(0, pvec.predicate.indexOf("#"));
 			allPreds.add(thisPred);
 		}
-		if (!EntailGraphFactoryAggregator.isTyped) {
+		if (!ConstantsAgg.isTyped) {
 			int numDSPredsCovered = 0;
 			for (String s : EntailGraphFactoryAggregator.dsPreds) {
 				if (allPreds.contains(s)) {
@@ -184,12 +227,6 @@ public class EntailGraph extends SimpleEntailGraph {
 			System.err.println("num preds covered: " + numDSPredsCovered + " out of "
 					+ EntailGraphFactoryAggregator.dsPreds.size());
 		}
-
-		// try {
-		// cutoffEntToWiki();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
 
 		for (PredicateVector pvec : pvecs) {
 			String s = pvec.predicate;
@@ -210,16 +247,24 @@ public class EntailGraph extends SimpleEntailGraph {
 		setAllPMIs();
 		System.err.println("set PMIs time: " + (System.currentTimeMillis() - t0));
 
-		for (PredicateVector pvec : pvecs) {
-			pvec.clean();
+		if (ConstantsAgg.computeProbELSims) {
+			computeAllDSPredScores();
+			// if (EntailGraphFactoryAggregator.allPosLinkPredProbs != null) {
+			// writeLinkPredPercentiles();
+			// }
 		}
+
+		System.err.println("starting to set similar vecs!");
 
 		t0 = System.currentTimeMillis();
 		setSimilarVecs();
 		System.err.println("set similar vecs: " + (System.currentTimeMillis() - t0));
 
-		t0 = System.currentTimeMillis();
+		for (PredicateVector pvec : pvecs) {
+			pvec.clean();
+		}
 
+		t0 = System.currentTimeMillis();
 		System.err.println("now computing similarities");
 		computeSimilarities();
 		System.err.println("compute dots: " + (System.currentTimeMillis() - t0));
@@ -237,7 +282,7 @@ public class EntailGraph extends SimpleEntailGraph {
 		}
 		int idx = 0;
 
-		int numThreads = EntailGraphFactoryAggregator.dsPredNumThreads;
+		int numThreads = ConstantsAgg.dsPredNumThreads;
 
 		List<String> currentArgPairs = new ArrayList<>();
 		for (String s : argPairs) {
@@ -271,7 +316,7 @@ public class EntailGraph extends SimpleEntailGraph {
 			// break;// TODO: remove this
 			// }
 
-			ProbLRunner pelRunner = new ProbLRunner(this, predPair, idx, typess, currentArgPairs, NTuples);
+			ProbScoreRunner pelRunner = new ProbScoreRunner(this, predPair, idx, typess, currentArgPairs, NTuples);
 
 			threadPool.execute(pelRunner);
 
@@ -287,15 +332,86 @@ public class EntailGraph extends SimpleEntailGraph {
 		}
 	}
 
-	double computeProbL(String rel1, String rel2, double preComputedProb, List<String> currentArgPairs,
+	double computeProbScore(String rel1, String rel2, double preComputedProb, List<String> currentArgPairs,
 			double NTuples) {
-		double probL = preComputedProb;
+		double probScore = preComputedProb;
 		if (preComputedProb == -1) {
-			
-			if (EntailGraphFactoryAggregator.probModel == ProbModel.Cos) {
-				probL = getCosPreds(rel1, rel2);
-				
+
+			if (ConstantsAgg.probModel == ProbModel.Cos) {
+				probScore = getCosPreds(rel1, rel2);
+			} else if (ConstantsAgg.probModel == ProbModel.RandWalk) {
+				double ret = 0;
+				// System.out.println(EntailGraphFactoryAggregator.predToEntPair);
+				if (!RandWalkMatrix.predToEntPair.containsKey(rel1)) {
+					return 0;
+				}
+				List<String> connectedEntPairs = RandWalkMatrix.predToEntPair.get(rel1);
+				System.err.println("num connected to rel1: " + rel1 + " " + connectedEntPairs.size());
+				for (String entPair : connectedEntPairs) {
+					if (RandWalkMatrix.entPairToPred.containsKey(entPair)) {
+						double denom1 = 0;
+						if (ConstantsAgg.linkPredBasedRandWalk) {
+							denom1 = RandWalkMatrix.predToSumNeighs.get(rel1);
+						} else {
+							try {
+								// denom1 = pvecs.get(predToIdx.get(rel1)).norm1;
+								denom1 = pvecs.get(predToIdx.get(rel1)).sumPMIs;
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+
+						double p1 = 0, p2 = 0;
+						if (denom1 != 0) {
+							if (ConstantsAgg.linkPredBasedRandWalk) {
+								p1 = getScore(rel1, entPair) / denom1;
+							} else {
+								try {
+									int argIdx = argPairToIdx.get(entPair);
+									PredicateVector pvec = pvecs.get(predToIdx.get(rel1));
+									// p1 = pvec.vals.get(pvec.argIdxToArrayIdx.get(argIdx)) / denom1;
+									p1 = pvec.PMIs.get(pvec.argIdxToArrayIdx.get(argIdx)) / denom1;
+								} catch (Exception e) {
+									System.err.println(entPair);
+									e.printStackTrace();
+								}
+
+							}
+						} else {
+							System.err.println("denom1 0: " + rel1);
+						}
+						double denom2 = 0;
+						if (ConstantsAgg.linkPredBasedRandWalk) {
+							denom2 = RandWalkMatrix.entPairToSumNeighs.get(entPair);
+						} else {
+							try {
+								// denom2 = invertedIdxes.get(argPairToIdx.get(entPair)).norm1;
+								denom2 = invertedIdxes.get(argPairToIdx.get(entPair)).sumPMIs;
+							} catch (Exception e) {
+								// e.printStackTrace();
+							}
+						}
+
+						if (denom2 != 0) {
+							if (ConstantsAgg.linkPredBasedRandWalk) {
+								p2 = getScore(rel2, entPair) / denom2;
+							} else {
+								try {
+									int argIdx = argPairToIdx.get(entPair);
+									PredicateVector pvec = pvecs.get(predToIdx.get(rel2));
+									// p2 = pvec.vals.get(pvec.argIdxToArrayIdx.get(argIdx)) / denom2;
+									p2 = pvec.PMIs.get(pvec.argIdxToArrayIdx.get(argIdx)) / denom2;
+								} catch (Exception e) {
+									// e.printStackTrace();
+								}
+							}
+						}
+						ret += p1 * p2;
+					}
+				}
+				return ret;
 			}
+
 			else {
 				double numerator = 0;
 				double denominator = 0;
@@ -304,12 +420,12 @@ public class EntailGraph extends SimpleEntailGraph {
 				for (String argPair : currentArgPairs) {
 					// System.out.println(argPair);
 					double nArgPair = argPairIdxToOcc.get(idx);
-//					double pr_ArgPair = nArgPair / NTuples;//TODO: be careful
-					double pr_ArgPair = 1;
+					double pr_ArgPair = nArgPair / NTuples;// TODO: be careful
+					// double pr_ArgPair = 1;
 					// System.out.println("narg nnz: "+nArgPair+" "+nnz);
 					double pr1 = 0;
 					double pr2 = 0;
-					if (EntailGraphFactoryAggregator.probModel == ProbModel.PL) {
+					if (ConstantsAgg.probModel == ProbModel.PL) {
 						pr1 = getScore(rel1, argPair);
 						pr2 = getScore(rel2, argPair);
 					} else {
@@ -317,25 +433,37 @@ public class EntailGraph extends SimpleEntailGraph {
 							PredicateVector pvec1 = pvecs.get(predToIdx.get(rel1));
 							if (pvec1.argIdxToArrayIdx.containsKey(idx)) {
 
-								if (EntailGraphFactoryAggregator.probModel == ProbModel.PEL) {
-									pr1 = getScore(rel1, argPair);//TODO: be careful
-								} else if (EntailGraphFactoryAggregator.probModel == ProbModel.PE) {
+								if (ConstantsAgg.probModel == ProbModel.PEL) {
+									pr1 = getScore(rel1, argPair);// TODO: be careful
+								} else if (ConstantsAgg.probModel == ProbModel.PE) {
 									int arrIdx = pvec1.argIdxToArrayIdx.get(idx);
 									pr1 = pvec1.vals.get(arrIdx) / nArgPair;
+
+									// TODO: remove below
+									if (getScore(rel1, argPair) == 0) {
+										// System.out.println("pe setting triple pr to 0: "+ rel1+" "+argPair);
+										pr1 = 0;
+									}
 									// System.out.println("count: "+pvec1.vals.get(arrIdx));
 									// System.out.println("pr1: "+pr1);
 								}
-
 							}
 						}
 						if (predToIdx.containsKey(rel2)) {
 							PredicateVector pvec2 = pvecs.get(predToIdx.get(rel2));
 							if (pvec2.argIdxToArrayIdx.containsKey(idx)) {
-								if (EntailGraphFactoryAggregator.probModel == ProbModel.PEL) {
-									pr2 = getScore(rel2, argPair);//TODO: be careful
-								} else if (EntailGraphFactoryAggregator.probModel == ProbModel.PE) {
+								if (ConstantsAgg.probModel == ProbModel.PEL) {
+									pr2 = getScore(rel2, argPair);// TODO: be careful
+								} else if (ConstantsAgg.probModel == ProbModel.PE) {
 									int arrIdx = pvec2.argIdxToArrayIdx.get(idx);
 									pr2 = pvec2.vals.get(arrIdx) / nArgPair;
+
+									// TODO: remove below
+									if (getScore(rel2, argPair) == 0) {
+										// System.out.println("pe setting triple pr to 0: "+ rel2+" "+argPair);
+										pr2 = 0;
+									}
+
 									// System.out.println("count: "+pvec2.vals.get(arrIdx));
 									// System.out.println("pr2: "+pr2);
 								}
@@ -343,64 +471,82 @@ public class EntailGraph extends SimpleEntailGraph {
 							}
 						}
 					}
-					
-					numerator += pr_ArgPair * pr1 * pr2;
+
+					// TODO: be careful about numerator!
+
+					// numerator += pr_ArgPair * pr1 * pr2;
+					// numerator += pr_ArgPair * pr1 * (1-pr2);
+
+					if (pr2 >= pr1) {
+						numerator += pr_ArgPair * pr1;
+					}
 
 					denominator += pr1 * pr_ArgPair;
 					if (pr1 > 0) {
-//						System.out.println("count: " + argPair + " " + argPairIdxToCount.get(idx));
-//						System.out.println("pred and arg pair: " + rel1 + " " + rel2 + " " + argPair + " " + pr1 + " " + pr2
-//								+ " " + pr_ArgPair);
-//						if (pr2>0) {
-//							System.out.println("both positive");
-//						}
+						// System.out.println("count: " + argPair + " " + argPairIdxToCount.get(idx));
+						// System.out.println("pred and arg pair: " + rel1 + " " + rel2 + " " + argPair
+						// + " " + pr1 + " " + pr2
+						// + " " + pr_ArgPair);
+						// if (pr2>0) {
+						// System.out.println("both positive");
+						// }
 					}
 
 					idx++;
 				}
+
 				if (denominator == 0) {
-					probL = 0;
+					probScore = 0;
 				} else {
-					probL = numerator / denominator;
+					probScore = numerator / denominator;
 				}
 			}
-			
-			
 		}
 
 		if (!EntailGraphFactoryAggregator.dsPredToPredToScore.containsKey(rel1)) {
 			EntailGraphFactoryAggregator.dsPredToPredToScore.put(rel1, new HashMap<>());
 		}
 
-		EntailGraphFactoryAggregator.dsPredToPredToScore.get(rel1).put(rel2, probL);
-		System.out.println(rel1 + " => " + rel2 + " " + probL);
-		return probL;
+		EntailGraphFactoryAggregator.dsPredToPredToScore.get(rel1).put(rel2, probScore);
+		System.out.println(rel1 + " => " + rel2 + " " + probScore);
+		return probScore;
 	}
-	
-	double getCosPreds(String rel1, String rel2) {
-		String rawPred1 = rel1.split("#")[0];
-		String rawPred2 = rel2.split("#")[0];
-		
+
+	public static double getCosPreds(String rel1, String rel2) {
+		String[] ss1 = rel1.split("#");
+		String[] ss2 = rel2.split("#");
+		String rawPred1 = ss1[0];
+		String rawPred2 = ss2[0];
+
+		if (ConstantsAgg.linkPredModel == LinkPredModel.ConvE) {
+			if (ss1[1].equals("thing_2")) {
+				rawPred1 += "_reverse";
+			}
+			if (ss2[1].equals("thing_2")) {
+				rawPred2 += "_reverse";
+			}
+		}
+
 		try {
-			double[] r1Emb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred1);
-			double[] r2Emb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred2);
-			return Math.max(getCos(r1Emb, r2Emb),0);
+			double[] r1Emb = RandWalkMatrix.relsToEmbed.get(rawPred1);
+			double[] r2Emb = RandWalkMatrix.relsToEmbed.get(rawPred2);
+			return Math.max(getCos(r1Emb, r2Emb), 0);
 		} catch (Exception e) {
 			return 0;
 		}
 	}
-	
-	double getCos(double[] a, double[] b) {
+
+	public static double getCos(double[] a, double[] b) {
 		double dot = 0;
-		for (int i=0; i<a.length; i++) {
-			dot += a[i]*b[i];
+		for (int i = 0; i < a.length; i++) {
+			dot += a[i] * b[i];
 		}
-		return dot/(getNorm(a)*getNorm(b));
+		return dot / (getNorm(a) * getNorm(b));
 	}
-	
-	double getNorm(double[] a) {
+
+	public static double getNorm(double[] a) {
 		double ret = 0;
-		for (int i=0; i<a.length; i++) {
+		for (int i = 0; i < a.length; i++) {
 			ret += Math.pow(a[i], 2);
 		}
 		return Math.sqrt(ret);
@@ -505,6 +651,11 @@ public class EntailGraph extends SimpleEntailGraph {
 			}
 			pvec.setSumPMIs();
 		}
+
+		for (InvertedIdx invIdx : invertedIdxes) {
+			invIdx.setSumPMIs();
+		}
+
 	}
 
 	void computeSimilarities() {
@@ -584,7 +735,7 @@ public class EntailGraph extends SimpleEntailGraph {
 
 					int timePreceding1 = 0;
 					int timePreceding2 = 0;
-					if (EntailGraphFactoryAggregator.useTimeEx) {
+					if (ConstantsAgg.useTimeEx) {
 						timePreceding1 = (rightInterval1.compareTo(leftInterval2) < 0) ? 1 : 0;
 						if (timePreceding1 == 1) {
 							// System.out.println("int score: "+rightInterval1+"
@@ -724,7 +875,7 @@ public class EntailGraph extends SimpleEntailGraph {
 
 		// If embBasedScore, then change count to count*score here! (instead of the
 		// default count*1)
-		if (EntailGraphFactoryAggregator.embBasedScores || EntailGraphFactoryAggregator.anchorBasedScores) {
+		if (ConstantsAgg.embBasedScores || EntailGraphFactoryAggregator.anchorBasedScores) {
 
 			if (pvec.argIdxToArrayIdx.containsKey(pairIdx)) {
 				return;// TODO: you might want to remove this
@@ -745,24 +896,45 @@ public class EntailGraph extends SimpleEntailGraph {
 		pvec.addArgPair(pairIdx, timeInterval, count);
 	}
 
-	double getScore(String pred, String featName) {
+	public static double getScore(String pred, String featName) {
 		// (visit.1,visit.2)#person#location e1 e2 => s = -|e_1 + r - e_2 |_1
 		// (visit.1,visit.2)#person_1#person_2 e1 e2 => ditto
 		// (visit.1,visit.2)#person_2#person_1 e1 e2 => swap e1 and e2
 
 		String[] ss = pred.split("#");
 		String[] args = featName.split("#");
+		String rawPred = ss[0];
 
 		if (ss.length != 3 || args.length != 2) {
-			return 1e-40f;
+			// return 1e-40f;
+			return 0;
 		}
 
-		String rawPred = ss[0];
 		if (ss[1].endsWith("_2") && ss[2].endsWith("_1")) {
 			// swap args
 			String tmp = args[0];
 			args[0] = args[1];
 			args[1] = tmp;
+		}
+
+		if (ConstantsAgg.linkPredModel == LinkPredModel.ConvE) {
+
+			String triple = args[0] + "#" + rawPred + "#" + args[1];
+			if (RandWalkMatrix.tripleToScore.containsKey(triple)) {
+				double ret = RandWalkMatrix.tripleToScore.get(triple);
+
+				// ret *= ConstantsAgg.sigmoidScaleParameter;
+				// ret += ConstantsAgg.sigmoidLocParameter;
+				//
+				// // sigmoid
+				// double s = (double) (1.0 / (1.0 + Math.exp(-ret)));
+
+				// System.out.println(triple + " " + ret);
+				EntailGraphFactoryAggregator.allPosLinkPredProbs.add(ret);
+				return ret;
+			}
+			// return 1e-40f;
+			return 0;
 		}
 
 		// System.out.println(args[0]+" "+ rawPred+" "+args[1]);
@@ -774,9 +946,9 @@ public class EntailGraph extends SimpleEntailGraph {
 		// return 1e-40f;
 		// }
 		// } else {// embBased
-		double[] e1Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[0]);
-		double[] e2Emb = EntailGraphFactoryAggregator.entsToEmbed.get(args[1]);
-		double[] rEmb = EntailGraphFactoryAggregator.relsToEmbed.get(rawPred);
+		double[] e1Emb = RandWalkMatrix.entsToEmbed.get(args[0]);
+		double[] e2Emb = RandWalkMatrix.entsToEmbed.get(args[1]);
+		double[] rEmb = RandWalkMatrix.relsToEmbed.get(rawPred);
 
 		// System.out.println("embeds null? "+ e1Emb+" "+e2Emb+" "+rEmb);
 
@@ -791,8 +963,8 @@ public class EntailGraph extends SimpleEntailGraph {
 
 			sum *= -1;
 
-			sum *= EntailGraphFactoryAggregator.sigmoidScaleParameter;
-			sum += EntailGraphFactoryAggregator.sigmoidLocParameter;
+			sum *= ConstantsAgg.sigmoidScaleParameter;
+			sum += ConstantsAgg.sigmoidLocParameter;
 
 			// sigmoid
 			double s = (double) (1.0 / (1.0 + Math.exp(-sum)));
@@ -863,7 +1035,7 @@ public class EntailGraph extends SimpleEntailGraph {
 		} else {
 			fileName = "news_NE.json";
 		}
-		EntailGraph p = new EntailGraph("none", "op", EntailGraphFactoryAggregator.minArgPairForPred, false);
+		EntailGraph p = new EntailGraph("none", "op", ConstantsAgg.minArgPairForPred, false);
 		System.err.println("time: " + (System.currentTimeMillis() - t0));
 	}
 

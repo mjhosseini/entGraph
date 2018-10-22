@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.google.api.client.util.Types;
 
+import constants.ConstantsAgg;
 import entailment.PredicateArgumentExtractor;
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
@@ -821,7 +822,7 @@ public class LevyProcessing {
 
 	// no typing, no arg checking
 	static void normalizeOIESimple(String fpath) throws IOException {
-		EntailGraphFactoryAggregator.isTyped = true;
+		ConstantsAgg.isTyped = true;
 		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
 		BufferedReader br = new BufferedReader(new FileReader(fpath));
 		int dotIdx = fpath.lastIndexOf('.');
@@ -860,9 +861,9 @@ public class LevyProcessing {
 		// String[] fileNames = new String[] { "dummy"};//
 		// String[] fileNames = new String[] { "dev1", "train1", "test1" };//
 		// String[] fileNames = new String[] { "all_new" };//
-		EntailGraphFactoryAggregator.isTyped = true;
+		ConstantsAgg.isTyped = true;
 		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
-		EntailGraphFactoryAggregator.isCCG = true;
+		ConstantsAgg.isCCG = true;
 		
 		// String[] fileNames = new String[] { "all_new", "all_new_dir" };//
 		String[] fileNames = new String[] { "all", "train1", "dev1", "test1", "all_new", "train_new", "dev_new",

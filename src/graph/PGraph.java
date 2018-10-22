@@ -45,9 +45,9 @@ public class PGraph implements Comparable<PGraph> {
 														// already has!
 
 	public static boolean removeStopPreds = false;
-	public static boolean shouldWrite = true;
-	public static boolean formBinaryGraph = true;
-	public static boolean transitive = true;
+	public static boolean shouldWrite = false;
+	public static boolean formBinaryGraph = false;
+	public static boolean transitive = false;
 	public static int numTNFThreads = 16;
 
 	public static boolean emb = false;
@@ -57,9 +57,10 @@ public class PGraph implements Comparable<PGraph> {
 	static String embSuffix = "_embsimsTransE.txt";
 	static String fpath = "../../python/gfiles/ent/ccg7.sim";
 
-	public static String suffix = "_sim.txt";
+	 public static String suffix = "_sim.txt";
 	public static FeatName featName = FeatName.BINC;
-	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
+//	public static FeatName featName = FeatName.Iter;
+//	public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	public static String graphPostFix = "_" + transMethod + "NOFRG_san.txt";
 	// static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";//
 	static String allExamplesPath = "../../python/gfiles/ent/all_new_comb_rels.txt";
@@ -75,9 +76,16 @@ public class PGraph implements Comparable<PGraph> {
 	int sortIdx = -1;// the index of the graph after sorting all the graphs based on their sizes. 0
 						// is the largets.
 
-	public static float edgeThreshold = 0.01f;// All the experiments are done by threshold = .01. Never change this!
-												// However, it isn't
-												// really worth it! .05 reduces edges by half, but not worth it
+//	public static float edgeThreshold = 0.01f;// All the experiments are done by threshold = .01. Never change this!
+//												// However, it isn't
+//												// really worth it! .05 reduces edges by half, but not worth it
+	
+//	public static float edgeThreshold = 0.0215112528889f;//cg pr, pr = .75
+	
+//	public static float edgeThreshold = 0.14436184f; //typed binc, pr = .79
+	public static float edgeThreshold = 0.18739995f;//, pr = .82
+//	public static float edgeThreshold = 0.08007261f;//typed binc, pr = .75
+	
 
 	static Map<FeatName, String> featNameToStr;
 

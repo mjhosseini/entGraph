@@ -65,6 +65,7 @@ public class TransClUtils {
 		int idx2 = node2comp[j];
 		assert idx1 != idx2;
 		int numVio = 0;
+		
 		for (DefaultEdge e : scc.outgoingEdgesOf(idx1)) {
 			int idx3 = scc.getEdgeTarget(e);
 			if (idx3 == idx1 || idx3 == idx2) {

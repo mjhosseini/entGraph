@@ -55,6 +55,9 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				if (w_ji <= 0 || w_ij <= 0) {
 					continue;
 				}
+				else {
+//					System.out.println("wij greater than 0: "+w_ij+" "+w_ji+" "+TypePropagateMN.tau);
+				}
 
 				if (!TypePropagateMN.obj1) {
 					w_ij += TypePropagateMN.tau;
@@ -191,6 +194,9 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 
 				if (w_jk <= 0 || w_kj <= 0) {
 					continue;
+				}
+				else {
+//					System.out.println("wjk great than 0: "+w_jk+" "+w_kj+" "+TypePropagateMN.tau);
 				}
 
 				if (!TypePropagateMN.obj1) {

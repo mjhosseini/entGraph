@@ -33,7 +33,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import entailment.LinesHandler;
+import constants.ConstantsParsing;
 import entailment.PredicateArgumentExtractor;
 
 public class CcgParseToUngroundedGraphs {
@@ -51,7 +51,7 @@ public class CcgParseToUngroundedGraphs {
 		jsonParser = new JsonParser();
 		gson = new Gson();
 		logger = Logger.getLogger(CcgParseToUngroundedGraphs.class);
-		nbestParses = LinesHandler.nbestParses;
+		nbestParses = ConstantsParsing.nbestParses;
 		
 		String ccgModelDir = Paths.get(dataFolder, "easyccg_model").toString();
 
@@ -59,8 +59,8 @@ public class CcgParseToUngroundedGraphs {
 		
 		
 		ccgParser = new EasyCcgCli(ccgModelDir + " -r S[dcl] S[pss] S[pt] S[b] S[ng] S NP", nbestParses);
-		ccgModelDir =
-		          Paths.get("lib_data", "model_ccgbank_questions").toString();
+//		ccgModelDir =
+//		          Paths.get("lib_data", "model_ccgbank_questions").toString();
 		
 //		ccgParser =
 //		          new EasySRLCli(ccgModelDir + " --rootCategories S[q] S[qem] S[wq]",nbestParses);
@@ -118,14 +118,14 @@ public class CcgParseToUngroundedGraphs {
 		for (String processedSentence : processedText) {
 			// System.out.println(processedSentence);
 			// We don't need questions for our application
-			if (!LinesHandler.useQuestionMod && processedSentence.endsWith("?|.|O")) {
+			if (!ConstantsParsing.parseQuestions && processedSentence.endsWith("?|.|O")) {
 				continue;
 			}
 			
 			List<String> ccgParseStrings;
 			
 //			System.out.println("processed sentence: "+processedSentence);
-			if (LinesHandler.useQuestionMod) {
+			if (ConstantsParsing.parseQuestions) {
 				ccgParseStrings = ccgParserQuestions != null && processedSentence.endsWith("?|.|O")
 						? ccgParserQuestions.parse(processedSentence)
 						: ccgParser.parse(processedSentence);

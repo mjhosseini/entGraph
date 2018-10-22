@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import constants.ConstantsAgg;
+
 //Useful summary out of EntailGraph, mainly for the sake of memory consumption 
 public class SimpleEntailGraph {
 	HashMap<String, Integer> predToIdx = new HashMap<>();
@@ -63,7 +65,7 @@ public class SimpleEntailGraph {
 			}
 		}
 		
-		if (!EntailGraphFactoryAggregator.isTyped){
+		if (!ConstantsAgg.isTyped){
 			System.err.println("final covered preds");
 			int numDSPredsCovered = 0;
 			for (String s:EntailGraphFactoryAggregator.dsPreds){

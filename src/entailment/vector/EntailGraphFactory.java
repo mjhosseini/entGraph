@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
+import constants.ConstantsAgg;
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
@@ -48,10 +49,19 @@ public class EntailGraphFactory implements Runnable {
 																						// lines
 
 	static {
-
-		for (int i = 0; i < 20000000; i++) {
-			lineIdSeen.add(0);
+		if (ConstantsAgg.backupToStanNER) {
+			if (ConstantsAgg.relAddress.contains("news_genC")) {
+				for (int i = 0; i < 200000000; i++) {
+					lineIdSeen.add(0);
+				}
+			}
+			else {
+				for (int i = 0; i < 20000000; i++) {
+					lineIdSeen.add(0);
+				}
+			}
 		}
+		
 		// try {
 		//
 		// typedOp = new PrintStream(new File("typedOP.txt"), "UTF-8");
@@ -91,6 +101,8 @@ public class EntailGraphFactory implements Runnable {
 		// }
 
 	}
+	
+	
 
 	@Override
 	public void run() {
@@ -133,11 +145,11 @@ public class EntailGraphFactory implements Runnable {
 		String line;
 		while ((line = br.readLine()) != null) {
 			
-			if (lineNumbers == 2000000) {
-				break;// TODO: remove this
-			}
+//			if (lineNumbers == 2000000) {
+//				break;// TODO: remove this
+//			}
 //			
-			if (lineNumbers%1000000==0 && EntailGraphFactoryAggregator.backupToStanNER) {
+			if (lineNumbers>0 && lineNumbers%1000000==0 && ConstantsAgg.backupToStanNER) {
 				Util.renewStanfordParser();
 			}
 			
@@ -150,7 +162,7 @@ public class EntailGraphFactory implements Runnable {
 				ArrayList<Integer> counts = new ArrayList<>();
 				String newsLine = null;
 
-				if (EntailGraphFactoryAggregator.GBooksCCG) {
+				if (ConstantsAgg.GBooksCCG) {
 					lineId++;
 					line = line.split("$$")[0];
 					String[] ss = line.split("\t");
@@ -162,20 +174,20 @@ public class EntailGraphFactory implements Runnable {
 					relStrs.add(relStr);
 					counts.add(count);
 
-					if (EntailGraphFactoryAggregator.backupToStanNER) {
+					if (ConstantsAgg.backupToStanNER) {
 						lineIdSeen.set(lineId, lineIdSeen.get(lineId) + 1);
-						if (lineIdSeen.get(lineId) == EntailGraphFactoryAggregator.numThreads) {
+						if (lineIdSeen.get(lineId) == ConstantsAgg.numThreads) {
 							lineIdToStanTypes.remove(lineId);
 						}
 					}
 
-				} else if (!EntailGraphFactoryAggregator.rawExtractions) {
+				} else if (!ConstantsAgg.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 					lineId = jObj.get("lineId").getAsInt();
 
-					if (EntailGraphFactoryAggregator.backupToStanNER) {
+					if (ConstantsAgg.backupToStanNER) {
 						lineIdSeen.set(lineId, lineIdSeen.get(lineId) + 1);
-						if (lineIdSeen.get(lineId) == EntailGraphFactoryAggregator.numThreads) {
+						if (lineIdSeen.get(lineId) == ConstantsAgg.numThreads) {
 							lineIdToStanTypes.remove(lineId);
 						}
 					}
@@ -206,7 +218,7 @@ public class EntailGraphFactory implements Runnable {
 					String relStr = relStrs.get(i);
 					int count = counts.get(i);
 					String timeInterval = null;
-					if (EntailGraphFactoryAggregator.useTimeEx) {
+					if (ConstantsAgg.useTimeEx) {
 						// System.out.println("relStr: "+relStr);
 						String[] ss = relStr.split("\\)::\\[");// TODO: fix this
 						timeInterval = "[" + ss[1];
@@ -218,25 +230,34 @@ public class EntailGraphFactory implements Runnable {
 					String pred = parts[0];
 					// System.out.println("now pred: "+pred);
 
-					if (!Util.acceptablePredFormat(pred, EntailGraphFactoryAggregator.isCCG)) {
+					if (!Util.acceptablePredFormat(pred, ConstantsAgg.isCCG)) {
 						continue;
 					}
 					
 					String[] predicateLemma;
-					if (!EntailGraphFactoryAggregator.rawExtractions && !EntailGraphFactoryAggregator.isForeign) {
-						predicateLemma = Util.getPredicateLemma(pred, EntailGraphFactoryAggregator.isCCG);
+					if (!ConstantsAgg.rawExtractions && !EntailGraphFactoryAggregator.isForeign) {
+						predicateLemma = Util.getPredicateLemma(pred, ConstantsAgg.isCCG);
+						if (predicateLemma==null) {
+							System.err.println(pred);
+							System.err.println("predlemma is null");
+							predicateLemma = Util.getPredicateLemma(pred, ConstantsAgg.isCCG);
+						}
 					} else {
 						predicateLemma = new String[] { pred, "false" };
 					}
+					if (predicateLemma==null) {
+						System.err.println(pred);
+						System.err.println("predlemma is null");
+					}
 					pred = predicateLemma[0];
 
-					if (EntailGraphFactoryAggregator.onlyDSPreds
+					if (ConstantsAgg.onlyDSPreds
 							&& !EntailGraphFactoryAggregator.dsPreds.contains(pred)) {
 						// System.out.println("continue: " + pred);
 						continue;
 					}
 					
-					if (EntailGraphFactoryAggregator.removeStopPreds && Util.stopPreds.contains(pred)) {
+					if (ConstantsAgg.removeStopPreds && Util.stopPreds.contains(pred)) {
 						continue;
 					}
 
@@ -244,14 +265,14 @@ public class EntailGraphFactory implements Runnable {
 						continue;
 					}
 
-					if (EntailGraphFactoryAggregator.maxPredsTotal > 0
+					if (ConstantsAgg.maxPredsTotal > 0
 							&& !EntailGraphFactoryAggregator.acceptablePreds.contains(pred)) {
 						continue;
 					}
 					
 					//Now, we might need to to backuptoStan. We do this down here to prevent unnecessary overhead!
 					// let's see if we have NER ed the line, otherwise, do it
-					if (EntailGraphFactoryAggregator.backupToStanNER && EntailGraphFactoryAggregator.typeScheme==TypeScheme.FIGER
+					if (ConstantsAgg.backupToStanNER && EntailGraphFactoryAggregator.typeScheme==TypeScheme.FIGER
 							&& lineIdSeen.get(lineId) == 1) {
 						// System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
 						Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
@@ -275,7 +296,7 @@ public class EntailGraphFactory implements Runnable {
 					String type1 = null, type2 = null;
 
 					if (EntailGraphFactoryAggregator.isForeign) {
-						if (EntailGraphFactoryAggregator.isTyped) {
+						if (ConstantsAgg.isTyped) {
 							type1 = parts[3];//.substring(1);
 							type2 = parts[4];//.substring(1);
 							System.out.println("types foreign: " + type1 + " " + type2);
@@ -285,7 +306,7 @@ public class EntailGraphFactory implements Runnable {
 							type2 = "thing";
 						}
 						
-					} else if (!EntailGraphFactoryAggregator.useTimeEx) {
+					} else if (!ConstantsAgg.useTimeEx) {
 						try {
 							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
 							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
@@ -582,9 +603,9 @@ public class EntailGraphFactory implements Runnable {
 			String opName = typedEntGrDir + "/" + thisType;
 			EntailGraph entGraph;
 			if (type1.equals("") || type2.equals("")) {// unary
-				entGraph = new EntailGraph(thisType, opName, EntailGraphFactoryAggregator.minPredForArg, unary);
+				entGraph = new EntailGraph(thisType, opName, ConstantsAgg.minPredForArg, unary);
 			} else {
-				entGraph = new EntailGraph(thisType, opName, EntailGraphFactoryAggregator.minPredForArgPair, unary);
+				entGraph = new EntailGraph(thisType, opName, ConstantsAgg.minPredForArgPair, unary);
 			}
 
 			thisTypesToGraph.put(thisType, entGraph);
@@ -621,7 +642,7 @@ public class EntailGraphFactory implements Runnable {
 		}
 
 		if (!type1.equals(type2)) {
-			if (!EntailGraphFactoryAggregator.isCCG || !Util.swapParts(pred).equals(pred)) {
+			if (!ConstantsAgg.isCCG || !Util.swapParts(pred).equals(pred)) {
 				return pred + "#" + type1 + "#" + type2;
 			} else {
 				return pred + "#" + getThisType(type1, type2);
@@ -630,7 +651,7 @@ public class EntailGraphFactory implements Runnable {
 		} else {
 			String typeD = type1 + "_1" + "#" + type1 + "_2";
 			String typeR = type1 + "_2" + "#" + type1 + "_1";
-			if (rev && (!EntailGraphFactoryAggregator.isCCG || !Util.swapParts(pred).equals(pred))) {
+			if (rev && (!ConstantsAgg.isCCG || !Util.swapParts(pred).equals(pred))) {
 				return pred + "#" + typeR;
 			} else {
 				return pred + "#" + typeD;
@@ -644,8 +665,8 @@ public class EntailGraphFactory implements Runnable {
 		for (SimplePredicateVector pvec : entGraph.getPvecs()) {
 			for (SimilaritiesInfo simInfo : pvec.similarityInfos.values()) {
 				String predPair = pvec.predicate + "#" + simInfo.predicate;
-				System.err.println(simInfo.predicate);
-				System.err.println(pvec.predicate);
+//				System.err.println(simInfo.predicate);
+//				System.err.println(pvec.predicate);
 				String predPairUntyped = pvec.predicate.split("#")[0] + "#" + simInfo.predicate.split("#")[0];
 				ret.add(predPair);
 				ret.add(predPairUntyped);
@@ -693,7 +714,7 @@ public class EntailGraphFactory implements Runnable {
 			entGraph.processGraph();
 
 			SimpleEntailGraph simpleEntGraph = entGraph;
-			if (EntailGraphFactoryAggregator.isTyped) {
+			if (ConstantsAgg.isTyped) {
 				simpleEntGraph = new SimpleEntailGraph(entGraph);
 			}
 
@@ -944,7 +965,7 @@ public class EntailGraphFactory implements Runnable {
 
 			}
 
-			if (EntailGraphFactoryAggregator.useTimeEx) {
+			if (ConstantsAgg.useTimeEx) {
 				PredicateVector.writeSims(entGraph.graphOp2, timeSimList, "time preceding sims");
 			}
 			PredicateVector.writeSims(entGraph.graphOp2, cosSimList, "cos sims");
@@ -957,7 +978,7 @@ public class EntailGraphFactory implements Runnable {
 			PredicateVector.writeSims(entGraph.graphOp2, BIncList, "BInc sims");
 			PredicateVector.writeSims(entGraph.graphOp2, WeedsPMIPrList, "Weed's PMI Precision sim");
 			
-			if (EntailGraphFactoryAggregator.onlyDSPreds) {
+			if (ConstantsAgg.computeProbELSims) {
 				PredicateVector.writeSims(entGraph.graphOp2, probELList, "probEL sim");
 			}
 			// PredicateVector.writeSims(entGraph.graphOp2, LinListSep, "DIRT

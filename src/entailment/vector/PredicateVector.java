@@ -5,7 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import constants.ConstantsAgg;
 import entailment.Util;
 
 public class PredicateVector extends SimplePredicateVector {
@@ -53,7 +56,7 @@ public class PredicateVector extends SimplePredicateVector {
 			argIdxToArrayIdx.put(idx, argIdxToArrayIdx.size());
 			argIdxes.add(idx);
 			vals.add(0.0);
-			if (EntailGraphFactoryAggregator.useTimeEx) {
+			if (ConstantsAgg.useTimeEx) {
 				minRightIntervals.add("3000-01-01");
 				maxLeftIntervals.add("1000-01-01");
 			} else {
@@ -62,7 +65,6 @@ public class PredicateVector extends SimplePredicateVector {
 			}
 
 			double prevCount = entGraph.argPairIdxToCount.get(idx);
-			
 
 			if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
 				entGraph.argPairIdxToCount.put(idx, prevCount + 1);// TODO:
@@ -71,7 +73,7 @@ public class PredicateVector extends SimplePredicateVector {
 																	// about
 																	// this in
 																	// cutoffs?
-				
+
 			} else {
 				entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
 																		// should
@@ -86,7 +88,7 @@ public class PredicateVector extends SimplePredicateVector {
 		}
 		int arrIdx = argIdxToArrayIdx.get(idx);
 		vals.set(arrIdx, vals.get(arrIdx) + count);
-		
+
 		double prevOcc = entGraph.argPairIdxToOcc.get(idx);
 		entGraph.argPairIdxToOcc.put(idx, prevOcc + count);
 		// if (EntailGraphFactoryAggregator.typeScheme !=
@@ -100,7 +102,7 @@ public class PredicateVector extends SimplePredicateVector {
 		// // cutoffs?
 		// }
 
-		if (EntailGraphFactoryAggregator.useTimeEx) {
+		if (ConstantsAgg.useTimeEx) {
 
 			String[] lr = Util.getLeftRightTimes(timeInterval);
 			// if (lr.length>0){
@@ -116,13 +118,15 @@ public class PredicateVector extends SimplePredicateVector {
 	}
 
 	// we remove any argpair that has less than ... occurrences
-	void cutoffInfreqArgPairs() {
+	void cutoffInfreqArgPairs(int argPAirCutoff) {
 		HashSet<Integer> toberemovedIdxes = new HashSet<>();
+
 		for (int i = 0; i < argIdxes.size(); i++) {
 			// if (vals.get(i)<EntailGraphFactory.minOccArgPairInPredicate){
 			// toberemovedIdxes.add(i);
 			// }
-			if (entGraph.argPairIdxToCount.get(argIdxes.get(i)) < entGraph.minPredForArgPair) {
+
+			if (entGraph.argPairIdxToCount.get(argIdxes.get(i)) < argPAirCutoff) {
 				toberemovedIdxes.add(i);
 			}
 			// else{
@@ -131,6 +135,87 @@ public class PredicateVector extends SimplePredicateVector {
 			// }
 		}
 
+		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
+														// format
+		ArrayList<Double> vals = new ArrayList<>();
+		HashMap<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
+
+		for (int i = 0; i < this.argIdxes.size(); i++) {
+			if (!toberemovedIdxes.contains(i)) {
+				argIdxToArrayIdx.put(this.argIdxes.get(i), vals.size());
+				vals.add(this.vals.get(i));
+				argIdxes.add(this.argIdxes.get(i));
+			}
+		}
+
+		this.argIdxes = argIdxes;
+		this.vals = vals;
+		this.argIdxToArrayIdx = argIdxToArrayIdx;
+	}
+	
+	int getNumApsToRetain() {
+		if (EntailGraphFactoryAggregator.predNumArgPairs.containsKey(this.predicate)) {
+			int NSBasedAllowed = EntailGraphFactoryAggregator.predNumArgPairs.get(this.predicate);
+			if (NSBasedAllowed<ConstantsAgg.numArgPairsNSBasedAlwaysAllowed) {
+				return ConstantsAgg.numArgPairsNSBasedAlwaysAllowed;
+			}
+			else {
+				return NSBasedAllowed;
+			}
+			 
+		}
+		else {
+			return argIdxes.size();
+		}
+	}
+	
+	Set<Integer> getNSPredBasedToBeRemovedArrIdxes() {
+		int numAllowed = getNumApsToRetain();
+
+		List<Integer> a = new ArrayList<>();
+		for (double i : vals) {
+			a.add((int) i);
+		}
+		
+		Set<Integer> ret = new HashSet<>();
+		
+		Collections.sort(a, Collections.reverseOrder());
+		if (numAllowed >= a.size()) {
+			return ret;
+		} else {
+			int cutoff = a.get(numAllowed - 1);
+			
+//			System.out.println("pred based cutoff: " + predicate +" "+ cutoff);
+			
+			Set<Integer> remainingIdxes = new HashSet<>();
+			
+			for (int i=0; i<vals.size(); i++) {
+				if (vals.get(i)>cutoff) {
+					remainingIdxes.add(i);
+				}
+			}
+			
+			for (int i=0; i<vals.size(); i++) {
+				if (vals.get(i)==cutoff && remainingIdxes.size()<=numAllowed) {
+					remainingIdxes.add(i);
+				}
+			}
+			
+			for (int i=0; i<vals.size(); i++) {
+				if (!remainingIdxes.contains(i)) {
+					ret.add(i);
+//					System.out.println("removing: "+ entGraph.argPairs.get(argIdxes.get(i)));
+				}
+			}
+			
+			return ret;
+		}
+	}
+
+	// we only retain the first numAPsToRetain arg-pairs
+	void cutoffInfreqArgPairsPredBased() {
+		Set<Integer> toberemovedIdxes = getNSPredBasedToBeRemovedArrIdxes();
+		
 		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
 														// format
 		ArrayList<Double> vals = new ArrayList<>();
@@ -286,7 +371,7 @@ public class PredicateVector extends SimplePredicateVector {
 
 			// add cos similarity
 			double cosSim;
-			if (!EntailGraphFactoryAggregator.embBasedScores && !EntailGraphFactoryAggregator.anchorBasedScores) {
+			if (!ConstantsAgg.embBasedScores && !EntailGraphFactoryAggregator.anchorBasedScores) {
 				cosSim = simInfo.basics.dotProd;
 				cosSim /= (norm2 * pvec2.norm2);
 			} else {
@@ -299,7 +384,7 @@ public class PredicateVector extends SimplePredicateVector {
 
 			// add time sims
 			double timeSim;
-			if (!EntailGraphFactoryAggregator.useTimeEx) {
+			if (!ConstantsAgg.useTimeEx) {
 				timeSim = 0;
 				// timeSims.add(new Similarity(pvec2.predicate, 0));
 			} else {
@@ -396,15 +481,14 @@ public class PredicateVector extends SimplePredicateVector {
 
 			// add cos similarity
 			double probELSim = 0;
-			if (EntailGraphFactoryAggregator.onlyDSPreds) {
+			if (ConstantsAgg.computeProbELSims) {
 				if (EntailGraphFactoryAggregator.dsPredToPredToScore.containsKey(this.predicate)) {
 					if (EntailGraphFactoryAggregator.dsPredToPredToScore.get(this.predicate)
 							.containsKey(pvec2.predicate)) {
-						probELSim = EntailGraphFactoryAggregator.dsPredToPredToScore.get(predicate).get(pvec2.predicate);
+						probELSim = EntailGraphFactoryAggregator.dsPredToPredToScore.get(predicate)
+								.get(pvec2.predicate);
 					}
 				}
-			} else {
-				cosSim = 0;
 			}
 
 			simInfo.setSims(cosSim, weedProbSim, weedPMISim, LinSim, BIncSim, timeSim, weedPMIPr, probELSim);

@@ -33,20 +33,20 @@ public class TypePropagateMN {
 	static int numThreads = 60;
 	static int numIters = 4;
 	// public static double lmbda = .001;// lmbda for L1 regularization
-	public static double lmbda = .01;// lmbda for L1 regularization
-	public static double lmbda2 = 100000000;
-	public static double tau = 1;
+	public static double lmbda = .001;// lmbda for L1 regularization //TODO: be careful, it used to be .01
+	public static double lmbda2 = 0;
+	public static double tau = .3;
 	// public static double lmbda3 = 0;
 	public static double smoothParam = 5.0;
 	// static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
 	// static final String tPropSuffix = "_tProp_trans_0_.3_obj2_n.txt";
-	static String tPropSuffix = "_lin_lm1_.01_reg_inf_1.txt";
+	static String tPropSuffix = "_binc_lm1_.001_reg_0_.3.txt";
 	// static String tPropSuffix = "_tprop_test2.txt";
-	public static boolean addTargetRels = false;
+	public static boolean addTargetRels = false;//must be false
 	static boolean predBasedPropagation = true;
-	static boolean sizeBasedPropagation = false;
-	static boolean factorized = false;
-	static boolean obj1 = false;// obj1: max(w-tau), false: 1(w>tau)w
+	static boolean sizeBasedPropagation = false;//must be fealse
+	static boolean factorized = false;//must be false
+	static boolean obj1 = false;// obj1: max(w-tau), false: 1(w>tau)w //must be false
 
 	Map<String, Integer> graphToNumEdges;
 	String compatiblesPath = "../../python/gfiles/ent/compatibles_all.txt";
@@ -191,9 +191,9 @@ public class TypePropagateMN {
 		for (File f : files) {
 
 			String fname = f.getName();
-			// if (gc > 50 && !fname.contains("food#chemistry")) {
-			// continue;
-			// }
+//			if (gc > 50) {
+//				continue;
+//			}
 
 			// TODO: remove
 			// if (gc==0) {

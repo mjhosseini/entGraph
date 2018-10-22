@@ -253,7 +253,7 @@ public class LabelPropagateMN implements Runnable {
 							double w;
 							if (c > 0) {
 								w = (c - TypePropagateMN.lmbda) / denom;
-							} else {
+							} else {//this never happens as everything in c is pos, and so is c!
 								w = (c + TypePropagateMN.lmbda) / denom;
 							}
 
@@ -302,7 +302,7 @@ public class LabelPropagateMN implements Runnable {
 
 			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_')) + TypePropagateMN.tPropSuffix;
 			writeTPropResults(pgraph, gs, fnameTProp);
-			System.out.println("results wrote for: "+fnameTProp);
+			System.out.println("results written for: "+fnameTProp);
 		}
 	}
 

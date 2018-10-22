@@ -97,7 +97,7 @@ public class EntToWikiHandler {
 		int lineNumber = 0;
 		for (SimpleSpot sspot : sspots) {
 			String spot = sspot.spot;
-			int count = sspot.count;
+			int count = (int) sspot.count;
 			try {
 				// System.err.println(lineNumber);
 				if (lineNumber % 1000 == 0) {

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -46,6 +47,7 @@ import com.google.gson.JsonSyntaxException;
 import com.ibm.icu.util.StringTokenizer;
 
 import ac.biu.nlp.normalization.BiuNormalizer;
+import constants.ConstantsAgg;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
@@ -79,7 +81,7 @@ public class Util {
 	private static Map<String, String> entToFigerType = null;
 	private static Map<String, Boolean> entToFigerONLYNE = null;
 	static String[] goodPart2s = new String[] { "1", "2", "3" };
-	
+
 	static HashSet<String> goodPart2sSet = new HashSet<String>();
 	static {
 		for (String s : goodPart2s) {
@@ -87,8 +89,8 @@ public class Util {
 		}
 	}
 
-	static HashMap<String, String[]> predToLemma = new HashMap<>();
-	static HashMap<String, String> predToLemma_unary = new HashMap<>();;
+	static Map<String, String[]> predToLemma = new ConcurrentHashMap<>();
+	static Map<String, String> predToLemma_unary = new ConcurrentHashMap<>();
 
 	static HashSet<String> modals;
 	public static Set<String> stopPreds;
@@ -178,7 +180,10 @@ public class Util {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		
+
+		// stanPipeline = null;//TODO: be careful
+		// stanPipelineSimple = null;
+		// stanPipelineSimple2 = null;
 
 	}
 
@@ -350,7 +355,7 @@ public class Util {
 	public static String[] getPredicateLemma(String pred, boolean isCCG) {
 
 		String[] ret = new String[2];
-		if (!EntailGraphFactoryAggregator.normalizePredicate) {
+		if (!ConstantsAgg.normalizePredicate) {
 			ret[0] = pred;
 			ret[1] = "false";
 			return ret;
@@ -426,23 +431,23 @@ public class Util {
 		predToLemma.put(pred0, ret);
 		return ret;
 	}
-	
+
 	public static String getPredicateLemma_unary(String pred, boolean isCCG) {
 		assert isCCG;
 		String ret = "";
-		if (!EntailGraphFactoryAggregator.normalizePredicate) {
+		if (!ConstantsAgg.normalizePredicate) {
 			return pred;
 		}
 
 		if (predToLemma_unary.containsKey(pred)) {
 			return predToLemma_unary.get(pred);
 		}
-		
+
 		pred = pred.toLowerCase();
 		// String[] parts = pred.split(",");
 
 		ret = getPartLemm(pred);
-		
+
 		predToLemma_unary.put(pred, ret);
 		return ret;
 	}
@@ -536,7 +541,7 @@ public class Util {
 			// System.out.println("header: "+header);
 			// System.out.println(text);
 			String candText = text.substring(maxIdx);
-			
+
 			// for cases like blah - blah - blah
 			if (splitter.equals(" - ")) {
 				int idx = candText.indexOf(" - ");
@@ -545,8 +550,7 @@ public class Util {
 				} else {
 					text = candText;
 				}
-			}
-			else {
+			} else {
 				text = candText;
 			}
 
@@ -650,8 +654,8 @@ public class Util {
 
 		return ret;
 	}
-	
-	public static List<String> getSentences(String s){
+
+	public static List<String> getSentences(String s) {
 		Annotation document = new Annotation(s);
 		stanPipelineSimple2.annotate(document);
 		List<String> ret = new ArrayList<>();
@@ -871,7 +875,7 @@ public class Util {
 		// "/Users/hosseini/Desktop/D/research/release/crawl"));
 		// BufferedReader br = new BufferedReader(new InputStreamReader(
 		// new FileInputStream("data/release/crawl"), "UTF-8"));
-		String fileName = "data/release/crawlbatched";
+		String fileName = "data/release/crawlbatched_en";
 		if (args.length > 1) {
 			fileName = args[0];
 		}
@@ -979,7 +983,7 @@ public class Util {
 	// well-formed sentences!
 	// arg must be simple-normalized
 	public static String getType(String arg, boolean isEntity, Map<String, String> tokenToType) {
-		if (!EntailGraphFactoryAggregator.isTyped) {
+		if (!ConstantsAgg.isTyped) {
 			return "thing";
 		}
 		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
@@ -1245,7 +1249,7 @@ public class Util {
 
 	static void convertPredArgsToJsonUnsorted(String[] args) throws IOException {
 		if (args == null || args.length == 0) {
-			args = new String[] { "predArgsC_gen.txt", "true", "true", "-1", "aida/newsC_linked.json" };
+			args = new String[] { "predArgs9_gen.txt", "true", "true", "-1", "aida/news_linked.json" };
 		}
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF-8"));
 		boolean shouldLink = Boolean.parseBoolean(args[1]);
@@ -1266,6 +1270,7 @@ public class Util {
 		int lineNumbers = 0;
 		String curLine = null;
 		ArrayList<String> curPrArgs = new ArrayList<String>();
+		ArrayList<String> curPrArgs_unary = new ArrayList<String>();
 
 		// int firstIdxToPrint = 0;
 		// int numPrintAtOnce = 1000000;
@@ -1298,8 +1303,10 @@ public class Util {
 						// Now, let's read all the pred_arg lines
 						String prArgLine = null;
 						curPrArgs = new ArrayList<String>();
+						curPrArgs_unary = new ArrayList<String>();
 
-						while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+						while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")
+								&& !prArgLine.equals("#unary rels:")) {
 							// System.out.println("pr arg line: " + prArgLine);
 							String pred = null;
 							String arg1 = null;
@@ -1363,6 +1370,57 @@ public class Util {
 						}
 						jObj.add("rels", rels);
 
+						if (prArgLine.equals("#unary rels:")) {
+							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+								// System.out.println("pr arg line: " + prArgLine);
+								String pred = null;
+								String arg = null;
+								int eventIdx, sentIdx;
+								String GorNE = null;
+
+								try {
+									StringTokenizer st = new StringTokenizer(prArgLine);
+									pred = st.nextToken();
+									arg = st.nextToken();
+									eventIdx = Integer.parseInt(st.nextToken());
+									GorNE = st.nextToken();
+									sentIdx = Integer.parseInt(st.nextToken());
+									arg = simpleNormalize(arg);
+
+									boolean isGen = GorNE.charAt(0) == 'G';
+
+									if (shouldLink) {
+										if (!isGen) {
+											if (!useContext) {
+												// arg1 = entToWiki.containsKey(arg1) ? entToWiki.get(arg1) : arg1;
+											} else {
+												if (artIdToEntToWiki.containsKey(articleId)) {
+													HashMap<String, String> e2w = artIdToEntToWiki.get(articleId);
+													arg = e2w.containsKey(arg) ? e2w.get(arg) : arg;
+												}
+											}
+										}
+									}
+								} catch (Exception e) {
+									e.printStackTrace();
+									System.err.println("exception for: " + line);
+									continue;
+								}
+
+								String prArg = "(" + pred + "::" + arg + "::" + GorNE + "::" + sentIdx + "::" + eventIdx
+										+ ")";
+								curPrArgs_unary.add(prArg);
+							}
+						}
+
+						JsonArray rels_unary = new JsonArray();
+						for (int i = 0; i < curPrArgs_unary.size(); i++) {
+							JsonObject rel = new JsonObject();
+							rel.addProperty("r", curPrArgs_unary.get(i));
+							rels_unary.add(rel);
+						}
+						jObj.add("rels_unary", rels_unary);
+
 						System.out.println(jObj);
 
 					} catch (Exception e) {
@@ -1391,7 +1449,7 @@ public class Util {
 
 	static void convertPredArgsToJson(String[] args) throws IOException {
 		if (args == null || args.length == 0) {
-			args = new String[] { "predArgs_gen.txt", "true", "true", "12000000", "aida/news_linked.json" };
+			args = new String[] { "predArgs9_gen.txt", "true", "true", "12000000", "aida/news_linked.json" };
 		}
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF-8"));
 		boolean shouldLink = Boolean.parseBoolean(args[1]);
@@ -1413,6 +1471,7 @@ public class Util {
 		int lineNumbers = 0;
 		String curLine = null;
 		ArrayList<String> curPrArgs = new ArrayList<String>();
+		ArrayList<String> curPrArgs_unary = new ArrayList<String>();
 
 		// int firstIdxToPrint = 0;
 		// int numPrintAtOnce = 1000000;
@@ -1451,8 +1510,10 @@ public class Util {
 						// Now, let's read all the pred_arg lines
 						String prArgLine = null;
 						curPrArgs = new ArrayList<String>();
+						curPrArgs_unary = new ArrayList<>();
 
-						while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+						while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")
+								&& !prArgLine.equals("#unary rels:")) {
 							// System.out.println("pr arg line: " + prArgLine);
 							String pred = null;
 							String arg1 = null;
@@ -1528,6 +1589,64 @@ public class Util {
 							rels.add(rel);
 						}
 						jObj.add("rels", rels);
+
+						if (prArgLine.equals("#unary rels:")) {
+							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+								// System.out.println("pr arg line: " + prArgLine);
+								String pred = null;
+								String arg = null;
+								int eventIdx, sentIdx;
+								String GorNE = null;
+
+								try {
+									StringTokenizer st = new StringTokenizer(prArgLine);
+									pred = st.nextToken();
+									arg = st.nextToken();
+									eventIdx = Integer.parseInt(st.nextToken());
+									GorNE = st.nextToken();
+									sentIdx = Integer.parseInt(st.nextToken());
+									arg = simpleNormalize(arg);
+
+									boolean isGen = GorNE.charAt(0) == 'G';
+
+									if (isGen) {
+										if (!gens.containsKey(arg)) {
+											gens.put(arg, 0);
+										}
+										gens.put(arg, gens.get(arg) + 1);
+									}
+
+									if (shouldLink) {
+										if (!isGen) {
+											if (!useContext) {
+												// arg1 = entToWiki.containsKey(arg1) ? entToWiki.get(arg1) : arg1;
+											} else {
+												if (artIdToEntToWiki.containsKey(articleId)) {
+													HashMap<String, String> e2w = artIdToEntToWiki.get(articleId);
+													arg = e2w.containsKey(arg) ? e2w.get(arg) : arg;
+												}
+											}
+										}
+									}
+								} catch (Exception e) {
+									e.printStackTrace();
+									System.err.println("exception for: " + line);
+									continue;
+								}
+
+								String prArg = "(" + pred + "::" + arg + "::" + GorNE + "::" + sentIdx + "::" + eventIdx
+										+ ")";
+								curPrArgs_unary.add(prArg);
+							}
+						}
+
+						JsonArray rels_unary = new JsonArray();
+						for (int i = 0; i < curPrArgs_unary.size(); i++) {
+							JsonObject rel = new JsonObject();
+							rel.addProperty("r", curPrArgs_unary.get(i));
+							rels_unary.add(rel);
+						}
+						jObj.add("rels_unary", rels_unary);
 
 						int lineIdInt = Integer.parseInt(lineId);
 						if (lineIdInt > maxIdx) {
@@ -1730,9 +1849,9 @@ public class Util {
 		if (Util.isCoordination(pred)) {
 			return false;
 		}
-		if (EntailGraphFactoryAggregator.removeEventEventModifiers) {
+		if (ConstantsAgg.removeEventEventModifiers) {
 			if (pred.contains("__") && !pred.toLowerCase().startsWith("neg")) {
-//				System.out.println("not acceptable: "+pred);
+				// System.out.println("not acceptable: "+pred);
 				return false;
 			}
 		}
@@ -1749,8 +1868,7 @@ public class Util {
 		return acceptablePredPartFormat(parts[0]) || acceptablePredPartFormat(parts[1]);
 	}
 
-	
-	//basically doesn't do much, because everything ends with .1, .2 or .3!
+	// basically doesn't do much, because everything ends with .1, .2 or .3!
 	public static boolean acceptablePredPartFormat(String pred) {
 		String[] parts = StringUtils.split(pred, ".");
 
@@ -2001,15 +2119,16 @@ public class Util {
 				String NERType = getSimpleNERType(argNER).toLowerCase();
 				if (!NERType.equals("none")) {
 					type = NERType;
-//					System.out.println("backing up to NER type: " + arg + " " + NERType);
+					// System.out.println("backing up to NER type: " + arg + " " + NERType);
 				} else {
 					// Now, we have to back up to genTypes
 					arg = getLemma(arg);
 					String genType = getType(arg, false, null);
-//					System.out.println("backing up to genTypes: " + mainArg + " " + arg + ": " + genType);
+					// System.out.println("backing up to genTypes: " + mainArg + " " + arg + ": " +
+					// genType);
 					type = genType;
 					if (genType.equals("thing")) {
-//						System.out.println("no type found for: " + arg);
+						// System.out.println("no type found for: " + arg);
 					}
 				}
 			}
@@ -2021,7 +2140,8 @@ public class Util {
 			if (type.equals("thing")) {
 				arg = simpleNormalize(arg);
 				type = getType(getLemma(arg), false, tokenToStanType);
-//				System.out.println("try lemma for: " + arg + " " + getLemma(arg) + " " + type);
+				// System.out.println("try lemma for: " + arg + " " + getLemma(arg) + " " +
+				// type);
 			}
 
 			// if it's still thing, we should back off to NEs!
@@ -2037,7 +2157,7 @@ public class Util {
 				} else {
 					type = "thing";
 				}
-//				System.out.println("backing up to entTypes for " + mainArg + ": " + type);
+				// System.out.println("backing up to entTypes for " + mainArg + ": " + type);
 			}
 		}
 
@@ -2063,7 +2183,7 @@ public class Util {
 	public static void fillDSPredsandPairs(String path, Set<String> preds, Set<String> predPairs) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(path));
 		String line = null;
-		
+
 		while ((line = br.readLine()) != null) {
 			String[] parts = line.split("\t");
 			if (parts[0].equals("") || parts[1].equals("")) {
@@ -2075,27 +2195,27 @@ public class Util {
 			String rel2 = pall[0];
 			preds.add(rel1);
 			preds.add(rel2);
-			
+
 			boolean isAligned = isAligned(qall, pall);
-			
-//			System.out.println(line);
-//			System.out.println(isAligned);
-//			System.out.println();
-			
-			predPairs.add(rel2+"#"+rel1+"#"+isAligned);
-			
+
+			// System.out.println(line);
+			// System.out.println(isAligned);
+			// System.out.println();
+
+			predPairs.add(rel2 + "#" + rel1 + "#" + isAligned);
+
 		}
 
 		br.close();
 	}
-	
+
 	static boolean isAligned(String[] qall, String[] pall) {
 		String q1 = Util.getLemma(qall[1].split("::")[0].toLowerCase());
 		String q2 = Util.getLemma(qall[2].split("::")[0].toLowerCase());
-		
+
 		String a1 = Util.getLemma(pall[1].split("::")[0].toLowerCase());
 		String a2 = Util.getLemma(pall[1].split("::")[0].toLowerCase());
-		
+
 		if (q1.equals(a1)) {
 			return true;
 		}
@@ -2108,9 +2228,10 @@ public class Util {
 		if (q2.equals(a2)) {
 			return true;
 		}
-//		System.out.println("not sure if aligned: "+qall[0]+ " "+ qall[1]+ " "+ qall[2]+pall[0]+ " "+ pall[1]+ " "+ pall[2]);
+		// System.out.println("not sure if aligned: "+qall[0]+ " "+ qall[1]+ " "+
+		// qall[2]+pall[0]+ " "+ pall[1]+ " "+ pall[2]);
 		return true;
-		
+
 	}
 
 	// static void convertOIEToOurFormat() {
@@ -2214,6 +2335,8 @@ public class Util {
 	}
 
 	public static void main(String[] args) throws ParseException, IOException {
+		// System.out.println(getPredicateLemma("(roam.1,roam.middle.of.2)",true)[0]);
+
 		// Logger.getRootLogger().setLevel(Level.WARN);
 		// getSimpleNERType("kansas jayhawks won the game.");
 		// getSimpleNERType("prime minister stephen harper");
@@ -2238,9 +2361,10 @@ public class Util {
 
 		// System.out.println(1d);
 		// readJSONSimple();
-		convertReleaseToRawJson(args);
+		// convertReleaseToRawJson(args);
 		// convertPredArgsToJsonUnsorted(args);
-//		convertSampleToRawJson();
+		convertPredArgsToJson(args);
+		// convertSampleToRawJson();
 		// recordStanTypes(args);
 		// countArgs(args);
 		// System.out.println(removeHtmlTags(""));

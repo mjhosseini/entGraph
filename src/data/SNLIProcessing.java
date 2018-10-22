@@ -11,7 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import entailment.LinesHandler;
+import constants.ConstantsAgg;
+import constants.ConstantsParsing;
 import entailment.PredicateArgumentExtractor;
 import entailment.Util;
 import entailment.vector.EntailGraphFactoryAggregator;
@@ -23,20 +24,23 @@ public class SNLIProcessing {
 	public static void extractRelationsSNLIAll() throws ArgumentValidationException, IOException, InterruptedException {
 
 		String root_mnli = "../../python/gfiles/multinli_1.0/";
-//		String fname_train = root + "multinli_1.0_train.txt";
+		// String fname_train_mnli = root_mnli + "multinli_1.0_train.txt";
 		String fname_dev_matched = root_mnli + "multinli_1.0_dev_matched.txt";
 		String fname_test_matched = root_mnli + "multinli_0.9_test_matched_unlabeled.txt";
 		String fname_dev_mismatched = root_mnli + "multinli_1.0_dev_mismatched.txt";
 		String fname_test_mismatched = root_mnli + "multinli_0.9_test_mismatched_unlabeled.txt";
 
-		// PrintStream op_train = new PrintStream(new File(root +
+		// PrintStream op_train_mnli = new PrintStream(new File(root_mnli +
 		// "multinli_extractions_train.txt"));
+
 		PrintStream op_dev_matched = new PrintStream(new File(root_mnli + "multinli_extractions_dev_matched.txt"));
 		PrintStream op_test_matched = new PrintStream(new File(root_mnli + "multinli_extractions_test_matched.txt"));
-		PrintStream op_dev_mismatched = new PrintStream(new File(root_mnli + "multinli_extractions_dev_mismatched.txt"));
-		PrintStream op_test_mismatched = new PrintStream(new File(root_mnli + "multinli_extractions_test_mismatched.txt"));
+		PrintStream op_dev_mismatched = new PrintStream(
+				new File(root_mnli + "multinli_extractions_dev_mismatched.txt"));
+		PrintStream op_test_mismatched = new PrintStream(
+				new File(root_mnli + "multinli_extractions_test_mismatched.txt"));
 
-		// PrintStream op_train_unary = new PrintStream(new File(root +
+		// PrintStream op_train_unary_mnli = new PrintStream(new File(root_mnli +
 		// "multinli_extractions_train_unary.txt"));
 		PrintStream op_dev_unary_matched = new PrintStream(
 				new File(root_mnli + "multinli_extractions_dev_unary_matched.txt"));
@@ -51,9 +55,10 @@ public class SNLIProcessing {
 		SNLIProcessing.extractRelationsSNLI(fname_test_matched, op_test_matched, op_test_unary_matched);
 		SNLIProcessing.extractRelationsSNLI(fname_dev_mismatched, op_dev_mismatched, op_dev_unary_mismatched);
 		SNLIProcessing.extractRelationsSNLI(fname_test_mismatched, op_test_mismatched, op_test_unary_mismatched);
-//		SNLIProcessing.extractRelationsSNLI(fname_train, op_train, op_train_unary);
-		
-		//now, snli
+		// SNLIProcessing.extractRelationsSNLI(fname_train_mnli, op_train_mnli,
+		// op_train_unary_mnli);
+
+		// now, snli
 		String root = "../../python/gfiles/snli_1.0/";
 		String fname_dev = root + "snli_1.0_dev.txt";
 		String fname_train = root + "snli_1.0_train.txt";
@@ -79,10 +84,10 @@ public class SNLIProcessing {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
 		br.readLine();
 
-		EntailGraphFactoryAggregator.isTyped = true;
+		ConstantsAgg.isTyped = true;
 		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
-		LinesHandler.snli = true;
-		LinesHandler.writeDebugString = false;
+		ConstantsParsing.snli = true;
+		ConstantsParsing.writeDebugString = false;
 
 		while ((line = br.readLine()) != null) {
 			String opLine = "";
@@ -290,7 +295,7 @@ public class SNLIProcessing {
 
 	// just change the format to be processable by the python code
 	public static void convertSNLIExtractionsToRelsAll() throws IOException {
-		String root_snli = "snli_1.0/";
+		String root_snli = "../../python/gfiles/snli_1.0/";
 		String fname_dev = root_snli + "snli_extractions_dev.txt";
 		String fname_train = root_snli + "snli_extractions_train.txt";
 		String fname_test = root_snli + "snli_extractions_test.txt";
@@ -298,7 +303,7 @@ public class SNLIProcessing {
 		String fname_train_unary = root_snli + "snli_extractions_train_unary.txt";
 		String fname_test_unary = root_snli + "snli_extractions_test_unary.txt";
 
-		String root_mnli = "multinli_1.0/";
+		String root_mnli = "../../python/gfiles/multinli_1.0/";
 
 		String fname_train_m = root_mnli + "multinli_extractions_train.txt";
 		String fname_dev_matched = root_mnli + "multinli_extractions_dev_matched.txt";
@@ -312,26 +317,30 @@ public class SNLIProcessing {
 		String fname_dev_unary_mismatched = root_mnli + "multinli_extractions_dev_unary_mismatched.txt";
 		String fname_test_unary_mismatched = root_mnli + "multinli_extractions_test_unary_mismatched.txt";
 
-		BufferedWriter op = new BufferedWriter(new FileWriter(root_snli + "msnli_rels.txt"));
-		BufferedWriter op_unary = new BufferedWriter(new FileWriter(root_snli + "msnli_rels_unary.txt"));
+		BufferedWriter op = new BufferedWriter(new FileWriter(root_snli + "msnli_rels2.txt"));
+		BufferedWriter op_unary = new BufferedWriter(new FileWriter(root_snli + "msnli_rels_unary2.txt"));
 
-		convertSNLIExtractionsToRels(fname_dev, fname_dev_unary, op, op_unary);
-		convertSNLIExtractionsToRels(fname_train, fname_train_unary, op, op_unary);
-		convertSNLIExtractionsToRels(fname_test, fname_test_unary, op, op_unary);
+		// convertSNLIExtractionsToRels(fname_dev, fname_dev_unary, op, op_unary);
+		// convertSNLIExtractionsToRels(fname_train, fname_train_unary, op, op_unary);
+		// convertSNLIExtractionsToRels(fname_test, fname_test_unary, op, op_unary);
 
-		// convertSNLIExtractionsToRels(fname_train_m, fname_train_unary_m, op,
+		convertSNLIExtractionsToRels(fname_train_m, fname_train_unary_m, op, op_unary);
+
+		// convertSNLIExtractionsToRels(fname_dev_matched, fname_dev_unary_matched, op,
 		// op_unary);
-		convertSNLIExtractionsToRels(fname_dev_matched, fname_dev_unary_matched, op, op_unary);
-		convertSNLIExtractionsToRels(fname_test_matched, fname_test_unary_matched, op, op_unary);
-		convertSNLIExtractionsToRels(fname_dev_mismatched, fname_dev_unary_mismatched, op, op_unary);
-		convertSNLIExtractionsToRels(fname_test_mismatched, fname_test_unary_mismatched, op, op_unary);
+		// convertSNLIExtractionsToRels(fname_test_matched, fname_test_unary_matched,
+		// op, op_unary);
+		// convertSNLIExtractionsToRels(fname_dev_mismatched,
+		// fname_dev_unary_mismatched, op, op_unary);
+		// convertSNLIExtractionsToRels(fname_test_mismatched,
+		// fname_test_unary_mismatched, op, op_unary);
 
 	}
 
 	public static void main(String[] args) throws IOException, ArgumentValidationException, InterruptedException {
-		LinesHandler.snli = true;
-		extractRelationsSNLIAll();
-		// convertSNLIExtractionsToRelsAll();
+		ConstantsParsing.snli = true;
+		// extractRelationsSNLIAll();
+		convertSNLIExtractionsToRelsAll();
 	}
 
 }

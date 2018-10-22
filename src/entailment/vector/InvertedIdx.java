@@ -14,6 +14,7 @@ public class InvertedIdx {
 	ArrayList<Double> PMIs;
 	HashMap<Integer, Integer> sampleIdxToArrIdx;
 	double norm1;
+	double sumPMIs;
 	
 	public InvertedIdx(int uniqueIdx) {
 		this.uniqueIdx = uniqueIdx;
@@ -38,6 +39,15 @@ public class InvertedIdx {
 		this.norm1 = 0;
 		for (double v:vals){
 			this.norm1 += v;
+		}
+	}
+	
+	void setSumPMIs() {
+		this.sumPMIs = 0;
+		for (double v:PMIs) {
+			if (v>0) {
+				this.sumPMIs += v;
+			}
 		}
 	}
 	

@@ -12,8 +12,8 @@ import java.util.TreeSet;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.hp.hpl.jena.graph.Node;
 
+import constants.ConstantsParsing;
 import in.sivareddy.graphparser.ccg.LexicalItem;
 import in.sivareddy.graphparser.cli.CcgParseToUngroundedGraphs;
 import in.sivareddy.graphparser.parsing.LexicalGraph;
@@ -29,7 +29,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	static {
 		acceptableGEStrs = new HashSet<>();
-		for (String s : LinesHandler.accepteds) {
+		for (String s : ConstantsParsing.accepteds) {
 			acceptableGEStrs.add(s);
 		}
 	}
@@ -94,7 +94,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 			mainStr += "#line: " + text + "\n";
 
-			if (!LinesHandler.writeDebugString) {
+			if (!ConstantsParsing.writeDebugString) {
 				mainStr += "#lineId: " + lineId + "\n";
 				mainStr += "#articleId: " + articleId + "\n";
 				mainStr += "#date: " + date + "\n";
@@ -104,6 +104,10 @@ public class PredicateArgumentExtractor implements Runnable {
 
 			String[] predArgStrs = extractPredArgsStrs(text);
 			mainStr += predArgStrs[0];
+			if (ConstantsParsing.writeUnaryRels && !predArgStrs[4].equals("")) {
+				mainStr += "#unary rels:\n";
+				mainStr += predArgStrs[4];
+			}
 			mainStrOnlyNEs += predArgStrs[1];
 
 		} catch (Exception e) {
@@ -114,7 +118,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-		// System.out.println(mainStr);
+//		System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {
@@ -295,7 +299,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	String[] getLeftRightPred(Edge<LexicalItem> edge) {
 		String leftPred = edge.getRelation().getLeft().toString();
-		if (LinesHandler.lemmatizePred) {
+		if (ConstantsParsing.lemmatizePred) {
 			leftPred = leftPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 		}
 
@@ -303,7 +307,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// + leftPred.replaceFirst(edge.getMediator().getWord(),
 		// edge.getMediator().getLemma()));
 		String rightPred = edge.getRelation().getRight().toString();
-		if (LinesHandler.lemmatizePred) {
+		if (ConstantsParsing.lemmatizePred) {
 			rightPred = rightPred.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 		}
 
@@ -345,11 +349,12 @@ public class PredicateArgumentExtractor implements Runnable {
 		int sentIdx = 0;
 
 		List<String> sentences = null;
-		if (LinesHandler.writeDebugString) {
+		if (ConstantsParsing.writeDebugString) {
 			sentences = Util.getSentences(text);
 		}
 
-		List<String> unaryRels = new ArrayList<>();
+		LinkedHashSet<String> unaryRels = new LinkedHashSet<>();
+		Set<Integer> notInterestingEventIdxes = new HashSet<>();// e.g., cigarettes at the bar: cigarettes as an event
 
 		for (List<LexicalGraph> graphs : allGraphs) {
 			if (graphs.size() > 0) {
@@ -359,6 +364,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				if (syntaxIdx >= graphs.size()) {
 					return new String[] { "", "", "", "none" };
 				}
+
 				LexicalGraph ungroundedGraph = graphs.get(syntaxIdx);
 
 				// System.out.println(ungroundedGraph.getSyntacticParse());
@@ -372,13 +378,14 @@ public class PredicateArgumentExtractor implements Runnable {
 					idx2Node.put(node.getWordPosition(), node);
 					// System.out.println(node.getPos());
 				}
-				
+
 				List<LexicalItem> actualNodes = ungroundedGraph.getActualNodes();
-				//it should be that nodes are a subset of the actualNodes, but I won't risk it since I used to work with nodes
-				//and actual nodes are only needed for lemmatizing unary relations.
-				Map<Integer,LexicalItem> idx2ActualNode = new HashMap<>();
-				
-				for (LexicalItem node: actualNodes) {
+				// it should be that nodes are a subset of the actualNodes, but I won't risk it
+				// since I used to work with nodes
+				// and actual nodes are only needed for lemmatizing unary relations.
+				Map<Integer, LexicalItem> idx2ActualNode = new HashMap<>();
+
+				for (LexicalItem node : actualNodes) {
 					idx2ActualNode.put(node.getWordPosition(), node);
 				}
 
@@ -390,7 +397,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				// System.out.println(syntacticParse);
 				// System.out.println(semanticParse);
 
-				if (LinesHandler.writeDebugString) {
+				if (ConstantsParsing.writeDebugString) {
 					mainStr += sentences.get(sentIdx);
 					mainStr += "\nSyntactic Parse:\n";
 					mainStr += syntacticParse + "\n\n";
@@ -478,7 +485,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					}
 					if (!eventTypeStrParticle.equals("")) {
 						String eventStr = edge.getMediator().getWord();
-						if (LinesHandler.lemmatizePred) {
+						if (ConstantsParsing.lemmatizePred) {
 							eventStr = edge.getMediator().getLemma();
 						}
 
@@ -534,8 +541,6 @@ public class PredicateArgumentExtractor implements Runnable {
 					// }
 					//
 					// }
-					
-					
 
 					String modifierStr = getModifierStr(ungroundedGraph, idx2Node, eventIndex);
 
@@ -555,7 +560,7 @@ public class PredicateArgumentExtractor implements Runnable {
 							eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
 					// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 					// true);
-					relInfos.add(relInfo0);
+					relInfos.add(relInfo0);// TODO: maybe don't do this if __
 					// System.out.println("adding rel info0: "+relInfo0.mainStr);
 					if (!modifierStr.equals("")) {
 						predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated,
@@ -607,7 +612,7 @@ public class PredicateArgumentExtractor implements Runnable {
 						// }
 
 						if (relInfo.foundInteresting || !notReallyInteresting(relInfo.mainStr)) {
-							if (LinesHandler.writeDebugString) {
+							if (ConstantsParsing.writeDebugString) {
 								if (first) {
 									mainStr += "binary rels:\n";
 								}
@@ -617,28 +622,30 @@ public class PredicateArgumentExtractor implements Runnable {
 
 							mainStr += relInfo.mainStr;
 							mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
-						} else if (LinesHandler.snli) {// TODO: maybe always have it
+						} else {
+							notInterestingEventIdxes.add(relInfo.eventIdx);
+							if (ConstantsParsing.snli) {// TODO: maybe always have it
 
-							String rMainStr = postProcessSameIndexMainStr(relInfo.mainStr);
-							if (rMainStr.equals(relInfo.mainStr)) {
-								continue;
-							} else {
-								// System.out.println(relInfo.mainStr +" replaced with "+rMainStr);
-							}
-
-							relInfo.mainStr = rMainStr;
-
-							if (LinesHandler.writeDebugString) {
-								if (first) {
-									mainStr += "binary rels:\n";
+								String rMainStr = postProcessSameIndexMainStr(relInfo.mainStr);
+								if (rMainStr.equals(relInfo.mainStr)) {
+									continue;
+								} else {
+									// System.out.println(relInfo.mainStr +" replaced with "+rMainStr);
 								}
+
+								relInfo.mainStr = rMainStr;
+
+								if (ConstantsParsing.writeDebugString) {
+									if (first) {
+										mainStr += "binary rels:\n";
+									}
+								}
+
+								first = false;
+
+								mainStr += relInfo.mainStr;
+								mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
 							}
-
-							first = false;
-
-							mainStr += relInfo.mainStr;
-							mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
-
 						}
 
 						dsStr += relInfo.dsStr + "\n";
@@ -648,12 +655,15 @@ public class PredicateArgumentExtractor implements Runnable {
 				} // end edge
 					// System.out.println(mainStr);
 
-				List<String[]> thisUnaryRels = new ArrayList<>();
+				LinkedHashSet<String[]> thisUnaryRels = new LinkedHashSet<>();
 				Map<String, Integer> eIdx2Count = new HashMap<>();
 
 				for (String rel : semanticParse) {
-					// System.out.println(rel);
-					if (!rel.contains(":e ,") || !rel.contains(":x)")) {
+					if (ConstantsParsing.writeDebugString) {
+						System.out.println(rel);
+					}
+
+					if (!rel.contains(":e ,")) {// TODO: be careful, bug fix by removing || !rel.contains(":x)")
 						continue;
 					}
 
@@ -661,17 +671,22 @@ public class PredicateArgumentExtractor implements Runnable {
 
 					// "arms.around.2 neck G", 2
 					// where 11 is the event idx number
-					String[] unaryRel = getUnariesFromSemParse(rel, idx2ActualNode, sentIdx);
-					thisUnaryRels.add(unaryRel);
-					eIdx2Count.putIfAbsent(unaryRel[1], 0);
-					eIdx2Count.put(unaryRel[1], eIdx2Count.get(unaryRel[1]) + 1);
+					String[] unaryRel = getUnariesFromSemParse(rel, idx2ActualNode, sentIdx, notInterestingEventIdxes);
+					if (unaryRel != null) {
+						thisUnaryRels.add(unaryRel);
+						eIdx2Count.putIfAbsent(unaryRel[1], 0);
+						eIdx2Count.put(unaryRel[1], eIdx2Count.get(unaryRel[1]) + 1);
+					}
 				}
 
 				// just add the ones that aren't recoverable from binaries
 				for (String[] unaryRel : thisUnaryRels) {
-					if (eIdx2Count.get(unaryRel[1]) > 1) {// we'll see this in binary rels
+					if (eIdx2Count.get(unaryRel[1]) > 1) {// we'll see this in binary rels (maybe a refined version,
+															// e.g., particle verbs)
 						continue;
 					}
+//					System.out.println("adding unary rel: " + unaryRel[0] + " " + eIdx2Count.get(unaryRel[1]));
+//					System.out.println(semanticParse);
 					unaryRels.add(unaryRel[0]);
 				}
 
@@ -683,22 +698,27 @@ public class PredicateArgumentExtractor implements Runnable {
 		// System.out.println("relCount: "+relCount+" "+text+" \n "+mainStr);
 		// }
 
-		List<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
-		unaryRels.addAll(unaryRelsFromBinary);
+		Set<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
+		for (String unaryRel : unaryRelsFromBinary) {
+			if (!unaryRels.contains(unaryRel)) {
+				unaryRels.add(unaryRel);
+			}
+		}
+		// unaryRels.addAll(unaryRelsFromBinary);
 
 		String unaryRelsStr = "";
 
-		if (LinesHandler.writeDebugString) {
+		if (ConstantsParsing.writeDebugString) {
 			System.out.println("unary rels: ");
 		}
 		for (String s : unaryRels) {
 			unaryRelsStr += s + "\n";
-			if (LinesHandler.writeDebugString) {
+			if (ConstantsParsing.writeDebugString) {
 				System.out.println(s);
 			}
 		}
 
-		if (LinesHandler.writeDebugString) {
+		if (ConstantsParsing.writeDebugString) {
 			System.out.println("\n");
 		}
 
@@ -706,9 +726,9 @@ public class PredicateArgumentExtractor implements Runnable {
 		return ret;
 	}
 
-	List<String> getUnaryRelsFromBinary(String mainStr) {
+	Set<String> getUnaryRelsFromBinary(String mainStr) {
 		String[] rels = mainStr.split("\n");
-		List<String> unaryRels = new ArrayList<>();
+		LinkedHashSet<String> unaryRels = new LinkedHashSet<>();
 		for (String rel : rels) {
 			String[] thisUnaries = getUnariesFromBinary(rel);
 			if (thisUnaries != null) {
@@ -723,36 +743,54 @@ public class PredicateArgumentExtractor implements Runnable {
 	// A man is running fast.
 	// [running.fast(4:s , 3:e), man(1:s , 1:x), running.1(3:e , 1:x)]
 	// => running.1 man G
-	String[] getUnariesFromSemParse(String rel, Map<Integer, LexicalItem> idx2Node, int sentIdx) {
+
+	// TODO: problem with "The cervical cancer vaccine , approved in 2006 , is
+	// recommended for girls around 11 or 12 ."
+	// twice approve.2
+	String[] getUnariesFromSemParse(String rel, Map<Integer, LexicalItem> idx2Node, int sentIdx,
+			Set<Integer> notInterestingEventIdxes) {
 
 		int firstIdx = rel.indexOf("(") + 1;
 		int lastIdx = rel.indexOf(":e ,");
 
 		int eIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
-		
+		if (notInterestingEventIdxes.contains(eIdx)) {
+			return null;
+		}
+
 		String pred = rel.substring(0, rel.indexOf("("));
-		if (LinesHandler.lemmatizePred) {
+		if (ConstantsParsing.lemmatizePred) {
 			LexicalItem predNode = idx2Node.get(eIdx);
 			pred = pred.replace(predNode.getWord(), predNode.getLemma()).toLowerCase();
 		}
 
 		firstIdx = rel.indexOf(", ") + 2;
-		lastIdx = rel.indexOf(":x");
-		
+		// lastIdx = rel.indexOf(":x");//TODO: be careful, bug fix for unary rels
+		lastIdx = rel.lastIndexOf(":");
+
 		int argIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
+
+		if (argIdx == eIdx) {
+			return null;
+		}
 
 		String arg = idx2Node.get(argIdx).getLemma();
 		String pos = idx2Node.get(argIdx).getPos();
 		boolean isEnt = isEntity(pos);
 		String ret = pred + " " + arg + " " + eIdx + " " + (isEnt ? "E" : "G") + " " + sentIdx;
-
+		if (ConstantsParsing.writeDebugString) {
+			System.out.println("eIdx: " + eIdx);
+		}
 		return new String[] { ret, eIdx + "" };
 	}
 
 	// (visit.1,visit.2) O H => [visit.1 O, visit.2 H]
 	String[] getUnariesFromBinary(String rel) {
+		String modifierStr = "";
 		if (rel.contains("__")) {
-			return null;
+			int modIdx = rel.indexOf("__");
+			modifierStr = rel.substring(0, modIdx);
+			rel = rel.substring(modIdx + 2);
 		}
 		try {
 			// System.out.println("rel is: "+rel);
@@ -760,6 +798,10 @@ public class PredicateArgumentExtractor implements Runnable {
 			String[] unaryPreds = ss[0].substring(1, ss[0].length() - 1).split(",");
 			String u1 = unaryPreds[0] + " " + ss[1] + " " + ss[3] + " " + ss[4].charAt(0) + " " + ss[5];
 			String u2 = unaryPreds[1] + " " + ss[2] + " " + ss[3] + " " + ss[4].charAt(1) + " " + ss[5];
+			if (!modifierStr.equals("")) {
+				u1 = modifierStr + "__" + u1;
+				u2 = modifierStr + "__" + u2;
+			}
 			return new String[] { u1, u2 };
 		} catch (Exception e) {
 			// e.printStackTrace();
@@ -1075,6 +1117,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		addEnts(arg1Index, arg2Index, idx2Node);
 		addGens(accepted, arg1, arg2);
 		BinaryRelInfo relInfo = new BinaryRelInfo();
+		relInfo.eventIdx = eventIndex;
 		relInfo.GEStr = GEStr;
 		relInfo.mainStr += predArgStr + " " + GEStr + " " + sentIdx + "\n";
 
@@ -1119,7 +1162,7 @@ public class PredicateArgumentExtractor implements Runnable {
 						eventTypeStrParticle = type.getEntityType().toString();
 						eventTypeStrParticle = eventTypeStrParticle.substring(0, eventTypeStrParticle.length() - 4);
 
-						if (LinesHandler.lemmatizePred) {
+						if (ConstantsParsing.lemmatizePred) {
 							eventTypeStrParticle = eventTypeStrParticle
 									.replace(edge.getMediator().getWord(), edge.getMediator().getLemma()).toLowerCase();
 						}
@@ -1413,18 +1456,25 @@ public class PredicateArgumentExtractor implements Runnable {
 		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
 		// Mexico and Turkey as examples of countries that Britain would fall behind
 		// without reforms.";
-		// String s = "Two women having drinks and smoking cigarettes at the bar";
+//		String s = "Two women having drinks and smoking cigarettes at the bar";
+		String s = "Stay in contact with friends – in person. Put down the electronics and call a friend. Host a game night. Set “dates” for the winter to meet friends for dinner and a movie. Go shopping together. Meet for coffee. Take a social dance class with friends. Loneliness can also lead to depression. Having a highly active social life can decrease Alzheimer’s disease risk by a surprisingly high 70 percent, according to new findings published in the Journal of the International Neuropsychological Society. So put yourself out there and find a group to share and laugh with!";
 		// String s = "A man wearing glasses and a ragged costume is playing a Jaguar
 		// electric guitar and singing with the accompaniment of a drummer.";
-		String s = "A man is walking and he is talking to his friend";
+		// String s = "A man is walking and he is talking to his friend";
 		// String s = "The man is outdoors.";
 		// String s = "Man on bike with female standing on rear of back with arms around
 		// his neck.";
 		// String s = "A woman in a black coat eats dinner while her dog looks on.";
 
 		// String s = "Tom managed to pass the exam.";
-		// String s = "John picked up the book.";
-		// String s = "What county is Heathrow airport in?";
+		// String s = "Tom just visited Harry at home.";
+		// String s = "Tom visited Harry at home.";
+		// String s = "Tom laughed.";
+		// String s = "Tom gave up his dream";
+		// String s = "John ate a banana.";
+		// String s = "Chris sees Asha pay Boyang.";
+		// String s = "The cervical cancer vaccine , approved in 2006 , is recommended
+		// for girls around 11 or 12 .";
 		// String s = "what is the first book Sherlock Holmes appeared in?";
 		// String s = "what type of car does michael weston drive?";
 		// String s = "location_1 be combined with location_2";
@@ -1437,6 +1487,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);
+		// System.out.println(exPrss[4]);
 	}
 
 	public static boolean isEntity(String pos) {
@@ -1488,4 +1539,5 @@ class BinaryRelInfo {
 	String dsStr;
 	boolean foundInteresting = false;
 	String GEStr;
+	int eventIdx;
 }

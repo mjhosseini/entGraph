@@ -44,9 +44,9 @@ public class Edge implements Comparable<Edge>{
 	public static void main(String[] args) {
 		Edge e1 = new Edge(5, 10, -1);
 		Edge e2 = new Edge(5, 10, 2);
-		System.out.println(e1.hashCode());
-		System.out.println(e2.hashCode());
-		System.out.println(e1.equals(e2));
+//		System.out.println(e1.hashCode());
+//		System.out.println(e2.hashCode());
+//		System.out.println(e1.equals(e2));
 		
 		HashMap<Edge,Float> s = new HashMap<>();
 		s.put(e1,2f);

@@ -2,9 +2,9 @@ package entailment.entityLinking;
 
 public class SimpleSpot implements Comparable<SimpleSpot> {
 	public String spot;
-	public int count;
+	public double count;
 
-	public SimpleSpot(String spot, int count) {
+	public SimpleSpot(String spot, double count) {
 		this.spot = spot;
 		this.count = count;
 	}

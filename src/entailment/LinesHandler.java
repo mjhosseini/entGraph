@@ -27,31 +27,14 @@ import java.util.concurrent.TimeUnit;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import constants.ConstantsParsing;
 import entailment.entityLinking.SimpleSpot;
 import it.cnr.isti.hpc.dexter.rest.client.DexterRestClient;
 import it.cnr.isti.hpc.dexter.rest.domain.CandidateSpot;
 import it.cnr.isti.hpc.dexter.rest.domain.SpottedDocument;
 
 public class LinesHandler {
-	final int maxLinesToRun = 100000;// This is because of the memory leak in
-										// easyCCG
-	final int numThreads = 15;
-	final int maxMBallowd = 14000;
-	// final int maxMBallowd = 140;
-	public static boolean convToEntityLinked = false;// Must be always false, we do linking separately!
-
-	// static String[] accepteds = new String[] { "GE", "EG", "EE" };
-	static String[] accepteds = new String[] { "GE", "EG", "EE"};//
-	// TODO:// remove
-
-	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1
-	public static boolean useQuestionMod = false;// Always set if to false!
-	public static boolean writeDebugString = false;
-	public static boolean snli = false;//a few hacks for snli ds
-
-	public static int nbestParses = 1;
 	
-
 	int numPortionsToSkip;
 	BufferedReader br;
 	int lineNumber;
@@ -107,7 +90,7 @@ public class LinesHandler {
 						new OutputStreamWriter(new FileOutputStream(f1, numPortionsToSkip > 0), "UTF-8"));
 				opMainStrsOnlyNEs = new BufferedWriter(
 						new OutputStreamWriter(new FileOutputStream(f2, numPortionsToSkip > 0), "UTF-8"));
-				if (convToEntityLinked) {
+				if (ConstantsParsing.convToEntityLinked) {
 					int dotIdx = args[0].indexOf('.');
 					String jsonName = args[0].substring(0, dotIdx) + ".json";
 					opJson = new PrintStream(new File(jsonName));
@@ -139,15 +122,15 @@ public class LinesHandler {
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		}
-		if (convToEntityLinked) {
+		if (ConstantsParsing.convToEntityLinked) {
 			spots = new ArrayList<ArrayList<String>>();
 			wikiNames = new ArrayList<ArrayList<String>>();
 			lines = new ArrayList<String>();
 
 		}
 
-		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreads);
-		threadPool = new ThreadPoolExecutor(numThreads, numThreads, 600, TimeUnit.SECONDS, queue);
+		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(ConstantsParsing.numThreads);
+		threadPool = new ThreadPoolExecutor(ConstantsParsing.numThreads, ConstantsParsing.numThreads, 600, TimeUnit.SECONDS, queue);
 		// to silently discard rejected tasks. :add new
 		// ThreadPoolExecutor.DiscardPolicy()
 
@@ -200,7 +183,7 @@ public class LinesHandler {
 				if (lineNumber % 1000 == 0) {
 					long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
 					System.err.println("usedMB: " + usedMb);
-					if (usedMb >= maxMBallowd) {
+					if (usedMb >= ConstantsParsing.maxMBallowd) {
 						memoryExceed = true;
 						break;
 					}
@@ -236,7 +219,7 @@ public class LinesHandler {
 
 			if (lineNumber % 10 == 0) {
 				writeOutPut();
-				if (convToEntityLinked) {
+				if (ConstantsParsing.convToEntityLinked) {
 					writeConvertedToEntityLinked();
 				}
 			}
@@ -256,7 +239,7 @@ public class LinesHandler {
 		writeEnts();
 		writeGens();
 		// System.err.println("after write enty");
-		if (convToEntityLinked) {
+		if (ConstantsParsing.convToEntityLinked) {
 			writeConvertedToEntityLinked();
 		}
 
@@ -510,7 +493,7 @@ public class LinesHandler {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		// breakFile();
 		// testDexter();
-		LinesHandler.useQuestionMod = false;
+		ConstantsParsing.parseQuestions = false;
 		long t0 = System.currentTimeMillis();
 		// convertPredArgsToJson(args);
 		// teshashMap();

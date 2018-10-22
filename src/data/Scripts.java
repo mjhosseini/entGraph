@@ -21,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import constants.ConstantsAgg;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
@@ -220,7 +221,7 @@ public class Scripts {
 	static void testEntTypes() throws IOException {
 		PrintStream op = new PrintStream("entToFigerTypes.txt");
 		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
-		EntailGraphFactoryAggregator.isTyped = true;
+		ConstantsAgg.isTyped = true;
 		BufferedReader br = new BufferedReader(new FileReader("entTypes.txt"));
 		String line;
 		while ((line = br.readLine()) != null) {
@@ -783,7 +784,7 @@ public class Scripts {
 		// testEntTypes();
 		// trueCase();
 		
-		convertDecomposableAttentionProbsToFlat("out_test_probs.txt");
+		convertDecomposableAttentionProbsToFlat(args[0]);
 
 //		extractRelationsSNLIAll();
 

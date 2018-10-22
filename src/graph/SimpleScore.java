@@ -1,9 +1,9 @@
 package graph;
 
 public class SimpleScore implements Comparable<SimpleScore>{
-	float score;
-	String pred1;
-	String pred2;
+	public float score;
+	public String pred1;
+	public String pred2;
 	
 	public SimpleScore(String pred1, String pred2, float score) {
 		this.pred1 = pred1;
