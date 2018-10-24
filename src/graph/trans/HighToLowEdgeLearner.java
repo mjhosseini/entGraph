@@ -1,4 +1,4 @@
-package graph;
+package graph.trans;
 
 import java.util.Collections;
 import java.util.Comparator;

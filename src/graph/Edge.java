@@ -6,9 +6,9 @@ import java.util.HashSet;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 public class Edge implements Comparable<Edge>{
-	int i;
-	int j;
-	float sim;
+	public int i;
+	public int j;
+	public float sim;
 	int hashCode = -1;
 	public Edge(int i, int j, float sim) {
 		this.i = i;

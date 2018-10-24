@@ -1,4 +1,4 @@
-package graph;
+package graph.trans;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.jgrapht.graph.DefaultEdge;
 
+import constants.ConstantsTrans;
 import eu.excitementproject.eop.common.datastructures.BidirectionalMap;
 import eu.excitementproject.eop.common.datastructures.SimpleBidirectionalMap;
 import eu.excitementproject.eop.globalgraphoptimizer.defs.Pair;
@@ -20,6 +21,9 @@ import eu.excitementproject.eop.globalgraphoptimizer.graph.NodeGraph;
 import eu.excitementproject.eop.globalgraphoptimizer.graph.RelationNode;
 import eu.excitementproject.eop.globalgraphoptimizer.graph.RuleEdge;
 import eu.excitementproject.eop.globalgraphoptimizer.score.MapLocalScorer;
+import graph.Node;
+import graph.Oedge;
+import graph.PGraph;
 
 public class EOPTNF {
 
@@ -66,7 +70,7 @@ public class EOPTNF {
 
 		NodeGraph nodeGraph = new NodeGraph(graph);
 
-		if (PGraph.fullTNF) {
+		if (ConstantsTrans.fullTNF) {
 			EfficientlyCorrectHtlLearner edgeLearner = null;
 
 			try {

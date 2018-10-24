@@ -1,9 +1,13 @@
-package graph;
+package graph.trans;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import graph.Node;
+import graph.Oedge;
+import graph.PGraph;
 
 //Builds entailment graph by first doing spectral clustering into C clusters. Then run ILP between clusters.
 

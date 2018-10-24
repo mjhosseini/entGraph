@@ -1,4 +1,4 @@
-package graph;
+package graph.softConst;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -13,6 +13,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
+
+import constants.ConstantsSoftConst;
+import graph.PGraph;
+import graph.SimpleScore;
 
 public class LabelPropagateMN implements Runnable {
 
@@ -241,7 +245,7 @@ public class LabelPropagateMN implements Runnable {
 
 						// System.out.println("c: "+c+" "+p+" "+q);
 
-						if (c <= 0 || (c <= TypePropagateMN.lmbda && c >= -TypePropagateMN.lmbda)) {
+						if (c <= 0 || (c <= ConstantsSoftConst.lmbda && c >= -ConstantsSoftConst.lmbda)) {
 							removableEdges.add(e);
 							continue;
 						} else {
@@ -252,9 +256,9 @@ public class LabelPropagateMN implements Runnable {
 							double denom = pgraph.edgeToMNWeight.get(p + "#" + q);
 							double w;
 							if (c > 0) {
-								w = (c - TypePropagateMN.lmbda) / denom;
+								w = (c - ConstantsSoftConst.lmbda) / denom;
 							} else {//this never happens as everything in c is pos, and so is c!
-								w = (c + TypePropagateMN.lmbda) / denom;
+								w = (c + ConstantsSoftConst.lmbda) / denom;
 							}
 
 							// System.out.println(
@@ -300,7 +304,7 @@ public class LabelPropagateMN implements Runnable {
 			gs.add(pgraph.g0);
 			gs.add(pgraph.gMN);
 
-			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_')) + TypePropagateMN.tPropSuffix;
+			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_')) + ConstantsSoftConst.tPropSuffix;
 			writeTPropResults(pgraph, gs, fnameTProp);
 			System.out.println("results written for: "+fnameTProp);
 		}

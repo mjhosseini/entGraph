@@ -7,7 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,78 +15,23 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import constants.ConstantsGraphs;
+import constants.ConstantsMNEmbIter;
 import entailment.Util;
+import graph.EmbIter.MNEmbIter;
 
 //entry point for running transitive graph making methods + iterative embedding (which never worked well)
 public class PGraph implements Comparable<PGraph> {
 
-	public static boolean checkFrgVio = false;
-	// public static boolean origBerantFRG = true;
-	public static boolean fullTNF = false;// Must be true. false means HTL(-FRG)
-	public static TransitiveMethod transMethod = TransitiveMethod.HTLFRG;
-	public static int specILPMaxClusterAllowed = 100;// for SpectralILP
-	public static int specILPMaxClusterSizeAllowed = 100;// for SpectralILPWithin (just an approximation)
-	public static boolean shouldReplaceOutputs = false;// if true, will solve everything, otherwise ignores the files it
-														// already has!
-
-	public static boolean removeStopPreds = false;
-	public static boolean shouldWrite = false;
-	public static boolean formBinaryGraph = false;
-	public static boolean transitive = false;
-	public static int numTNFThreads = 16;
-
-	public static boolean emb = false;
-	public static boolean weightEdgeSimilarities = true;
-	public static int maxNeighs = 1000;// more than 30!
-	public static float relMinSim = -1f;// -1 if don't want to
-	static String embSuffix = "_embsimsTransE.txt";
-	static String fpath = "../../python/gfiles/ent/ccg7.sim";
-
-	 public static String suffix = "_sim.txt";
-	public static FeatName featName = FeatName.BINC;
-//	public static FeatName featName = FeatName.Iter;
-//	public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
-	public static String graphPostFix = "_" + transMethod + "NOFRG_san.txt";
-	// static final String tfpath = "../../python/gfiles/ent/target_rels_CCG.txt";//
-	static String allExamplesPath = "../../python/gfiles/ent/all_new_comb_rels.txt";
-	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
-	// public static String root =
-	// "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
-	// public static String root =
-	// "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
-
-	// static final String root =
-	// "../../python/gfiles/typedEntGrDir_aida_LDA15_2_2/";
-	static int maxEmbIter = 3;
-	int sortIdx = -1;// the index of the graph after sorting all the graphs based on their sizes. 0
-						// is the largets.
-
-//	public static float edgeThreshold = 0.01f;// All the experiments are done by threshold = .01. Never change this!
-//												// However, it isn't
-//												// really worth it! .05 reduces edges by half, but not worth it
-	
-//	public static float edgeThreshold = 0.0215112528889f;//cg pr, pr = .75
-	
-//	public static float edgeThreshold = 0.14436184f; //typed binc, pr = .79
-	public static float edgeThreshold = 0.18739995f;//, pr = .82
-//	public static float edgeThreshold = 0.08007261f;//typed binc, pr = .75
-	
-
+	//fields
 	static Map<FeatName, String> featNameToStr;
+	public int sortIdx = -1;// the index of the graph after sorting all the graphs based on their sizes. 0 is the largest.
 
 	static {
 		featNameToStr = new HashMap<>();
@@ -100,25 +44,24 @@ public class PGraph implements Comparable<PGraph> {
 		featNameToStr.put(FeatName.Iter, "iter 1");
 	}
 
-	static int allEdges = 0;
-	static int allEdgesRemained = 0;
+	public static int allEdges = 0;
+	public static int allEdgesRemained = 0;
 
-	String name;
-	String types;
-	String fname;
+	public String name;
+	public String types;
+	public String fname;
 	public List<Node> nodes;
 	public Map<Integer, Node> idx2node;
 	public Map<String, Node> pred2node;
 
-	public static Map<String, List<PredSim>> rels2Sims;
-	public static Map<String, List<PredSim>> invRels2Sims;
-	public static Set<String> targetRels = new HashSet<>();
 	public static Set<String> targetRelsAddedToGraphs = new HashSet<>();
 	public static Map<String, Set<String>> types2TargetRels = new HashMap<>();
 	public ArrayList<Edge> sortedEdges;
-	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
-	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
-	Map<String, Double> edgeToMNWeight;
+	
+	//These three fields should be actually in softGraphs, but for simplicity, I'm not changing the code
+	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
+	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
+	public Map<String, Double> edgeToMNWeight;
 
 	// static List<SimpleScore> scores = new ArrayList<>();
 
@@ -150,84 +93,10 @@ public class PGraph implements Comparable<PGraph> {
 		this.setSortedEdges();
 		// Now, build the graph using embeddings
 
-		if (PGraph.emb) {
-			int N = this.nodes.size();
-			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0 = formWeightedGraph(sortedEdges, N);
-			List<String> prevIds = new ArrayList<>();
-			Map<String, Integer> prevPred2Node = new HashMap<>();
-
-			for (int i = 0; i < N; i++) {
-				prevIds.add(this.nodes.get(i).id);
-				prevPred2Node.put(prevIds.get(i), i);
-			}
-
-			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> nextG = g0;
-
-			List<DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge>> gs = new ArrayList<>();
-			List<List<String>> allPredsList = new ArrayList<>();
-			gs.add(g0);
-			List<String> nextIds = new ArrayList<>();
-			for (String s : prevIds) {
-				nextIds.add(s);
-			}
-			allPredsList.add(nextIds);
-
-			for (int k = 0; k < PGraph.maxEmbIter; k++) {
-				System.out.println("iter: " + (k + 1));
-				nextG = getNextEmbeddingGr(nextG, PGraph.invRels2Sims, prevIds, prevPred2Node, targetRels,
-						k == PGraph.maxEmbIter - 1);
-				gs.add(nextG);
-				nextIds = new ArrayList<>();
-				for (String s : prevIds) {
-					nextIds.add(s);
-				}
-				allPredsList.add(nextIds);
-				System.out.println("num preds: " + nextIds.size());
-			}
-			String fnameEmbeds = fname.substring(0, fname.lastIndexOf('_')) + PGraph.embSuffix;
-			writeEmbeddingResults(gs, allPredsList, fnameEmbeds);
-		}
+		
 	}
 
-	void writeEmbeddingResults(List<DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge>> gs,
-			List<List<String>> allPredsList, String fnameEmbeds) {
-		// list of all predicates can be found from the last graph. The indexes
-		// are also the same (if existing) with previous graphs
-		PrintStream op = null;
-		try {
-			op = new PrintStream(new File(fnameEmbeds));
-		} catch (Exception e) {
-		}
-		List<String> predList = allPredsList.get(allPredsList.size() - 1);
-		op.println("types: " + this.name + ", " + " label propagation num preds: " + predList.size());
-		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> lastG = gs.get(gs.size() - 1);
-		for (int i = 0; i < predList.size(); i++) {
-			op.println("predicate: " + predList.get(i));
-			op.println("num max neighbors: " + lastG.outgoingEdgesOf(i).size());
-			op.println();
-			for (int iter = 0; iter < gs.size(); iter++) {
-				DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> thisG = gs.get(iter);
-				op.println("iter " + iter + " sims");
-				List<SimpleScore> scores = new ArrayList<>();
-				if (thisG.containsVertex(i)) {
-					for (DefaultWeightedEdge e : thisG.outgoingEdgesOf(i)) {
-						int j = thisG.getEdgeTarget(e);
-						double w = thisG.getEdgeWeight(e);
-						scores.add(new SimpleScore("", predList.get(j), (float) w));
-					}
-
-					Collections.sort(scores, Collections.reverseOrder());
-					for (SimpleScore sc : scores) {
-						op.println(sc.pred2 + " " + sc.score);
-					}
-				}
-				op.println();
-			}
-		}
-		op.close();
-	}
-
-	List<Edge> getSortedEdges() {
+	public List<Edge> getSortedEdges() {
 		return sortedEdges;
 	}
 
@@ -248,51 +117,6 @@ public class PGraph implements Comparable<PGraph> {
 		this.sortedEdges = ret;
 	}
 
-	// typed similar ones that are in pgraph. We force the types to be the same
-	// (and same order)
-	// onlyGraph: get neighbors only from the graph (don't wanna add anymore!)
-	List<PredSim> getTypedPredSimList(String rId, Map<String, List<PredSim>> invrels2Sims,
-			Map<String, List<PredSim>> currentInvPredToSimList, Map<String, Integer> curPred2Node, boolean onlyGraph) {
-
-		if (onlyGraph && currentInvPredToSimList.containsKey(rId)) {
-			return currentInvPredToSimList.get(rId);
-		}
-
-		String[] ss = rId.split("#");
-		String rawPred = ss[0];// without types
-		String type1 = ss[1];
-		String type2 = ss[2];
-
-		List<PredSim> pss = invrels2Sims.get(rawPred);
-
-		if (pss == null) {
-			pss = new ArrayList<>();
-			pss.add(new PredSim(rawPred, 1));
-		}
-
-		List<PredSim> ret = new ArrayList<>();
-
-		// System.out.println("returning simlist of " + rId);
-
-		for (PredSim ps : pss) {
-			String cand = ps.pred + "#" + type1 + "#" + type2;
-			if (onlyGraph && !curPred2Node.containsKey(cand)) {
-				continue;
-			}
-			ret.add(new PredSim(cand, ps.sim));
-			// System.out.println(ret.get(ret.size() - 1));
-
-		}
-
-		// if (ret.size() > 1) {
-		// System.out.println("OK, found a similar one!");
-		// }
-		if (onlyGraph) {
-			currentInvPredToSimList.put(rId, ret);
-		}
-		return ret;
-	}
-
 	/*
 	 * 
 	 * 2) for p#q##t1#t2#a, in a graph for t1 and t2, we were checking both p#t1#t2
@@ -302,294 +126,7 @@ public class PGraph implements Comparable<PGraph> {
 	 */
 	// prevIds will change (new ids might get added)
 
-	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> getNextEmbeddingGr(
-			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0, Map<String, List<PredSim>> invrels2Sims,
-			List<String> prevIds, Map<String, Integer> prevPred2Node, Set<String> targetRels, boolean addNewRel) {
-
-		int prevN = g0.vertexSet().size();
-		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g = new DefaultDirectedWeightedGraph<>(
-				DefaultWeightedEdge.class);
-
-		Map<String, Integer> curPred2Node = new HashMap<>();
-		List<String> curIds = new ArrayList<>();
-
-		for (int i = 0; i < prevN; i++) {
-			g.addVertex(i);
-			curIds.add(prevIds.get(i));
-			curPred2Node.put(prevIds.get(i), i);
-		}
-
-		int curN = prevN;
-
-		if (addNewRel) {
-			// Now, add nodes from target relations!
-			for (int r = 0; r < prevN; r++) {
-				// System.out.println(prevIds.get(r));
-				List<PredSim> pss = getTypedPredSimList(prevIds.get(r), invrels2Sims, null, null, false);
-
-				for (PredSim ps : pss) {
-					String rawPred = ps.pred.substring(0, ps.pred.indexOf("#"));
-					// System.out.println("rawPred: " + rawPred);
-					if (!curPred2Node.containsKey(ps.pred) && targetRels.contains(rawPred)) {
-						g.addVertex(curN);
-						curIds.add(ps.pred);
-						curPred2Node.put(ps.pred, curN);
-						// System.out.println("adding new node: " +
-						// curIds.get(curN)
-						// + " based on " + prevIds.get(r));
-						curN++;
-					}
-				}
-			}
-
-			System.out.println("new nodes added: " + prevN + " " + curN);
-
-		}
-
-		Map<String, List<PredSim>> currentInvPredToSimList = new HashMap<>();
-
-		// sum of similarities of all rs that have p around them...
-		// double[] neighWeights = new double[curN];
-		// Map<Edge, Double> edgeSumWeights = new HashMap<>();
-
-		int numAllProp = 0;
-
-		for (int r = 0; r < g0.vertexSet().size(); r++) {
-			if (r % 100 == 0) {
-				System.out.println("r: " + r + " " + numAllProp);
-			}
-
-			List<PredSim> pss = getTypedPredSimList(curIds.get(r), invrels2Sims, currentInvPredToSimList, curPred2Node,
-					true);
-
-			// for (PredSim ps : pss) {
-			//
-			// if (!curPred2Node.containsKey(ps.pred)) {
-			// // System.out.println("can't find: " + ps.pred);
-			// continue;
-			// }
-			// int p = curPred2Node.get(ps.pred);
-			// neighWeights[p] += ps.sim;
-			// }
-
-			for (DefaultWeightedEdge e : g0.outgoingEdgesOf(r)) {
-				int rp = g0.getEdgeTarget(e);
-				// DefaultWeightedEdge e0 = g0.getEdge(r, rp);// It must have
-				// the
-				// // edge because it's
-				// // a superset of
-				// // gDits!
-				double sim = g0.getEdgeWeight(e);
-
-				List<PredSim> qss = getTypedPredSimList(curIds.get(rp), invrels2Sims, currentInvPredToSimList,
-						curPred2Node, true);
-
-				// System.out.println("curId: " + curIds.get(r));
-				// System.out.println("neigh: " + curIds.get(rp));
-
-				for (PredSim ps : pss) {
-					// if (!curPred2Node.containsKey(ps.pred)) {
-					// // System.out.println("no pred " + ps.pred);
-					// continue;
-					// }
-					int p = curPred2Node.get(ps.pred);
-
-					for (PredSim qs : qss) {
-						// if (!curPred2Node.containsKey(qs.pred)) {
-						// continue;
-						// }
-
-						int q = curPred2Node.get(qs.pred);
-
-						// System.out.println("avg for 1: " + ps);
-						// System.out.println("avg for 2: " + qs);
-
-						double w;
-						DefaultWeightedEdge ee;
-						if (!g.containsEdge(p, q)) {
-							ee = g.addEdge(p, q);
-							numAllProp++;
-							g.setEdgeWeight(ee, 0);
-							w = 0;
-						} else {
-							ee = g.getEdge(p, q);
-							w = g.getEdgeWeight(ee);
-						}
-						if (!PGraph.weightEdgeSimilarities) {
-							g.setEdgeWeight(ee, w + sim * ps.sim * qs.sim);
-						} else {
-							List<Integer> l = new ArrayList<>();
-							// r and rp are always in g0. p and q might be new!
-							if (p < prevN) {
-								l.add(g0.outDegreeOf(p));
-							}
-							l.add(g0.outDegreeOf(r));
-							if (q < prevN) {
-								l.add(g0.inDegreeOf(q));
-							}
-
-							l.add(g0.inDegreeOf(rp));
-
-							double beta = Math.max(Collections.min(l), 1);
-
-							g.setEdgeWeight(ee, w + sim * ps.sim * qs.sim * beta);
-						}
-
-						// if (sim != 0) {// similar to python. Avg only if
-						// r->rp
-						// exists!
-						// ImmutablePair<Integer, Integer> ip = new
-						// ImmutablePair<Integer, Integer>(p, q);
-						// Edge mye = new Edge(p, q, -1);
-						// if (!edgeSumWeights.containsKey(mye)) {
-						// edgeSumWeights.put(mye, 0.0);
-						// }
-						// // System.out.println("sim1, sim2: " + ps.sim + " "
-						// // + qs.sim);
-						// edgeSumWeights.put(mye, edgeSumWeights.get(mye) +
-						// (ps.sim * qs.sim));
-						// }
-
-					}
-				}
-			}
-		}
-
-		Map<String, List<PredSim>> currentPredToSimList = new HashMap<>();
-
-		for (int p = 0; p < curN; p++) {
-			if (p % 100 == 0) {
-				System.out.println("p: " + p);
-			}
-			if (!g.containsEdge(p, p)) {
-				g.addEdge(p, p);
-			}
-
-			List<PredSim> pss = getTypedPredSimList(curIds.get(p), PGraph.rels2Sims, currentPredToSimList, curPred2Node,
-					true);
-
-			DefaultWeightedEdge ee = g.getEdge(p, p);
-			g.setEdgeWeight(ee, 1);
-
-			for (DefaultWeightedEdge e : g.outgoingEdgesOf(p)) {
-				int q = g.getEdgeTarget(e);
-				if (p == q) {
-					continue;
-				}
-
-				List<PredSim> qss = getTypedPredSimList(curIds.get(q), PGraph.rels2Sims, currentPredToSimList,
-						curPred2Node, true);
-
-				double wCor = 0;
-				// For pairs that both are in the graph, we consider their feats
-				// (even if zero)
-				for (PredSim ps : pss) {
-					int r = curPred2Node.get(ps.pred);
-					if (curPred2Node.get(ps.pred) >= prevN) {
-						// System.out.println("cont1: " + curIds.get(p) + " " +
-						// ps.pred + " " + curPred2Node.get(ps.pred)
-						// + " " + prevN);
-						continue;
-					}
-					for (PredSim qs : qss) {
-
-						if (curPred2Node.get(qs.pred) >= prevN) {
-							// System.out.println("cont2: " + curIds.get(q) + ""
-							// + qs.pred + " "
-							// + curPred2Node.get(qs.pred) + " " + prevN);
-							continue;
-						}
-						// else{
-						// System.out.println("add w: " + ps +" " + qs);
-						// }
-						if (!PGraph.weightEdgeSimilarities) {
-							wCor += ps.sim * qs.sim;
-						} else {
-							int rp = curPred2Node.get(qs.pred);
-
-							List<Integer> l = new ArrayList<>();
-							// r and rp are always in g0. p and q might be new!
-							if (p < prevN) {
-								l.add(g0.outDegreeOf(p));
-							}
-							l.add(g0.outDegreeOf(r));
-							if (q < prevN) {
-								l.add(g0.inDegreeOf(q));
-							}
-
-							l.add(g0.inDegreeOf(rp));
-
-							double beta = Math.max(Collections.min(l), 1);
-							wCor += ps.sim * qs.sim * beta;
-						}
-					}
-				}
-
-				// double w = g.getEdgeWeight(e) / (neighWeights[p] *
-				// neighWeights[q]);
-
-				// ImmutablePair<Integer, Integer> ip = new
-				// ImmutablePair<Integer, Integer>(p, q);
-				// Edge mye = new Edge(p, q, -1);
-				double w;
-				// if (edgeSumWeights.containsKey(mye)) {
-				// w = g.getEdgeWeight(e) / edgeSumWeights.get(mye);
-
-				w = g.getEdgeWeight(e) / wCor;
-
-				// System.out.println("avg: " + w + " " + g.getEdgeWeight(e) + "
-				// " + wCor);
-				// System.out.println("avg: "+curIds.get(p) + " " +
-				// curIds.get(q) + " ");
-
-				if (w > 1.01) {
-					System.out.println("bug: " + w + " " + g.getEdgeWeight(e) + " " + wCor);
-					System.out.println(curIds.get(p) + " " + curIds.get(q) + " ");
-				}
-				if (wCor != 1) {
-					g.setEdgeWeight(e, w);
-				}
-
-				// }
-				// else {
-				// // System.out.println("no wight: "+curIds.get(p)+"
-				// // "+curIds.get(q));
-				// w = g.getEdgeWeight(e);
-				// }
-
-				// double prevSim = 0;
-				// if (g0.containsEdge(p, q)) {
-				// ee = g0.getEdge(p, q);
-				// prevSim = g0.getEdgeWeight(ee);
-				// }
-				// if (w != prevSim) {
-				// // System.out.println("emb sim: " + curIds.get(p) + " " +
-				// // curIds.get(q) + " " + w);
-				// // System.out.println("prev sim: " + prevSim);
-				// }
-			}
-		}
-
-		//
-		// List<PredSim> pss = rels2Sims.get(r);
-		//
-		// for (DefaultWeightedEdge e : g.outgoingEdgesOf(p)) {
-		//
-		// }
-		// }
-
-		// make prevIds and prevPred2Node equal current ones
-		prevPred2Node.clear();
-		prevIds.clear();
-		for (String p : curIds) {
-			prevIds.add(p);
-			prevPred2Node.put(p, curPred2Node.get(p));
-		}
-		// System.out.println("here prevId size: "+prevIds.size());
-		return g;
-	}
-
-	DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> formWeightedGraph(List<Edge> sortedEdges, int N) {
+	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> formWeightedGraph(List<Edge> sortedEdges, int N) {
 		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0 = new DefaultDirectedWeightedGraph<>(
 				DefaultWeightedEdge.class);
 		// System.out.println("sorted edges: "+sortedEdges);
@@ -617,7 +154,7 @@ public class PGraph implements Comparable<PGraph> {
 		// sortedEdges = null;
 	}
 
-	float getW(int i, int j) {
+	public float getW(int i, int j) {
 		if (i == j) {
 			return 1;
 		} else {
@@ -633,9 +170,9 @@ public class PGraph implements Comparable<PGraph> {
 	static {
 
 		try {
-			read_rels_sim(fpath, true, true);
+			
 			// targetRels = readTargetRels(tfpath);
-			if (TypePropagateMN.addTargetRels) {
+			if (ConstantsGraphs.addTargetRels) {
 				setTargetRelsMap();
 			}
 		} catch (NumberFormatException | IOException e) {
@@ -695,7 +232,7 @@ public class PGraph implements Comparable<PGraph> {
 					simName = line.toLowerCase();
 				} else {
 
-					if (!simName.contains(featNameToStr.get(PGraph.featName)) || simName.contains("unary")
+					if (!simName.contains(featNameToStr.get(ConstantsGraphs.featName)) || simName.contains("unary")
 							|| simName.contains("sep")) {
 						continue;
 					}
@@ -717,7 +254,7 @@ public class PGraph implements Comparable<PGraph> {
 						continue;
 					}
 					allEdges++;
-					if (sim < edgeThreshold) {
+					if (sim < ConstantsGraphs.edgeThreshold) {
 						// System.out.println("lt: " + sim);
 						continue;
 					}
@@ -739,7 +276,7 @@ public class PGraph implements Comparable<PGraph> {
 					// if (sim > .5) {
 					// PGraph.scores.add(new SimpleScore(node.id, nNode.id, sim));
 					// }
-					if (!PGraph.removeStopPreds
+					if (!ConstantsGraphs.removeStopPreds
 							|| (!Util.stopPreds.contains(node.id) && !Util.stopPreds.contains(nNode.id))) {
 						node.addNeighbor(nIdx, sim);
 					}
@@ -748,7 +285,7 @@ public class PGraph implements Comparable<PGraph> {
 		}
 
 		// Now, add the target rels without any neighbors
-		if (TypePropagateMN.addTargetRels) {
+		if (ConstantsGraphs.addTargetRels) {
 			Set<String> targetPreds = null;
 			String[] ss = types.split("#");
 			String types2 = ss[1] + "#" + ss[0];
@@ -788,153 +325,11 @@ public class PGraph implements Comparable<PGraph> {
 
 	}
 
-	void insertNode(Node n) {
+	public void insertNode(Node n) {
 		// System.out.println("adding node: "+n.id+" "+n.idx);
 		nodes.add(n);
 		idx2node.put(n.idx, n);
 		pred2node.put(n.id, n);
-	}
-
-	static List<Float> getLambdas1() {
-		List<Float> lmbdas = new ArrayList<>();
-		float maxLmbda = .05f;
-		int numLmbdas = 10;
-		float minLambda = maxLmbda / numLmbdas;
-		for (float lmbda = minLambda; lmbda <= maxLmbda; lmbda += (maxLmbda - minLambda) / (numLmbdas - 1)) {
-			lmbdas.add(lmbda);
-		}
-		lmbdas.add(.06f);
-		lmbdas.add(.1f);
-		lmbdas.add(.2f);
-		return lmbdas;
-	}
-
-	static List<Float> getLambdas2() {
-		List<Float> lmbdas = new ArrayList<>();
-		lmbdas.add(.03f);
-		lmbdas.add(.04f);
-		lmbdas.add(.05f);
-		lmbdas.add(.06f);
-		lmbdas.add(.1f);
-		lmbdas.add(.2f);
-		return lmbdas;
-	}
-
-	static List<Float> getLambdas3(float lmbda) {
-		List<Float> lmbdas = new ArrayList<>();
-		lmbdas.add(lmbda);
-		return lmbdas;
-	}
-
-	public static void main(String[] args) {
-		System.err.println("start!");
-		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.WARN);
-		// String root = "../../python/gfiles/typedEntGrDir_aida/";
-		// PGraph pgraph = new PGraph(root+"location#person_sim.txt");
-
-		// TODO: be careful
-		List<Float> lmbdas = getLambdas2();// (.08f);
-
-		// List<Float> lmbdas = new ArrayList<>();
-		// // lmbdas.add(.04f);
-		// lmbdas.add(.12f);// was .06
-		// lmbdas.add(.1f);
-		// lmbdas.add(.2f);
-
-		// List<Float> lmbdas = new ArrayList<>();
-		// lmbdas.add(.04f);
-		// lmbdas.add(.08f);
-		// lmbdas.add(.12f);
-
-		File folder = new File(root);
-		File[] files = folder.listFiles();
-		Arrays.sort(files);
-
-		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numTNFThreads);
-		ThreadPoolExecutor threadPool = new ThreadPoolExecutor(numTNFThreads, numTNFThreads, 600, TimeUnit.HOURS,
-				queue);
-		// to silently discard rejected tasks. :add new
-		// ThreadPoolExecutor.DiscardPolicy()
-
-		threadPool.setRejectedExecutionHandler(new RejectedExecutionHandler() {
-			@Override
-			public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-				// this will block if the queue is full
-				try {
-					executor.getQueue().put(r);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-
-		// boolean seenLoc = false;// TODO: be careful
-
-		int gc = 0;
-		for (File f : files) {
-			String fname = f.getName();
-
-			// if (!fname.contains("location#food")) {
-			// continue;
-			// }
-
-			if (!fname.contains("thing#location") && !fname.contains("location#location")) {
-				continue;
-			}
-
-			// if (fname.startsWith("location#location_sim.txt")) {
-			// seenLoc = true;
-			// }
-			// if (seenLoc) {
-			// break;
-			// }
-
-			if (!fname.contains(PGraph.suffix)) {
-				continue;
-			}
-
-			// if (gc++==50) {
-			// break;
-			// }
-			String outPath = "";
-			if (!PGraph.shouldReplaceOutputs) {
-				String fname2 = PGraph.root + fname;
-				int lastDotIdx = fname2.lastIndexOf('.');
-				outPath = fname2.substring(0, lastDotIdx) + PGraph.graphPostFix;
-				System.out.println("out: " + outPath);
-				File candF = new File(outPath);
-				if (candF.exists() && candF.length() > 0) {
-					continue;
-				} else {
-					System.out.println("not exist");
-
-				}
-			}
-
-			System.out.println("accepted out:: " + outPath);
-
-			System.out.println("fname: " + fname);
-			EntGraphBuilderRunner tnfR = new EntGraphBuilderRunner(fname, lmbdas);
-			threadPool.execute(tnfR);
-		}
-
-		threadPool.shutdown();
-		// Wait hopefully all threads are finished. If not, forget about it!
-		try {
-			threadPool.awaitTermination(200, TimeUnit.HOURS);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
-
-		System.out.println("allEdgesRem, allEdges: " + allEdgesRemained + " " + allEdges);
-
-		// Collections.sort(scores, Collections.reverseOrder());
-		// System.out.println("higest scoring relations:");
-		// for (int i = 0; i < Math.min(1000000, scores.size()); i++) {
-		// System.out.println(scores.get(i));
-		// }
-
 	}
 
 	// isConjunction or a bad thing!
@@ -953,15 +348,15 @@ public class PGraph implements Comparable<PGraph> {
 		}
 	}
 
-	static Set<String> readTargetRels(String fpath) throws IOException {
-		Set<String> ret = new HashSet<>();
-		BufferedReader br = new BufferedReader(new FileReader(fpath));
-		String line = null;
-		while ((line = br.readLine()) != null) {
-			ret.add(line);
-		}
-		return ret;
-	}
+//	static Set<String> readTargetRels(String fpath) throws IOException {
+//		Set<String> ret = new HashSet<>();
+//		BufferedReader br = new BufferedReader(new FileReader(fpath));
+//		String line = null;
+//		while ((line = br.readLine()) != null) {
+//			ret.add(line);
+//		}
+//		return ret;
+//	}
 
 	// (cause.1,cause.2) pharyngitis::disease fever::disease =>
 	// {(cause.1,cause.2)#disease_1#disease_2,disease#disease}
@@ -981,9 +376,9 @@ public class PGraph implements Comparable<PGraph> {
 	}
 
 	static void setTargetRelsMap() throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(allExamplesPath));
+		BufferedReader br = new BufferedReader(new FileReader(ConstantsMNEmbIter.allExamplesPath));
 		types2TargetRels = new HashMap<>();
-		targetRels = new HashSet<>();
+		MNEmbIter.targetRels = new HashSet<>();
 		targetRelsAddedToGraphs = new HashSet<>();
 		String line = null;
 
@@ -994,7 +389,7 @@ public class PGraph implements Comparable<PGraph> {
 				String types1 = rel1t[1];
 				String types1p = types1.split("#")[1] + types1.split("#")[0];
 				String rel1 = rel1t[0];
-				targetRels.add(rel1);
+				MNEmbIter.targetRels.add(rel1);
 
 				if (types2TargetRels.containsKey(types1)) {
 					types2TargetRels.get(types1).add(rel1);
@@ -1012,7 +407,7 @@ public class PGraph implements Comparable<PGraph> {
 				String types2 = rel2t[1];
 				String types2p = types2.split("#")[1] + types2.split("#")[0];
 				String rel2 = rel2t[0];
-				targetRels.add(rel2);
+				MNEmbIter.targetRels.add(rel2);
 
 				if (types2TargetRels.containsKey(types2)) {
 					types2TargetRels.get(types2).add(rel2);
@@ -1028,116 +423,8 @@ public class PGraph implements Comparable<PGraph> {
 		br.close();
 	}
 
-	static void read_rels_sim(String fpath, boolean isCCG, boolean useSims) throws NumberFormatException, IOException {
-		Map<String, List<PredSim>> rels2Sims = new HashMap<>();
-
-		// The reason is that we're getting top 30 relations. So, if r is in p's
-		// neigh, it might not be otherwise.
-		Map<String, List<PredSim>> invRels2Sims = new HashMap<>();
-		if (!useSims) {
-			return;
-		}
-
-		String line = null;
-		BufferedReader br = new BufferedReader(new FileReader(fpath));
-
-		while ((line = br.readLine()) != null) {
-			String[] ss = line.split("\t");
-			for (int i = 0; i < ss.length; i++) {
-				ss[i] = ss[i].trim();
-			}
-			String p = ss[0];
-
-			String modifier = "";
-			if (isCCG) {
-				int ridx = p.lastIndexOf("__");
-				if (ridx != -1) {
-					modifier = p.substring(0, ridx);
-					p = p.substring(ridx + 2);
-				}
-			}
-			List<PredSim> qs = new ArrayList<>();
-			Set<String> currentPreds = new HashSet<>();
-			int idx = 1;
-			while (idx < ss.length && qs.size() < PGraph.maxNeighs) {
-				String q = ss[idx];
-				idx += 1;
-				float sim = Float.parseFloat(ss[idx]);
-
-				if (sim < PGraph.relMinSim) {
-					break;
-				}
-				idx += 1;
-
-				if (isCCG) {
-					int ridx = q.lastIndexOf("__");
-					if (ridx != -1) {
-						q = q.substring(ridx + 2);
-					}
-
-					try {
-						if (!sameCCGArgs(p, q)) {
-							continue;
-						}
-					} catch (Exception e) {
-						// System.out.println("exception for: " + q);
-
-					}
-
-					if (!modifier.equals("")) {
-						q = modifier + "__" + q;
-					}
-
-				}
-
-				if (!currentPreds.contains(q)) {
-					qs.add(new PredSim(q, sim));
-					currentPreds.add(q);
-				}
-
-			}
-
-			if (isCCG && !modifier.equals("")) {
-				p = modifier + "__" + p;
-			}
-			if (!currentPreds.contains(p)) {
-				qs.add(0, new PredSim(p, 1));
-			}
-			rels2Sims.put(p, qs);
-
-			for (PredSim qsim : qs) {
-				if (!invRels2Sims.containsKey(qsim.pred)) {
-					invRels2Sims.put(qsim.pred, new ArrayList<>());
-				}
-				invRels2Sims.get(qsim.pred).add(new PredSim(p, qsim.sim));
-			}
-
-			// System.out.println("p: " + p);
-			// System.out.println("sims: ");
-			// for (PredSim qq : qs) {
-			// System.out.print(qq.pred + " ");
-			// }
-			// System.out.println();
-		}
-
-		// make sure invRels2Sims has itself!
-		for (String q : invRels2Sims.keySet()) {
-			List<PredSim> ql = invRels2Sims.get(q);
-			Set<String> qPreds = new HashSet<>();
-			for (PredSim ps : ql) {
-				qPreds.add(ps.pred);
-			}
-			if (!qPreds.contains(q)) {
-				ql.add(0, new PredSim(q, 1));
-			}
-		}
-
-		PGraph.rels2Sims = rels2Sims;
-		PGraph.invRels2Sims = invRels2Sims;
-	}
-
 	// carried here form python
-	static boolean sameCCGArgs(String p, String q) {
+	public static boolean sameCCGArgs(String p, String q) {
 		String[] ss_p = p.substring(1, p.length() - 1).split(",");
 		String[] ss_q = q.substring(1, q.length() - 1).split(",");
 

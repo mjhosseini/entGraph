@@ -1,4 +1,4 @@
-package graph;
+package graph.softConst;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,18 +12,24 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class TypePropagateRunner {
+import constants.ConstantsGraphs;
+import constants.ConstantsMNEmbIter;
+import constants.ConstantsTrans;
+import graph.PGraph;
+
+@Deprecated
+public class TypePropagateRunnerBasic {
 	ThreadPoolExecutor threadPool;
 	ArrayList<PGraph> pGraphs;
 	public final static float edgeThreshold = -1;// edgeThreshold
 	static int numThreads = 10;
 	Map<String,Integer> graphToNumEdges;
 
-	public TypePropagateRunner(String root) {
-		PGraph.emb = false;
-		PGraph.suffix = "_sim.txt";
-		PGraph.formBinaryGraph = false;
-		PGraph.edgeThreshold = edgeThreshold;
+	public TypePropagateRunnerBasic(String root) {
+		ConstantsMNEmbIter.emb = false;
+		ConstantsGraphs.suffix = "_sim.txt";
+		ConstantsTrans.formBinaryGraph = false;
+		ConstantsGraphs.edgeThreshold = edgeThreshold;
 		pGraphs = new ArrayList<>();
 		graphToNumEdges = new HashMap<String, Integer>();
 
@@ -43,7 +49,7 @@ public class TypePropagateRunner {
 			// continue;
 			// }
 
-			if (!fname.contains(PGraph.suffix)) {
+			if (!fname.contains(ConstantsGraphs.suffix)) {
 				continue;
 			}
 
@@ -94,7 +100,7 @@ public class TypePropagateRunner {
 		Map<String, Integer> matchedEdges = new ConcurrentHashMap();
 		
 		for (int threadIdx = 0; threadIdx<numThreads; threadIdx++){
-			TypePropagate tpr = new TypePropagate(pGraphs, threadIdx, candidateEdges, matchedEdges);
+			TypePropagateBasic tpr = new TypePropagateBasic(pGraphs, threadIdx, candidateEdges, matchedEdges);
 			threadPool.execute(tpr);
 		}
 		
@@ -118,7 +124,7 @@ public class TypePropagateRunner {
 	
 	public static void main(String[] args) throws InterruptedException {
 		String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/";
-		TypePropagateRunner tprRunner = new TypePropagateRunner(root);
+		TypePropagateRunnerBasic tprRunner = new TypePropagateRunnerBasic(root);
 		tprRunner.runAll();
 	}
 

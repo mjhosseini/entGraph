@@ -1,8 +1,8 @@
 package graph;
 
 public class PredSim {
-	String pred;
-	float sim;
+	public String pred;
+	public float sim;
 	
 	public PredSim(String pred, float sim) {
 		this.pred = pred;

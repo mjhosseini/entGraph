@@ -1,4 +1,4 @@
-package graph;
+package graph.softConst;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,7 +7,9 @@ import java.util.Map;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-public class TypePropagate implements Runnable{
+import graph.PGraph;
+@Deprecated
+public class TypePropagateBasic implements Runnable{
 
 	ArrayList<PGraph> pGraphs;
 	int threadIdx;
@@ -16,7 +18,7 @@ public class TypePropagate implements Runnable{
 	Map<String, Integer> candidateEdges;
 	Map<String, Integer> matchedEdges;
 
-	public TypePropagate(ArrayList<PGraph> pGraphs, int threadIdx, Map<String, Integer> candidateEdges,
+	public TypePropagateBasic(ArrayList<PGraph> pGraphs, int threadIdx, Map<String, Integer> candidateEdges,
 			Map<String, Integer> matchedEdges) {
 		this.pGraphs = pGraphs;
 		this.threadIdx = threadIdx;
@@ -30,7 +32,7 @@ public class TypePropagate implements Runnable{
 		// checking whether g2 entailments can be used in g1
 		int gc2 = 0;
 		for (PGraph pg2 : pGraphs) {
-			if (gc2++ % TypePropagateRunner.numThreads != threadIdx) {
+			if (gc2++ % TypePropagateRunnerBasic.numThreads != threadIdx) {
 				continue;
 			}
 			System.out.println("pg2: " + pg2.fname);

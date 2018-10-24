@@ -20,7 +20,7 @@ import constants.ConstantsRWalk;
 import entailment.randWalk.RandWalkMatrix;
 import entailment.vector.EntailGraphFactoryAggregator.LinkPredModel;
 import entailment.vector.EntailGraphFactoryAggregator.ProbModel;
-import graph.LabelPropagationMNWithinGraph;
+import graph.softConst.LabelPropagationMNWithinGraph;
 
 public class EntailGraph extends SimpleEntailGraph {
 

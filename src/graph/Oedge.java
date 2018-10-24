@@ -1,7 +1,7 @@
 package graph;
 
 public class Oedge {
-	int nIdx;
+	public int nIdx;
 	public float sim;
 	
 	public Oedge(int nIdx,float sim) {

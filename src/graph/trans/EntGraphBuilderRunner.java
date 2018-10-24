@@ -1,10 +1,13 @@
-package graph;
+package graph.trans;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.List;
 
+import constants.ConstantsGraphs;
+import constants.ConstantsTrans;
+import graph.PGraph;
 import graph.PGraph.TransitiveMethod;
 
 public class EntGraphBuilderRunner implements Runnable {
@@ -19,14 +22,14 @@ public class EntGraphBuilderRunner implements Runnable {
 
 	@Override
 	public void run() {
-		PGraph pgraph = new PGraph(PGraph.root + fname);
+		PGraph pgraph = new PGraph(ConstantsGraphs.root + fname);
 		if (pgraph.nodes.size() == 0) {
 			return;
 		}
 
 		System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 
-		if (!PGraph.formBinaryGraph) {
+		if (!ConstantsTrans.formBinaryGraph) {
 			return;
 		}
 
@@ -36,7 +39,7 @@ public class EntGraphBuilderRunner implements Runnable {
 		// PGraph.graphPostFix = "_graphsNoFrg2.txt";
 		// }
 
-		String outPath = pgraph.fname.substring(0, lastDotIdx) + PGraph.graphPostFix;
+		String outPath = pgraph.fname.substring(0, lastDotIdx) + ConstantsTrans.graphPostFix;
 		PrintStream op = null;
 		try {
 			op = new PrintStream(new File(outPath));
@@ -45,11 +48,11 @@ public class EntGraphBuilderRunner implements Runnable {
 		}
 
 		SpectralClustering specClusterer = null;
-		if (PGraph.transMethod == TransitiveMethod.SpectralILPWithin) {
+		if (ConstantsTrans.transMethod == TransitiveMethod.SpectralILPWithin) {
 			// if (pgraph.nodes.size() > PGraph.specILPMaxClusterSizeAllowed) {
-			int K = (int) Math.ceil((double) (pgraph.nodes.size()) / PGraph.specILPMaxClusterAllowed);
+			int K = (int) Math.ceil((double) (pgraph.nodes.size()) / ConstantsTrans.specILPMaxClusterAllowed);
 			System.out.println("num clusters: " + K + " num node: " + pgraph.nodes.size());
-			specClusterer = new SpectralClustering(pgraph, K, PGraph.specILPMaxClusterSizeAllowed);
+			specClusterer = new SpectralClustering(pgraph, K, ConstantsTrans.specILPMaxClusterSizeAllowed);
 			specClusterer.cluster();
 			System.out.println("clustering done");
 			// }
@@ -59,15 +62,15 @@ public class EntGraphBuilderRunner implements Runnable {
 			System.out.println("lambda: " + lmbda);
 
 			// System.out.println("Berant's HTL started");
-			if (PGraph.transMethod == TransitiveMethod.BerantTNF) {
+			if (ConstantsTrans.transMethod == TransitiveMethod.BerantTNF) {
 				EOPTNF.formEntGraph(pgraph, lmbda, op);
 			}
 			// System.out.println("Berant's HTL finished");
 
-			else if (PGraph.transMethod == TransitiveMethod.HTLFRG) {
+			else if (ConstantsTrans.transMethod == TransitiveMethod.HTLFRG) {
 
-				TransClUtils tnf = new TransClUtils(pgraph, op, lmbda, PGraph.checkFrgVio, null);
-				if (PGraph.shouldWrite) {
+				TransClUtils tnf = new TransClUtils(pgraph, op, lmbda, ConstantsTrans.checkFrgVio, null);
+				if (ConstantsTrans.shouldWrite) {
 					tnf.writeSCC();
 				}
 
@@ -76,10 +79,10 @@ public class EntGraphBuilderRunner implements Runnable {
 
 			}
 
-			else if (PGraph.transMethod == TransitiveMethod.SpectralILP) {
+			else if (ConstantsTrans.transMethod == TransitiveMethod.SpectralILP) {
 
-				if (pgraph.nodes.size() > PGraph.specILPMaxClusterAllowed) {
-					specClusterer = new SpectralClustering(pgraph, PGraph.specILPMaxClusterAllowed);
+				if (pgraph.nodes.size() > ConstantsTrans.specILPMaxClusterAllowed) {
+					specClusterer = new SpectralClustering(pgraph, ConstantsTrans.specILPMaxClusterAllowed);
 					specClusterer.cluster();
 				}
 

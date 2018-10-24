@@ -22,10 +22,10 @@ public class ConstantsAgg {
 	 public static String NSSizesAddress = "NS_sizes.txt";
 	
 	 // cutoffs
-	 public static int minArgPairForPred = 3;// 100;
-	 public static int minPredForArgPair = 3;// 20;// min num of unique predicates for argpair
+	 public static int minArgPairForPred = 4;// 100;
+	 public static int minPredForArgPair = 4;// 20;// min num of unique predicates for argpair
 	//when NS based num aps, we allow x aps for each pred, even if not in NS
-	 public static int numArgPairsNSBasedAlwaysAllowed = 20; 
+	 public static int numArgPairsNSBasedAlwaysAllowed = 10; 
 	 public static int maxPredsTotal = -1;// 35000;
 	 public static final int minPredForArg = -1;// min num of unique predicates for
 	 public static final int numThreads = 20;
@@ -43,7 +43,7 @@ public class ConstantsAgg {
 	 public static String relAddress = "news_genC.json";
 	 
 	 public static String simsFolder =
-	 "typedEntGrDirC_aida_typed_NSSize_predBased_"+minArgPairForPred+"_"+minPredForArgPair;
+	 "typedEntGrDirC_aida_typed_NSSize_predBasedEx_"+minArgPairForPred+"_"+minPredForArgPair;
 	 
 	 public static boolean computeProbELSims = false;
 	 public static boolean linkPredBasedRandWalk = false;

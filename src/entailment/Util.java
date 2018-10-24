@@ -809,7 +809,7 @@ public class Util {
 						currentNEType = "time";
 					}
 				}
-				// System.out.println(token + " " + currentNEType);
+//				System.out.println(token + " " + currentNEType);
 				tokenToType.put(thisToken, currentNEType);
 				// ret += token.get(LemmaAnnotation.class);
 			}
@@ -2363,7 +2363,8 @@ public class Util {
 		// readJSONSimple();
 		// convertReleaseToRawJson(args);
 		// convertPredArgsToJsonUnsorted(args);
-		convertPredArgsToJson(args);
+		// convertPredArgsToJson(args);
+		getSimpleNERTypeSent("John went home yesterday");
 		// convertSampleToRawJson();
 		// recordStanTypes(args);
 		// countArgs(args);

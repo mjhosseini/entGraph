@@ -1,4 +1,4 @@
-package graph;
+package graph.softConst;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -6,7 +6,9 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import constants.ConstantsSoftConst;
 import edu.stanford.nlp.util.CollectionUtils;
+import graph.PGraph;
 
 //Propagate labels within a graph for the range start to end
 public class LabelPropagationMNWithinGraph implements Runnable {
@@ -47,10 +49,10 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				}
 				double w_ij = 0;
 				if (gPrev.containsEdge(i, j)) {
-					w_ij = gPrev.getEdgeWeight(gPrev.getEdge(i, j)) - TypePropagateMN.tau;
+					w_ij = gPrev.getEdgeWeight(gPrev.getEdge(i, j)) - ConstantsSoftConst.tau;
 				}
 
-				double w_ji = gPrev.getEdgeWeight(e) - TypePropagateMN.tau;
+				double w_ji = gPrev.getEdgeWeight(e) - ConstantsSoftConst.tau;
 
 				if (w_ji <= 0 || w_ij <= 0) {
 					continue;
@@ -59,9 +61,9 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 //					System.out.println("wij greater than 0: "+w_ij+" "+w_ji+" "+TypePropagateMN.tau);
 				}
 
-				if (!TypePropagateMN.obj1) {
-					w_ij += TypePropagateMN.tau;
-					w_ji += TypePropagateMN.tau;
+				if (!ConstantsSoftConst.obj1) {
+					w_ij += ConstantsSoftConst.tau;
+					w_ji += ConstantsSoftConst.tau;
 				}
 
 				// if (!TypePropagateMN.obj1) {
@@ -189,8 +191,8 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					continue;
 				}
 
-				double w_jk = gPrev.getEdgeWeight(gPrev.getEdge(j, k)) - TypePropagateMN.tau;
-				double w_kj = gPrev.getEdgeWeight(gPrev.getEdge(k, j)) - TypePropagateMN.tau;
+				double w_jk = gPrev.getEdgeWeight(gPrev.getEdge(j, k)) - ConstantsSoftConst.tau;
+				double w_kj = gPrev.getEdgeWeight(gPrev.getEdge(k, j)) - ConstantsSoftConst.tau;
 
 				if (w_jk <= 0 || w_kj <= 0) {
 					continue;
@@ -199,9 +201,9 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 //					System.out.println("wjk great than 0: "+w_jk+" "+w_kj+" "+TypePropagateMN.tau);
 				}
 
-				if (!TypePropagateMN.obj1) {
-					w_jk += TypePropagateMN.tau;
-					w_kj += TypePropagateMN.tau;
+				if (!ConstantsSoftConst.obj1) {
+					w_jk += ConstantsSoftConst.tau;
+					w_kj += ConstantsSoftConst.tau;
 				}
 
 				double denom = 2 * w_jk * w_kj;

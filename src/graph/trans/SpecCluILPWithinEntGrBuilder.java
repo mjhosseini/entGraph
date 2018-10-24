@@ -1,10 +1,15 @@
-package graph;
+package graph.trans;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import constants.ConstantsTrans;
+import graph.Node;
+import graph.Oedge;
+import graph.PGraph;
 
 //Builds entailment graph by first doing spectral clustering into C clusters. Then run ILP on each cluster. Then, run the HTL method
 //on the rest!
@@ -43,7 +48,7 @@ public class SpecCluILPWithinEntGrBuilder {
 		ConnectivityChecker spConnectivityChecker = new SpecClustersConnectivityChecker(sccs, node2compList,
 				specCluster, origIdxtoIdxList);
 
-		TransClUtils tnf = new TransClUtils(pgraph, op, lmbda, PGraph.checkFrgVio, spConnectivityChecker);
+		TransClUtils tnf = new TransClUtils(pgraph, op, lmbda, ConstantsTrans.checkFrgVio, spConnectivityChecker);
 		this.scc = tnf.scc;
 	}
 

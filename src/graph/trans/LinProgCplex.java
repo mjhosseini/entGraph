@@ -1,8 +1,9 @@
-package graph;
+package graph.trans;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import graph.PGraph;
 import ilog.concert.IloException;
 import ilog.concert.IloLPMatrix;
 import ilog.concert.IloNumVar;

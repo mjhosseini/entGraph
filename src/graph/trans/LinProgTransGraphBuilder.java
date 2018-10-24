@@ -1,4 +1,4 @@
-package graph;
+package graph.trans;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,6 +9,9 @@ import java.util.Set;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
+
+import constants.ConstantsGraphs;
+import graph.PGraph;
 
 //Gets a pgraph and a lambda, runs ILP, returns transitive graph!
 
@@ -25,7 +28,7 @@ public class LinProgTransGraphBuilder {
 
 	public LinProgTransGraphBuilder(String fname, double lmbda) {
 		this.lmbda = lmbda;
-		this.pgraph = new PGraph(PGraph.root + fname);
+		this.pgraph = new PGraph(ConstantsGraphs.root + fname);
 	}
 
 	gtGraph findTransGraph() {
@@ -79,7 +82,7 @@ public class LinProgTransGraphBuilder {
 
 	public static void main(String[] args) {
 
-		File folder = new File(PGraph.root);
+		File folder = new File(ConstantsGraphs.root);
 		File[] files = folder.listFiles();
 		Arrays.sort(files);
 
@@ -95,7 +98,7 @@ public class LinProgTransGraphBuilder {
 			// break;
 			// }
 
-			if (!fname.contains(PGraph.suffix)) {
+			if (!fname.contains(ConstantsGraphs.suffix)) {
 				continue;
 			}
 

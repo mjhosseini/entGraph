@@ -1,7 +1,12 @@
-package graph;
+package graph.trans;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import constants.ConstantsTrans;
+import graph.Node;
+import graph.Oedge;
+import graph.PGraph;
 
 //gets a pgraph, runs spectral clustering.
 //if M given, makes sure cluster sizes < M
@@ -201,7 +206,7 @@ public class SpectralClustering {
 		if (firstK != -1) {
 			thisK = firstK;
 		} else {
-			thisK = (int) Math.ceil((double) (clu.size()) / PGraph.specILPMaxClusterAllowed);
+			thisK = (int) Math.ceil((double) (clu.size()) / ConstantsTrans.specILPMaxClusterAllowed);
 
 		}
 		if (thisK != 1 && thisK != 0) {

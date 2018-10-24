@@ -1,4 +1,4 @@
-package graph;
+package graph.trans;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -13,6 +13,12 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.GabowStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
+
+import constants.ConstantsTrans;
+import graph.Edge;
+import graph.Node;
+import graph.Oedge;
+import graph.PGraph;
 
 public class TransClUtils {
 	boolean checkFrgVio;
@@ -35,7 +41,7 @@ public class TransClUtils {
 		List<Edge> sortedEdges = pgraph.getSortedEdges();
 		// System.out.println("heree" + pgraph.nodes.size() + " " + pgraph.sortedEdges);
 		this.N = pgraph.nodes.size();
-		if (PGraph.transitive) {
+		if (ConstantsTrans.transitive) {
 			this.HTLFRG(sortedEdges, this.lmbda);
 		} else {
 			this.formGraphPlain(sortedEdges, lmbda);

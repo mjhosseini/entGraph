@@ -19,7 +19,7 @@ public class Node {
 		this.idx2oedges = new HashMap<>();
 	}
 
-	void addNeighbor(int nIdx, float sim) {
+	public void addNeighbor(int nIdx, float sim) {
 //		System.out.println("adding "+idx+" "+nIdx + " "+this.id +" " );
 		if (!idx2oedges.containsKey(nIdx)) {
 			Oedge oedge = new Oedge(nIdx, sim);

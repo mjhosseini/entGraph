@@ -1,4 +1,4 @@
-package graph;
+package graph.softConst;
 
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +8,9 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import constants.ConstantsSoftConst;
 import edu.stanford.nlp.util.CollectionUtils;
+import graph.PGraph;
 
 public class LabelPropagationBetweenGraphs implements Runnable {
 
@@ -62,7 +64,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				Set<Integer> rawPred_rp_PGraphs = rawPred2PGraphs.get(rawPred_rp); // pgraphs with this predicate
 
 				Set<Integer> neighborGraphs = CollectionUtils.intersection(rawPred_r_PGraphs, rawPred_rp_PGraphs);
-				if (TypePropagateMN.lmbda2 == 0) {
+				if (ConstantsSoftConst.lmbda2 == 0) {
 					neighborGraphs = new HashSet<>();
 					neighborGraphs.add(pgraph.sortIdx);
 				}
@@ -70,7 +72,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				double sim = gPrev.getEdgeWeight(e);
 				int minPairOcc1 = 1;
 
-				if (TypePropagateMN.sizeBasedPropagation) {
+				if (ConstantsSoftConst.sizeBasedPropagation) {
 					minPairOcc1 = Math.min(TypePropagateMN.predToOcc.get(pred_r),
 							TypePropagateMN.predToOcc.get(pred_rp));
 				}
@@ -110,7 +112,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 
 					double compScore1, compScore2;
 
-					if (!TypePropagateMN.predBasedPropagation) {
+					if (!ConstantsSoftConst.predBasedPropagation) {
 						// make sure you give to both cases: tp1#tp2 and tp2#tp1
 						compScore1 = TypePropagateMN.getCompatibleScore(tp1_plain, tp2_plain, aligned, t1_r_plain,
 								t2_r_plain);
@@ -148,7 +150,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 						pred_q = rawPred_rp + "#" + tp1 + "#" + tp2;
 					}
 
-					if (!TypePropagateMN.predBasedPropagation) {
+					if (!ConstantsSoftConst.predBasedPropagation) {
 						compScore2 = TypePropagateMN.getCompatibleScore(tp2_plain, tp1_plain, aligned, t1_r_plain,
 								t2_r_plain);
 						// compScore2 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
@@ -180,7 +182,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 //			System.out.println("propagating from graph: " + pgraph.types + " to graph " + pgraph_neigh.types + " for "
 //					+ pred_p + " " + pred_q + " " + compScore+" "+sim);
 			int minPairOcc2 = 1;
-			if (TypePropagateMN.sizeBasedPropagation) {
+			if (ConstantsSoftConst.sizeBasedPropagation) {
 				minPairOcc2 = Math.min(TypePropagateMN.predToOcc.get(pred_p), TypePropagateMN.predToOcc.get(pred_q));
 				compScore *= Math.min(minPairOcc1, minPairOcc2);
 			}
@@ -268,7 +270,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 			double compScore2;
 
 			// make sure you get from both cases: t1#t2 and t2#t1
-			if (!TypePropagateMN.predBasedPropagation) {
+			if (!ConstantsSoftConst.predBasedPropagation) {
 				compScore1 = TypePropagateMN.getCompatibleScore(tp1, tp2, aligned, t1_plain, t2_plain);
 				// compScore1 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 				// TODO: added, be careful
@@ -291,7 +293,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				// System.out.println("propagating: "+rawPred_p+" "+rawPred_q+" "+tp1+" "+tp2+"
 				// "+aligned+" "+t1+" "+t2+" "+compScore1);
 
-				if (TypePropagateMN.sizeBasedPropagation) {
+				if (ConstantsSoftConst.sizeBasedPropagation) {
 					int minPairOcc1 = Math.min(TypePropagateMN.predToOcc.get(p1), TypePropagateMN.predToOcc.get(q1));
 					compScore1 *= Math.min(minPairOcc1, minPairOcc2);
 				}
@@ -300,7 +302,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 			if (pgraph_neigh.pred2node.containsKey(p2) && pgraph_neigh.pred2node.containsKey(q2)) {
 				// System.out.println("propagating: "+rawPred_p+" "+rawPred_q+" "+tp1+" "+tp2+"
 				// "+aligned+" "+t2+" "+t1+" "+compScore2);
-				if (TypePropagateMN.sizeBasedPropagation) {
+				if (ConstantsSoftConst.sizeBasedPropagation) {
 					int minPairOcc1 = Math.min(TypePropagateMN.predToOcc.get(p2), TypePropagateMN.predToOcc.get(q2));
 					compScore2 *= Math.min(minPairOcc1, minPairOcc2);
 				}
