@@ -268,14 +268,14 @@ public class Util {
 
 							if (k == 0) {
 								isGen[0] = isGeneric(p, posTags);
-//								if (shouldLink && !isGen[0]) {
-//									p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
-//								}
+								// if (shouldLink && !isGen[0]) {
+								// p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
+								// }
 							} else if (k == 2) {
 								isGen[1] = isGeneric(p, posTags);
-//								if (shouldLink && !isGen[1]) {
-//									p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
-//								}
+								// if (shouldLink && !isGen[1]) {
+								// p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
+								// }
 							}
 
 							parts[k] = p;
@@ -2352,7 +2352,7 @@ public class Util {
 		// }
 		// System.out.println(isGeneric("los angeles", allPOSTags));
 		//
-		// convertToPArgFormat(args);
+		convertToPArgFormat(args);
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);
@@ -2362,7 +2362,7 @@ public class Util {
 		// convertReleaseToRawJson(args);
 		// convertPredArgsToJsonUnsorted(args);
 		// convertPredArgsToJson(args);
-		getSimpleNERTypeSent("John went home yesterday");
+		// getSimpleNERTypeSent("John went home yesterday");
 		// convertSampleToRawJson();
 		// recordStanTypes(args);
 		// countArgs(args);
