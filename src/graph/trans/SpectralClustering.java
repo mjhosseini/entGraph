@@ -31,7 +31,7 @@ public class SpectralClustering {
 		this.M = M;
 	}
 
-	void cluster() {
+	public void cluster() {
 
 		if (pgraph.nodes.size() > 45000) {
 			clusters = TransClUtils.findComponents(pgraph, 0.15);

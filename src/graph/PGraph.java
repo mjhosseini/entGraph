@@ -81,9 +81,9 @@ public class PGraph implements Comparable<PGraph> {
 			if (this.name == null) {
 				return;
 			}
-			for (int i = 0; i < nodes.size(); i++) {
-				System.out.println(i + ": " + nodes.get(i).id);
-			}
+//			for (int i = 0; i < nodes.size(); i++) {
+//				System.out.println(i + ": " + nodes.get(i).id);
+//			}
 		} catch (IOException e) {
 			System.err.println("exception before sorted edges");
 			e.printStackTrace();

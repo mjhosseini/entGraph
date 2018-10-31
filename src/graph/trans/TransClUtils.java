@@ -28,7 +28,7 @@ public class TransClUtils {
 	int[] node2comp;
 	PrintStream op;
 	int N;
-	static boolean debug = true;
+	static boolean debug = false;
 	ConnectivityChecker connChecker;
 
 	public TransClUtils(PGraph pgraph, PrintStream op, double lmbda, boolean checkFrgVio,
@@ -242,7 +242,7 @@ public class TransClUtils {
 		}
 
 		int idx = 0;
-		System.out.println("num all edges: " + sortedEdges.size());
+		System.out.println("num all edges: " + pgraph.name+ " " + sortedEdges.size());
 
 		for (Edge e : sortedEdges) {
 			float sim = e.sim - (float) lmbda;

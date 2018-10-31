@@ -26,7 +26,7 @@ import graph.Oedge;
 import graph.PGraph;
 
 public class EOPTNF {
-
+	
 	static void formEntGraph(PGraph pgraph, double lmbda, PrintStream op) {
 
 		// build the local graph

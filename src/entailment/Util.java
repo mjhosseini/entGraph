@@ -207,121 +207,119 @@ public class Util {
 	// }
 
 	// // To parse results of stanford parser...
-	// static void convertToPArgFormat(String[] args) throws IOException {
-	// String fname;
-	// boolean shouldLink;
-	// if (args != null && args.length > 0) {
-	// fname = args[0];
-	// shouldLink = Boolean.parseBoolean(args[1]);
-	// } else {
-	// fname = "stan.txt";
-	// shouldLink = false;
-	// }
-	//
-	// BufferedReader br = new BufferedReader(new InputStreamReader(new
-	// FileInputStream(fname)));
-	// JsonParser jsonParser = new JsonParser();
-	// String line;
-	// while ((line = br.readLine()) != null) {
-	// if (line.equals("")) {
-	// continue;
-	// }
-	// try {
-	// JsonObject jo = jsonParser.parse(line).getAsJsonObject();
-	// int i = 0;
-	// String docS = "";
-	// String articleId = jo.get("articleId").getAsString();
-	// String date = jo.get("date").getAsString();
-	//
-	// JsonObject jObj = new JsonObject();
-	//
-	// JsonArray rels = new JsonArray();
-	//
-	// ArrayList<String> curPrArgs = new ArrayList<>();
-	//
-	// while (jo.has("" + i)) {
-	// JsonArray jai = jo.get("" + i).getAsJsonArray();
-	// String s = jai.get(0).getAsJsonObject().get("s").toString();
-	//
-	// // I must do POS tagging as well for GorE
-	//
-	// s = s.substring(1, s.length() - 1);
-	// docS += s + " ";
-	// // System.out.println("#line: " + s);
-	// HashMap<String, String> posTags = new HashMap<>();
-	// if (shouldLink) {
-	// posTags = getAllPOSTags(s);
-	// }
-	// // for (String t:posTags.keySet()){
-	// // System.out.println(t+" "+posTags.get(t));
-	// // }
-	//
-	// for (int j = 1; j < jai.size(); j++) {
-	// String r = jai.get(j).getAsJsonObject().get("r").toString();
-	// r = r.substring(2, r.length() - 2);
-	//
-	// String[] parts = r.split(",");
-	// boolean isGen[] = new boolean[2];
-	//
-	// for (int k = 0; k < parts.length; k++) {
-	// String p = parts[k].trim();
-	// p = simpleNormalize(p);
-	//
-	// if (k == 0) {
-	// isGen[0] = isGeneric(p, posTags);
-	// if (shouldLink && !isGen[0]) {
-	// p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
-	// }
-	// } else if (k == 2) {
-	// isGen[1] = isGeneric(p, posTags);
-	// if (shouldLink && !isGen[1]) {
-	// p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
-	// }
-	// }
-	//
-	// parts[k] = p;
-	// }
-	//
-	// String GorE = (isGen[0] ? "G" : "E") + (isGen[1] ? "G" : "E");
-	//
-	// parts[1] = parts[1].replace(" ", "_");
-	//
-	// String prArg = "(" + parts[1] + "::" + parts[0] + "::" + parts[2] + "::" +
-	// GorE + ")";
-	// curPrArgs.add(prArg);
-	//
-	// // System.out.println(rs);
-	// }
-	// // System.out.println();
-	// i++;
-	// }
-	// docS = docS.trim();
-	// jObj.addProperty("s", docS);
-	// jObj.addProperty("date", date);
-	// jObj.addProperty("articleId", articleId);
-	// // jObj.addProperty("lineId", lineId);
-	//
-	// for (int j = 0; j < curPrArgs.size(); j++) {
-	// JsonObject rel = new JsonObject();
-	// rel.addProperty("r", curPrArgs.get(j));
-	// rels.add(rel);
-	// }
-	// jObj.add("rels", rels);
-	//
-	// System.out.println(jObj);
-	//
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// }
-	//
-	// // JsonArray ja = jsonParser.parse(line).getAsJsonArray();
-	// // for (int i=0; i<ja.size(); i++){
-	// // System.out.println(ja.get(i));
-	// // }
-	//
-	// }
-	// br.close();
-	// }
+	static void convertToPArgFormat(String[] args) throws IOException {
+		String fname;
+		boolean shouldLink;
+		if (args != null && args.length > 0) {
+			fname = args[0];
+			shouldLink = Boolean.parseBoolean(args[1]);
+		} else {
+			fname = "stan.txt";
+			shouldLink = false;
+		}
+
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fname)));
+		JsonParser jsonParser = new JsonParser();
+		String line;
+		while ((line = br.readLine()) != null) {
+			if (line.equals("")) {
+				continue;
+			}
+			try {
+				JsonObject jo = jsonParser.parse(line).getAsJsonObject();
+				int i = 0;
+				String docS = "";
+				String articleId = jo.get("articleId").getAsString();
+				String date = jo.get("date").getAsString();
+
+				JsonObject jObj = new JsonObject();
+
+				JsonArray rels = new JsonArray();
+
+				ArrayList<String> curPrArgs = new ArrayList<>();
+
+				while (jo.has("" + i)) {
+					JsonArray jai = jo.get("" + i).getAsJsonArray();
+					String s = jai.get(0).getAsJsonObject().get("s").toString();
+
+					// I must do POS tagging as well for GorE
+
+					s = s.substring(1, s.length() - 1);
+					docS += s + " ";
+					// System.out.println("#line: " + s);
+					HashMap<String, String> posTags = new HashMap<>();
+					if (shouldLink) {
+						posTags = getAllPOSTags(s);
+					}
+					// for (String t:posTags.keySet()){
+					// System.out.println(t+" "+posTags.get(t));
+					// }
+
+					for (int j = 1; j < jai.size(); j++) {
+						String r = jai.get(j).getAsJsonObject().get("r").toString();
+						r = r.substring(2, r.length() - 2);
+
+						String[] parts = r.split(",");
+						boolean isGen[] = new boolean[2];
+
+						for (int k = 0; k < parts.length; k++) {
+							String p = parts[k].trim();
+							p = simpleNormalize(p);
+
+							if (k == 0) {
+								isGen[0] = isGeneric(p, posTags);
+//								if (shouldLink && !isGen[0]) {
+//									p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
+//								}
+							} else if (k == 2) {
+								isGen[1] = isGeneric(p, posTags);
+//								if (shouldLink && !isGen[1]) {
+//									p = entToWiki.containsKey(p) ? entToWiki.get(p) : p;
+//								}
+							}
+
+							parts[k] = p;
+						}
+
+						String GorE = (isGen[0] ? "G" : "E") + (isGen[1] ? "G" : "E");
+
+						parts[1] = parts[1].replace(" ", "_");
+
+						String prArg = "(" + parts[1] + "::" + parts[0] + "::" + parts[2] + "::" + GorE + ")";
+						curPrArgs.add(prArg);
+
+						// System.out.println(rs);
+					}
+					// System.out.println();
+					i++;
+				}
+				docS = docS.trim();
+				jObj.addProperty("s", docS);
+				jObj.addProperty("date", date);
+				jObj.addProperty("articleId", articleId);
+				// jObj.addProperty("lineId", lineId);
+
+				for (int j = 0; j < curPrArgs.size(); j++) {
+					JsonObject rel = new JsonObject();
+					rel.addProperty("r", curPrArgs.get(j));
+					rels.add(rel);
+				}
+				jObj.add("rels", rels);
+
+				System.out.println(jObj);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			// JsonArray ja = jsonParser.parse(line).getAsJsonArray();
+			// for (int i=0; i<ja.size(); i++){
+			// System.out.println(ja.get(i));
+			// }
+
+		}
+		br.close();
+	}
 
 	public static String normalizeArg(String arg) {
 
@@ -809,7 +807,7 @@ public class Util {
 						currentNEType = "time";
 					}
 				}
-//				System.out.println(token + " " + currentNEType);
+				// System.out.println(token + " " + currentNEType);
 				tokenToType.put(thisToken, currentNEType);
 				// ret += token.get(LemmaAnnotation.class);
 			}
