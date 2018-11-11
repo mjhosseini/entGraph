@@ -521,7 +521,7 @@ public class PredicateVector extends SimplePredicateVector {
 	// }
 	// }
 
-	static void writeSims(PrintStream graphOp2, ArrayList<Similarity> simsList, String simName) {
+	public static void writeSims(PrintStream graphOp2, List<Similarity> simsList, String simName) {
 		graphOp2.println();
 
 		Collections.sort(simsList, Collections.reverseOrder());
@@ -533,27 +533,7 @@ public class PredicateVector extends SimplePredicateVector {
 
 }
 
-class Similarity implements Comparable<Similarity> {
-	String pred;
-	double sim;
 
-	public Similarity(String pred, double sim) {
-		this.pred = pred;
-		this.sim = sim;
-	}
-
-	public int compareTo(Similarity dp2) {
-		return (new Double(sim)).compareTo(new Double(dp2.sim));
-		// if (sim > dp2.sim) {
-		// return 1;
-		// } else if (sim < dp2.sim) {
-		// return -1;
-		// }
-		//
-		// return 0;
-	}
-
-}
 
 class ArgPair implements Comparable<ArgPair> {
 	String argPairStr;

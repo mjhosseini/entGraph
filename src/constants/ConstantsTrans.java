@@ -11,7 +11,7 @@ public class ConstantsTrans {
 	public static int specILPMaxClusterAllowed = 100;// for SpectralILP
 	public static int specILPMaxClusterSizeAllowed = 100;// for SpectralILPWithin (just an approximation)
 
-	public static boolean shouldReplaceOutputs = true;// if true, will solve everything, otherwise ignores the files it
+	public static boolean shouldReplaceOutputs = false;// if true, will solve everything, otherwise ignores the files it
 	// already has!
 	public static boolean shouldWrite = true;
 	public static boolean formBinaryGraph = true;
