@@ -3,7 +3,7 @@ package entailment.vector;
 public class Similarity implements Comparable<Similarity> {
 	String pred;
 	double sim;
-
+	
 	public Similarity(String pred, double sim) {
 		this.pred = pred;
 		this.sim = sim;

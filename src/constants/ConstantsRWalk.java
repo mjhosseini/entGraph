@@ -13,14 +13,15 @@ public class ConstantsRWalk {
 //	public static String embsPath = "embs/rels2emb_ConvE_NS_unt_20_20_1000.txt";
 //	public static String allTriplesPath = "embs/triples_20_20.txt";
 	
-	public static String triples2scoresPath = "embs/probs_all_ConvE_NS_10_10_unique_ex.txt";
+//	public static String triples2scoresPath = "embs/probs_all_ConvE_NS_10_10_unique_ex.txt";
+	public static String triples2scoresPath = "embs/probs_all_conve_lstm_10_10_100.txt";
 	public static String embsPath = "embs/rels2emb_ConvE_NS_unt_10_10_1000.txt";
 	public static String allTriplesPath = "embs/triples_10_10.txt";
 	
 	public static double threshold = 1e-6;
 	public static double thresholdMul = -1;//for 2nd-order statistic, etc
-	public static int NThr = 1000000;
-	public static int L = 2; 
+	public static int NThr = 1000000000;
+	public static int L = 1; 
 
 	public static void setAggConstants() {
 		ConstantsAgg.linkPredBasedRandWalk = true;

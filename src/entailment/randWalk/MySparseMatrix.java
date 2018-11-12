@@ -528,7 +528,7 @@ public class MySparseMatrix extends Matrix implements MatrixMultiplication<Spars
 
 	// threshold anything other than the first N elements
 	public MySparseMatrix threshold(int N) {
-		if (N > x.length) {
+		if (N >= x.length) {
 			return threshold(-1.0);
 		}
 
