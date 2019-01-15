@@ -165,7 +165,10 @@ public class RandWalkMatrix {
 		MySparseMatrix B = new MySparseMatrix(argPair2idx.size(), pred2idx.size(), xB, rowIndexB, colIndexB);
 //				.threshold(numAllSeenEdges);
 		System.out.println("A, B size: " + A.size() + " " + B.size());
-		mat = A.abmm(B).threshold(ConstantsRWalk.threshold);
+		//TODO: be careful with this, added on 15 Nov
+		A = A.threshold(ConstantsRWalk.NThr);
+		B = B.threshold(ConstantsRWalk.NThr);
+		mat = (A.abmm(B)).threshold(ConstantsRWalk.threshold);
 
 		for (double x : mat.values()) {
 			if (x == 0) {
@@ -197,12 +200,13 @@ public class RandWalkMatrix {
 
 		// MySparseMatrix randWalkMat =
 		// matNoHub.threshold(ConstantsRWalk.thresholdMul);//TODO: be careful!
-		MySparseMatrix randWalkMat = matNoHub.threshold(ConstantsRWalk.NThr);// TODO: be careful!
-		MySparseMatrix matThr = randWalkMat;
-
+//		MySparseMatrix randWalkMat = matNoHub.threshold(ConstantsRWalk.NThr);// TODO: be careful!
+//		MySparseMatrix matThr = randWalkMat;
+		
+		MySparseMatrix randWalkMat = mat;
 		for (int k = 0; k < K - 1; k++) {
 			System.out.println("multiplying matrix, current size: " + randWalkMat.size());
-			randWalkMat = randWalkMat.abmm(matThr).threshold(ConstantsRWalk.NThr);
+			randWalkMat = randWalkMat.abmm(mat);//.threshold(ConstantsRWalk.NThr);
 			randWalkMats.add(randWalkMat);
 		}
 
@@ -278,7 +282,10 @@ public class RandWalkMatrix {
 					scores_cos.add(new SimpleScore("", pred2, (float) w_cos));
 				}
 
-				System.out.println("sanity: " + sumOuts);
+//				if (sumOuts<.99 || sumOuts>1.01) {
+					System.out.println(pred);
+					System.out.println("sanity: " + sumOuts);
+//				}
 
 				Collections.sort(scores, Collections.reverseOrder());
 				Collections.sort(scores_cos, Collections.reverseOrder());
@@ -316,9 +323,9 @@ public class RandWalkMatrix {
 		while ((line = br.readLine()) != null) {
 			try {
 				index++;
-//				if (index >= 100000) {
-//					break;// TODO: remove this
-//				}
+				if (index >= 1000) {
+					break;// TODO: remove this
+				}
 				if (index % 100000 == 0) {
 					System.out.println(index);
 				}
@@ -362,16 +369,16 @@ public class RandWalkMatrix {
 						entPair_reverse = e1 + "#" + e2;
 					}
 
-					if (allTriples.contains(triple) || N_ap < ConstantsRWalk.convEArgPairNeighs) {// TODO: be
+					if (allTriples.contains(triple) || N_ap < ConstantsRWalk.convEArgPairNeighs) {// TODO: be careful
 
 						ret.putIfAbsent(triple, prob);
-						// careful
 						if (!allTriples.contains(triple)) {
 							N_ap++;
 						}
 						else {
 							numAllSeenEdges++;
 						}
+						
 						String pred_orig = pred + "#thing_1#thing_2";
 						String pred_reverse = pred + "#thing_2#thing_1";
 

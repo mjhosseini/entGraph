@@ -28,7 +28,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 
 	@Override
 	public void run() {
-		Map<String, Set<Integer>> rawPred2PGraphs = TypePropagateMN.rawPred2PGraphs;
+		Map<String, Set<Integer>> rawPred2PGraphs = PGraph.rawPred2PGraphs;
 		DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gPrev = pgraph.g0;
 
 		for (int r = 0; r < gPrev.vertexSet().size(); r++) {
@@ -73,8 +73,8 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				int minPairOcc1 = 1;
 
 				if (ConstantsSoftConst.sizeBasedPropagation) {
-					minPairOcc1 = Math.min(TypePropagateMN.predToOcc.get(pred_r),
-							TypePropagateMN.predToOcc.get(pred_rp));
+					minPairOcc1 = Math.min(PGraph.predToOcc.get(pred_r),
+							PGraph.predToOcc.get(pred_rp));
 				}
 
 				// Let's propagate to all the neighbor graphs
@@ -183,7 +183,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 //					+ pred_p + " " + pred_q + " " + compScore+" "+sim);
 			int minPairOcc2 = 1;
 			if (ConstantsSoftConst.sizeBasedPropagation) {
-				minPairOcc2 = Math.min(TypePropagateMN.predToOcc.get(pred_p), TypePropagateMN.predToOcc.get(pred_q));
+				minPairOcc2 = Math.min(PGraph.predToOcc.get(pred_p), PGraph.predToOcc.get(pred_q));
 				compScore *= Math.min(minPairOcc1, minPairOcc2);
 			}
 
@@ -294,7 +294,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				// "+aligned+" "+t1+" "+t2+" "+compScore1);
 
 				if (ConstantsSoftConst.sizeBasedPropagation) {
-					int minPairOcc1 = Math.min(TypePropagateMN.predToOcc.get(p1), TypePropagateMN.predToOcc.get(q1));
+					int minPairOcc1 = Math.min(PGraph.predToOcc.get(p1), PGraph.predToOcc.get(q1));
 					compScore1 *= Math.min(minPairOcc1, minPairOcc2);
 				}
 				sumCoefs += compScore1;
@@ -303,7 +303,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				// System.out.println("propagating: "+rawPred_p+" "+rawPred_q+" "+tp1+" "+tp2+"
 				// "+aligned+" "+t2+" "+t1+" "+compScore2);
 				if (ConstantsSoftConst.sizeBasedPropagation) {
-					int minPairOcc1 = Math.min(TypePropagateMN.predToOcc.get(p2), TypePropagateMN.predToOcc.get(q2));
+					int minPairOcc1 = Math.min(PGraph.predToOcc.get(p2), PGraph.predToOcc.get(q2));
 					compScore2 *= Math.min(minPairOcc1, minPairOcc2);
 				}
 

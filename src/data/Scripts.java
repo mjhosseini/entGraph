@@ -784,7 +784,8 @@ public class Scripts {
 		// testEntTypes();
 		// trueCase();
 		
-		convertDecomposableAttentionProbsToFlat(args[0]);
+//		convertDecomposableAttentionProbsToFlat(args[0]);
+		swapDS("../../python/gfiles/ent/naacl_levy_format.txt");
 
 //		extractRelationsSNLIAll();
 

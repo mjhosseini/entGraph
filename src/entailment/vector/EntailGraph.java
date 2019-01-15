@@ -90,14 +90,11 @@ public class EntailGraph extends SimpleEntailGraph {
 			}
 		}
 	}
-	
-	int getNSBasedPredCutoff() {
-		if (!EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)) {
-			return -1;
-		}
 
+	int getNSBasedPredCutoff() {
+		
 		List<Integer> a = new ArrayList<>();
-		for (PredicateVector pvec: pvecs) {
+		for (PredicateVector pvec : pvecs) {
 			a.add(pvec.argIdxes.size());
 		}
 
@@ -111,11 +108,8 @@ public class EntailGraph extends SimpleEntailGraph {
 			return ret;
 		}
 	}
-	
+
 	int getNSBasedAPCutoff() {
-		if (!EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)) {
-			return -1;
-		}
 
 		List<Integer> a = new ArrayList<>();
 		for (double i : argPairIdxToCount.values()) {
@@ -139,24 +133,28 @@ public class EntailGraph extends SimpleEntailGraph {
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
+		
+		boolean shouldCutoffNSBased = ConstantsAgg.cutoffBasedonNSGraphs && EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)
+				&& EntailGraphFactoryAggregator.type2RankNS.get(types) < ConstantsAgg.numTopTypePairs; 
+		
 
 		// cutoff arg-pairs
 		int argPAirCutoff = minPredForArgPair;
-		if (ConstantsAgg.cutoffBasedonNSGraphs) {
+		if (shouldCutoffNSBased) {
 			argPAirCutoff = Math.max(argPAirCutoff, getNSBasedAPCutoff());
 		}
 
 		for (PredicateVector pvec : pvecs) {
 			pvec.cutoffInfreqArgPairs(argPAirCutoff);
-			if (ConstantsAgg.cutoffBasedonNSGraphs) {
+			if (shouldCutoffNSBased) {// just retain the first X number of arg-pairs for that predicate
 				pvec.cutoffInfreqArgPairsPredBased();
 			}
 		}
-		
+
 		// cutoff preds
-		
+
 		int predCutoff = ConstantsAgg.minArgPairForPred;
-		if (ConstantsAgg.cutoffBasedonNSGraphs) {
+		if (shouldCutoffNSBased) {
 			predCutoff = Math.max(predCutoff, getNSBasedPredCutoff());
 		}
 

@@ -118,7 +118,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinesHandler.mainStrs.add(mainStr);
 		LinesHandler.mainStrsOnlyNEs.add(mainStrOnlyNEs);
 
-//		System.out.println(mainStr);
+		// System.out.println(mainStr);
 
 		// if (LinesHandler.convToEntityLinked) {
 		// for (String spot : entsSet) {
@@ -323,6 +323,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			List<List<LexicalGraph>> allGraphs) throws ArgumentValidationException, IOException, InterruptedException {
 		String mainStr = "";
 		String mainStrOnlyNEs = "";
+		List<String> semanticParses = new ArrayList<>();
 		String dsStr = "";// For very simple sentences with only one expected
 							// relation
 		boolean foundInteresting = false;// true if argIdx!=eventIdx, ...
@@ -356,7 +357,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinkedHashSet<String> unaryRels = new LinkedHashSet<>();
 		Set<Integer> notInterestingEventIdxes = new HashSet<>();// e.g., cigarettes at the bar: cigarettes as an event
 
-		for (List<LexicalGraph> graphs : allGraphs) {
+		for (List<LexicalGraph> graphs : allGraphs) {//each graph is for one sentence
 			if (graphs.size() > 0) {
 
 				// System.out.println("syn ind: "+syntaxIdx + " "+
@@ -404,6 +405,10 @@ public class PredicateArgumentExtractor implements Runnable {
 					mainStr += "Semantic Parse:\n";
 					mainStr += semanticParse + "\n\n";
 
+				}
+
+				if (ConstantsParsing.writeSemParse) {
+					semanticParses.add(semanticParse + "");
 				}
 
 				boolean first = true;
@@ -685,8 +690,9 @@ public class PredicateArgumentExtractor implements Runnable {
 															// e.g., particle verbs)
 						continue;
 					}
-//					System.out.println("adding unary rel: " + unaryRel[0] + " " + eIdx2Count.get(unaryRel[1]));
-//					System.out.println(semanticParse);
+					// System.out.println("adding unary rel: " + unaryRel[0] + " " +
+					// eIdx2Count.get(unaryRel[1]));
+					// System.out.println(semanticParse);
 					unaryRels.add(unaryRel[0]);
 				}
 
@@ -720,6 +726,13 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		if (ConstantsParsing.writeDebugString) {
 			System.out.println("\n");
+		}
+
+		if (ConstantsParsing.writeSemParse) {
+			mainStr += "semantic parses:\n";
+			for (String s : semanticParses) {
+				mainStr += s + "\n";
+			}
 		}
 
 		String[] ret = new String[] { mainStr, mainStrOnlyNEs, dsStr, foundInteresting + "", unaryRelsStr };
@@ -1445,19 +1458,24 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
-		// String s = "Barack Obama is not against all wars.";
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
-		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
-		// and Explosives.";
+		String s = "Doan scores late in OT to lift Coyotes by Avs, 3-2";
+//		String s = "President Barack Obama intends to nominate B. Todd Jones as his choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms and Explosives. Cameron said the coalition's main aim was to stay ahead in the \\\"global race\\\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
 		// String s = "Cameron said the coalition's main aim was to stay ahead in the
 		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
 		// Mexico and Turkey as examples of countries that Britain would fall behind
 		// without reforms.";
-//		String s = "Two women having drinks and smoking cigarettes at the bar";
-		String s = "Stay in contact with friends – in person. Put down the electronics and call a friend. Host a game night. Set “dates” for the winter to meet friends for dinner and a movie. Go shopping together. Meet for coffee. Take a social dance class with friends. Loneliness can also lead to depression. Having a highly active social life can decrease Alzheimer’s disease risk by a surprisingly high 70 percent, according to new findings published in the Journal of the International Neuropsychological Society. So put yourself out there and find a group to share and laugh with!";
+		// String s = "Two women having drinks and smoking cigarettes at the bar";
+		// String s = "Stay in contact with friends – in person. Put down the
+		// electronics and call a friend. Host a game night. Set “dates” for the winter
+		// to meet friends for dinner and a movie. Go shopping together. Meet for
+		// coffee. Take a social dance class with friends. Loneliness can also lead to
+		// depression. Having a highly active social life can decrease Alzheimer’s
+		// disease risk by a surprisingly high 70 percent, according to new findings
+		// published in the Journal of the International Neuropsychological Society. So
+		// put yourself out there and find a group to share and laugh with!";
 		// String s = "A man wearing glasses and a ragged costume is playing a Jaguar
 		// electric guitar and singing with the accompaniment of a drummer.";
 		// String s = "A man is walking and he is talking to his friend";

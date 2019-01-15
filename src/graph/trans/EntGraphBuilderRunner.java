@@ -12,20 +12,16 @@ import graph.PGraph.TransitiveMethod;
 
 public class EntGraphBuilderRunner implements Runnable {
 
-	String fname;
 	List<Float> lmbdas;
+	PGraph pgraph;
 
-	public EntGraphBuilderRunner(String fname, List<Float> lmbdas) {
-		this.fname = fname;
+	public EntGraphBuilderRunner(PGraph pgraph, List<Float> lmbdas) {
+		this.pgraph = pgraph;
 		this.lmbdas = lmbdas;
 	}
 
 	@Override
 	public void run() {
-		PGraph pgraph = new PGraph(ConstantsGraphs.root + fname);
-		if (pgraph.nodes.size() == 0) {
-			return;
-		}
 
 		System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 
@@ -99,12 +95,12 @@ public class EntGraphBuilderRunner implements Runnable {
 
 				specILP.buildEntGraph();
 				specILP.writeEntGraph();
-				System.out.println("done specILP " +fname+ " "+lmbda);
+				System.out.println("done specILP " +pgraph.fname+ " "+lmbda);
 			}
 
 		}
 		op.close();
-		System.out.println("entGraph done: "+fname);
+		System.out.println("entGraph done: "+pgraph.fname);
 	}
 
 }

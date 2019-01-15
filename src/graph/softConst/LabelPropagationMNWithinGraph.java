@@ -49,21 +49,21 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 				}
 				double w_ij = 0;
 				if (gPrev.containsEdge(i, j)) {
-					w_ij = gPrev.getEdgeWeight(gPrev.getEdge(i, j)) - ConstantsSoftConst.tau;
+					w_ij = gPrev.getEdgeWeight(gPrev.getEdge(i, j)) - ConstantsSoftConst.epsilon;
 				}
 
-				double w_ji = gPrev.getEdgeWeight(e) - ConstantsSoftConst.tau;
+				double w_ji = gPrev.getEdgeWeight(e) - ConstantsSoftConst.epsilon;
 
 				if (w_ji <= 0 || w_ij <= 0) {
 					continue;
-				}
-				else {
-//					System.out.println("wij greater than 0: "+w_ij+" "+w_ji+" "+TypePropagateMN.tau);
+				} else {
+					// System.out.println("wij greater than 0: "+w_ij+" "+w_ji+"
+					// "+TypePropagateMN.tau);
 				}
 
 				if (!ConstantsSoftConst.obj1) {
-					w_ij += ConstantsSoftConst.tau;
-					w_ji += ConstantsSoftConst.tau;
+					w_ij += ConstantsSoftConst.epsilon;
+					w_ji += ConstantsSoftConst.epsilon;
 				}
 
 				// if (!TypePropagateMN.obj1) {
@@ -154,7 +154,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 
 				// System.out.println("numerator 3 j: "+pgraph.nodes.get(i).id+"
 				// "+pgraph.nodes.get(j).id+" "+numerator);
-				
+
 				// TODO: added, be careful
 				// numerator/=(pgraph.nodes.get(i).getNumNeighs()+pgraph.nodes.get(j).getNumNeighs());
 
@@ -191,19 +191,19 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					continue;
 				}
 
-				double w_jk = gPrev.getEdgeWeight(gPrev.getEdge(j, k)) - ConstantsSoftConst.tau;
-				double w_kj = gPrev.getEdgeWeight(gPrev.getEdge(k, j)) - ConstantsSoftConst.tau;
+				double w_jk = gPrev.getEdgeWeight(gPrev.getEdge(j, k)) - ConstantsSoftConst.epsilon;
+				double w_kj = gPrev.getEdgeWeight(gPrev.getEdge(k, j)) - ConstantsSoftConst.epsilon;
 
 				if (w_jk <= 0 || w_kj <= 0) {
 					continue;
-				}
-				else {
-//					System.out.println("wjk great than 0: "+w_jk+" "+w_kj+" "+TypePropagateMN.tau);
+				} else {
+					// System.out.println("wjk great than 0: "+w_jk+" "+w_kj+"
+					// "+TypePropagateMN.tau);
 				}
 
 				if (!ConstantsSoftConst.obj1) {
-					w_jk += ConstantsSoftConst.tau;
-					w_kj += ConstantsSoftConst.tau;
+					w_jk += ConstantsSoftConst.epsilon;
+					w_kj += ConstantsSoftConst.epsilon;
 				}
 
 				double denom = 2 * w_jk * w_kj;
@@ -334,6 +334,18 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 					double prevDenom = pgraph.edgeToMNWeight.get(edgeStr);
 					pgraph.edgeToMNWeight.put(edgeStr, prevDenom + denom);
 				}
+			}
+		}
+
+	}
+
+	static void addDenomNewEdge(PGraph pgraph, int i, int j) {
+
+		String edgeStr = i + "#" + j;
+		synchronized (pgraph.edgeToMNWeight) {
+			if (!pgraph.edgeToMNWeight.containsKey(edgeStr)) {
+				pgraph.edgeToMNWeight.put(edgeStr, 1.0);// we still need to add the "1" that we haven't added
+																// any other place! Although, the numerator is 0!
 			}
 		}
 

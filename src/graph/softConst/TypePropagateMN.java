@@ -1,16 +1,14 @@
 package graph.softConst;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -31,14 +29,10 @@ import edu.stanford.nlp.util.CollectionUtils;
 import graph.PGraph;
 
 public class TypePropagateMN {
-	
-	
+
 	Map<String, Integer> graphToNumEdges;
 	static Map<String, Double> compatibles;
 	ThreadPoolExecutor threadPool;
-	static ArrayList<PGraph> pGraphs;
-	static Map<String, Integer> predToOcc;// ex: (visit.1,visit.2)#person#location => 10344
-	static Map<String, Set<Integer>> rawPred2PGraphs;
 	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric)
 	static Map<String, Double> beta1s;// p#t1#t3(it will be symmetric)
 	static Map<String, Double> beta2s;// p#t2#t4(it will be symmetric)
@@ -49,11 +43,11 @@ public class TypePropagateMN {
 
 	public TypePropagateMN(String root) {
 		ConstantsGraphs.suffix = "_sim.txt";
-		ConstantsGraphs.edgeThreshold = .01f;//All TACL experiments
+		ConstantsGraphs.edgeThreshold = .01f;// All TACL experiments
 		ConstantsTrans.formBinaryGraph = false;
-		
+
 		if (ConstantsSoftConst.sizeBasedPropagation) {
-			setPredToOcc(root);
+			PGraph.setPredToOcc(root);
 		}
 		// PGraph.edgeThreshold = edgeThreshold;
 		try {
@@ -66,58 +60,6 @@ public class TypePropagateMN {
 		System.err.println("after reading all pgraphs");
 		memStat();
 
-	}
-
-	static void setPredToOcc(String root) {
-		predToOcc = new HashMap<>();
-
-		File folder = new File(root);
-		File[] files = folder.listFiles();
-		Arrays.sort(files);
-
-		for (File f : files) {
-
-			String fname = f.getName();
-
-			if (fname.contains("_sim") || fname.contains("_tProp") || fname.contains("_emb")) {
-				continue;
-			}
-
-			System.out.println("occ f name: " + fname);
-
-			try {
-				readOccFile(predToOcc, root + fname);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	static void readOccFile(Map<String, Integer> predToOcc, String fname) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(fname));
-		String line = null;
-		String currentPred = null;
-		int currOcc = 0;
-		while ((line = br.readLine()) != null) {
-			if (line.equals("")) {
-				continue;
-			} else if (line.startsWith("predicate:")) {
-				if (currentPred != null) {
-					// System.out.println("pred: "+currentPred+" "+currOcc);
-					predToOcc.put(currentPred, currOcc);
-				}
-				currentPred = line.substring(11);
-				currOcc = 0;
-			} else if (line.startsWith("inv idx")) {
-				predToOcc.put(currentPred, currOcc);
-				break;
-			} else {
-				int colIdx = line.lastIndexOf(":");
-				int occ = (int) Float.parseFloat(line.substring(colIdx + 2));
-				currOcc += occ;
-			}
-		}
-		br.close();
 	}
 
 	static void memStat() {
@@ -158,7 +100,7 @@ public class TypePropagateMN {
 	}
 
 	void readPGraphs(String root) {
-		pGraphs = new ArrayList<>();
+		PGraph.pGraphs = new ArrayList<>();
 		graphToNumEdges = new HashMap<String, Integer>();
 		if (ConstantsGraphs.addTargetRels) {
 			createEmptySimFiles(root);
@@ -169,15 +111,13 @@ public class TypePropagateMN {
 
 		Arrays.sort(files);
 
-		rawPred2PGraphs = new HashMap<>();
-
 		// boolean seenLoc = false;//TODO: be carful
 		int gc = 0;
 		for (File f : files) {
 
 			String fname = f.getName();
-//			if (gc > 50) {
-//				continue;
+//			if (gc == 5) {
+//				break;
 //			}
 
 			// TODO: remove
@@ -190,6 +130,10 @@ public class TypePropagateMN {
 			// if (!seenLoc) {
 			// continue;
 			// }
+			
+//			if (!fname.contains("person#location")) {
+//				continue;
+//			}
 
 			if (!fname.contains(ConstantsGraphs.suffix)) {
 				continue;
@@ -217,7 +161,7 @@ public class TypePropagateMN {
 				continue;
 			}
 
-			pGraphs.add(pgraph);
+			PGraph.pGraphs.add(pgraph);
 			String[] ss = pgraph.types.split("#");
 			String types2 = ss[1] + "#" + ss[0];
 			graphToNumEdges.put(pgraph.types, pgraph.sortedEdges.size());
@@ -226,26 +170,17 @@ public class TypePropagateMN {
 			System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 			gc++;
 		}
-
-		Collections.sort(pGraphs, Collections.reverseOrder());
-
-		for (int i = 0; i < pGraphs.size(); i++) {
-			PGraph pgraph = pGraphs.get(i);
-			pgraph.sortIdx = i;
-
-			for (String s : pgraph.pred2node.keySet()) {
-				String rawPred = s.split("#")[0];
-				if (!rawPred2PGraphs.containsKey(rawPred)) {
-					rawPred2PGraphs.put(rawPred, new HashSet<>());
-				}
-				rawPred2PGraphs.get(rawPred).add(i);
-			}
-
-			System.out.println("pgraph name: " + pGraphs.get(i).name + " " + pGraphs.get(i).nodes.size());
+		
+		for (PGraph pgraph: PGraph.pGraphs) {
+			pgraph.setSortedEdges();
 		}
 
-	}
+		Collections.sort(PGraph.pGraphs, Collections.reverseOrder());
 
+		PGraph.setRawPred2PGraphs(PGraph.pGraphs);
+
+	}
+	
 	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
 
 		String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
@@ -515,14 +450,14 @@ public class TypePropagateMN {
 
 	}
 
-	static double getSum1(ArrayList<PGraph> allPGraphs, String rawPred_r, String t1_plain, String tp1_plain) {
+	static double getSum1(List<PGraph> allPGraphs, String rawPred_r, String t1_plain, String tp1_plain) {
 
 		double sum1 = 0;
 		if (t1_plain.equals(tp1_plain)) {
 			return sum1;
 		}
 
-		Set<Integer> rawPred_r_PGraphs = TypePropagateMN.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
+		Set<Integer> rawPred_r_PGraphs = PGraph.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
 																							// predicate
 		// System.out.println("getBeta1 for " + rawPred_r + " " + t1_plain + " " +
 		// tp1_plain);
@@ -623,14 +558,14 @@ public class TypePropagateMN {
 		return sum1;
 	}
 
-	static double getSum2(ArrayList<PGraph> allPGraphs, String rawPred_r, String t2_plain, String tp2_plain) {
+	static double getSum2(List<PGraph> allPGraphs, String rawPred_r, String t2_plain, String tp2_plain) {
 		double sum2 = 0;
 
 		if (t2_plain.equals(tp2_plain)) {
 			return sum2;
 		}
 
-		Set<Integer> rawPred_r_PGraphs = TypePropagateMN.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
+		Set<Integer> rawPred_r_PGraphs = PGraph.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
 																							// predicate
 		// System.out.println("getBeta2 for " + rawPred_r + " " + t2_plain + " " +
 		// tp2_plain);
@@ -825,7 +760,7 @@ public class TypePropagateMN {
 				sum1 = beta1s.get(beta1Key);
 			} else {
 				shouldWrite = true;
-				sum1 = getSum1(pGraphs, rawPred_r, t1_plain, tp1_plain);
+				sum1 = getSum1(PGraph.pGraphs, rawPred_r, t1_plain, tp1_plain);
 				synchronized (beta2Keyp) {
 					beta1s.put(beta1Key, sum1);
 					beta1s.put(beta1Keyp, sum1);
@@ -839,7 +774,7 @@ public class TypePropagateMN {
 
 			else {
 				shouldWrite = true;
-				sum2 = getSum2(pGraphs, rawPred_r, t2_plain, tp2_plain);
+				sum2 = getSum2(PGraph.pGraphs, rawPred_r, t2_plain, tp2_plain);
 				synchronized (beta2Keyp) {
 					beta2s.put(beta2Key, sum2);
 					beta2s.put(beta2Keyp, sum2);
@@ -898,7 +833,7 @@ public class TypePropagateMN {
 			beta1s = Collections.synchronizedMap(new HashMap<>());
 			beta2s = Collections.synchronizedMap(new HashMap<>());
 			System.err.println("iter " + iter);
-			for (PGraph pgraph : pGraphs) {
+			for (PGraph pgraph : PGraph.pGraphs) {
 				// initialize gMN (next g) based on g0 (cur g)
 				int N = pgraph.g0.vertexSet().size();
 				pgraph.gMN = new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
@@ -927,9 +862,16 @@ public class TypePropagateMN {
 				e1.printStackTrace();
 			}
 
-			// propagate within graphs
+			// propagate within graphs trans
 			try {
 				propagateAll(1);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+
+			// propagate within graphs
+			try {
+				propagateAll(2);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
@@ -937,24 +879,25 @@ public class TypePropagateMN {
 			// Now, just let's get the average for gMNs
 
 			try {
-				propagateAll(2);
+				propagateAll(3);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
 
 			// now let's put g0 = gMN
 			if (iter != ConstantsSoftConst.numIters - 1) {
-				for (PGraph pgraph : pGraphs) {
-					pgraph.g0 = pgraph.gMN;
+				for (PGraph pgraph : PGraph.pGraphs) {
+					pgraph.g0 = pgraph.gMN;//TODO: be very careful, put this back.
 				}
 			}
+			System.out.println("num trans vio: "+LabelPropagationMNWithinGraphTrans.numVio);
 			System.out.println("obj change: " + objChange);
 			System.out.println("num beta1: " + numBetaOne + " " + numBetaAll);
 		}
 
 		// now, let's write the results
 		try {
-			propagateAll(3);
+			propagateAll(4);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
@@ -1013,7 +956,8 @@ public class TypePropagateMN {
 	void propagateAll(int runIdx) throws InterruptedException {
 
 		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(ConstantsSoftConst.numThreads);
-		threadPool = new ThreadPoolExecutor(ConstantsSoftConst.numThreads, ConstantsSoftConst.numThreads, 600, TimeUnit.SECONDS, queue);
+		threadPool = new ThreadPoolExecutor(ConstantsSoftConst.numThreads, ConstantsSoftConst.numThreads, 600,
+				TimeUnit.SECONDS, queue);
 		// to silently discard rejected tasks. :add new
 		// ThreadPoolExecutor.DiscardPolicy()
 
@@ -1030,7 +974,7 @@ public class TypePropagateMN {
 		});
 
 		for (int threadIdx = 0; threadIdx < ConstantsSoftConst.numThreads; threadIdx++) {
-			LabelPropagateMN lmn = new LabelPropagateMN(pGraphs, threadIdx, ConstantsSoftConst.numThreads, runIdx);
+			LabelPropagateMN lmn = new LabelPropagateMN(PGraph.pGraphs, threadIdx, ConstantsSoftConst.numThreads, runIdx);
 			threadPool.execute(lmn);
 		}
 

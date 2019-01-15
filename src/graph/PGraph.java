@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,9 +30,10 @@ import graph.EmbIter.MNEmbIter;
 //entry point for running transitive graph making methods + iterative embedding (which never worked well)
 public class PGraph implements Comparable<PGraph> {
 
-	//fields
+	// fields
 	static Map<FeatName, String> featNameToStr;
-	public int sortIdx = -1;// the index of the graph after sorting all the graphs based on their sizes. 0 is the largest.
+	public int sortIdx = -1;// the index of the graph after sorting all the graphs based on their sizes. 0
+							// is the largest.
 
 	static {
 		featNameToStr = new HashMap<>();
@@ -57,11 +59,15 @@ public class PGraph implements Comparable<PGraph> {
 	public static Set<String> targetRelsAddedToGraphs = new HashSet<>();
 	public static Map<String, Set<String>> types2TargetRels = new HashMap<>();
 	public ArrayList<Edge> sortedEdges;
-	
-	//These three fields should be actually in softGraphs, but for simplicity, I'm not changing the code
+
+	// These three fields should be actually in softGraphs, but for simplicity, I'm
+	// not changing the code
 	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
 	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
 	public Map<String, Double> edgeToMNWeight;
+	public static List<PGraph> pGraphs;
+	public static Map<String, Set<Integer>> rawPred2PGraphs;
+	public static Map<String, Integer> predToOcc;// ex: (visit.1,visit.2)#person#location => 10344
 
 	// static List<SimpleScore> scores = new ArrayList<>();
 
@@ -81,26 +87,25 @@ public class PGraph implements Comparable<PGraph> {
 			if (this.name == null) {
 				return;
 			}
-//			for (int i = 0; i < nodes.size(); i++) {
-//				System.out.println(i + ": " + nodes.get(i).id);
-//			}
+			// for (int i = 0; i < nodes.size(); i++) {
+			// System.out.println(i + ": " + nodes.get(i).id);
+			// }
 		} catch (IOException e) {
 			System.err.println("exception before sorted edges");
 			e.printStackTrace();
 			return;
 		}
 		// System.out.println("here sorted edges1: "+sortedEdges);
-		this.setSortedEdges();
+//		this.setSortedEdges();//This was moved to the end of pgraphs building...
 		// Now, build the graph using embeddings
 
-		
 	}
 
 	public List<Edge> getSortedEdges() {
 		return sortedEdges;
 	}
 
-	void setSortedEdges() {
+	public void setSortedEdges() {
 		ArrayList<Edge> ret = new ArrayList<>();
 		for (Node n : this.nodes) {
 			int i = n.idx;
@@ -108,7 +113,11 @@ public class PGraph implements Comparable<PGraph> {
 				int j = oedge.nIdx;
 				float sim = oedge.sim;
 				if (sim > 0) {
-					ret.add(new Edge(i, j, sim));
+					Edge edge = new Edge(i, j, sim, this);
+					if (ConstantsGraphs.sortEdgesConfidenceBased) {
+						edge.setConfidence();
+					}
+					ret.add(edge);
 					// System.out.println("edge: "+i+" "+j+" "+sim);
 				}
 			}
@@ -170,7 +179,7 @@ public class PGraph implements Comparable<PGraph> {
 	static {
 
 		try {
-			
+
 			// targetRels = readTargetRels(tfpath);
 			if (ConstantsGraphs.addTargetRels) {
 				setTargetRelsMap();
@@ -182,16 +191,14 @@ public class PGraph implements Comparable<PGraph> {
 
 	void buildGraphFromFile(String fname) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(fname));
-		String typeStr = fname.substring(fname.lastIndexOf('/') + 1, fname.lastIndexOf('_'));
-		this.types = typeStr;
-		this.name = this.types;
 		String line = "";
 		int lIdx = 0;
 		boolean first = true;
 		String simName = "";
 		Node node = null;
 
-		boolean isConjunction = false;
+		boolean shouldRemove = false;
+		int rank = 1;
 		while ((line = br.readLine()) != null) {
 			line = line.replace("` ", "").trim();
 			if (lIdx % 1000000 == 0) {
@@ -200,20 +207,28 @@ public class PGraph implements Comparable<PGraph> {
 			lIdx++;
 			if (first) {
 				// this.name = line;
+				
+				line = line.replace("types: ", "").replace(",", " ");
+				line = line.substring(0, line.indexOf(' '));
+				
+				this.types = line;
+				this.name = this.types;
+//				System.out.println("types in pgraph: "+this.types);
+				
 				first = false;
 			} else if (line.equals("")) {
 				continue;
 			} else if (line.startsWith("predicate:")) {
 				String pred = line.substring(11);
+				rank = 1;
 
-				if (isConjunction(pred)) {
-					isConjunction = true;
+				if (shouldRemovePred(pred)) {
+					shouldRemove = true;
 					continue;
 				} else {
-					isConjunction = false;
+					shouldRemove = false;
 				}
 
-				// System.out.println("pred: "+pred);
 				if (!pred2node.containsKey(pred)) {
 					int nIdx = nodes.size();
 					node = new Node(nIdx, pred);
@@ -222,7 +237,7 @@ public class PGraph implements Comparable<PGraph> {
 					node = pred2node.get(pred);
 				}
 			} else {
-				if (isConjunction) {
+				if (shouldRemove) {
 					continue;
 				}
 				if (line.startsWith("num neighbors:")) {
@@ -245,7 +260,7 @@ public class PGraph implements Comparable<PGraph> {
 					try {
 						String[] ss = line.split(" ");
 						nPred = ss[0];
-						if (isConjunction(nPred)) {
+						if (shouldRemovePred(nPred)) {
 							continue;
 						}
 						// System.out.println("npred: "+nPred);
@@ -257,6 +272,9 @@ public class PGraph implements Comparable<PGraph> {
 					if (sim < ConstantsGraphs.edgeThreshold) {
 						// System.out.println("lt: " + sim);
 						continue;
+					}
+					if (ConstantsGraphs.rankDiscount) {
+						sim *= (1/Math.sqrt(rank));
 					}
 					// else{
 					// System.out.println("gt: "+sim);
@@ -279,6 +297,7 @@ public class PGraph implements Comparable<PGraph> {
 					if (!ConstantsGraphs.removeStopPreds
 							|| (!Util.stopPreds.contains(node.id) && !Util.stopPreds.contains(nNode.id))) {
 						node.addNeighbor(nIdx, sim);
+						rank++;
 					}
 				}
 			}
@@ -332,6 +351,16 @@ public class PGraph implements Comparable<PGraph> {
 		pred2node.put(n.id, n);
 	}
 
+	static boolean shouldRemovePred(String pred) {
+		if (ConstantsGraphs.removeNegs && pred.startsWith("NEG__")) {
+			return true;
+		}
+		if (ConstantsGraphs.removeEventEventModifers && pred.contains("__") && !pred.startsWith("NEG__")) {
+			return true;
+		}
+		return isConjunction(pred);
+	}
+
 	// isConjunction or a bad thing!
 	static boolean isConjunction(String pred) {
 		try {
@@ -348,15 +377,15 @@ public class PGraph implements Comparable<PGraph> {
 		}
 	}
 
-//	static Set<String> readTargetRels(String fpath) throws IOException {
-//		Set<String> ret = new HashSet<>();
-//		BufferedReader br = new BufferedReader(new FileReader(fpath));
-//		String line = null;
-//		while ((line = br.readLine()) != null) {
-//			ret.add(line);
-//		}
-//		return ret;
-//	}
+	// static Set<String> readTargetRels(String fpath) throws IOException {
+	// Set<String> ret = new HashSet<>();
+	// BufferedReader br = new BufferedReader(new FileReader(fpath));
+	// String line = null;
+	// while ((line = br.readLine()) != null) {
+	// ret.add(line);
+	// }
+	// return ret;
+	// }
 
 	// (cause.1,cause.2) pharyngitis::disease fever::disease =>
 	// {(cause.1,cause.2)#disease_1#disease_2,disease#disease}
@@ -484,6 +513,79 @@ public class PGraph implements Comparable<PGraph> {
 			return -1;
 		}
 		return 0;
+	}
+
+	public static void setRawPred2PGraphs(List<PGraph> pGraphs) {
+		rawPred2PGraphs = new HashMap<>();
+		for (int i = 0; i < pGraphs.size(); i++) {
+			PGraph pgraph = pGraphs.get(i);
+			pgraph.sortIdx = i;
+			for (String s : pgraph.pred2node.keySet()) {
+				String rawPred = s.split("#")[0];
+				if (!rawPred2PGraphs.containsKey(rawPred)) {
+					rawPred2PGraphs.put(rawPred, new HashSet<>());
+				}
+				rawPred2PGraphs.get(rawPred).add(i);
+			}
+			System.out.println("pgraph name: " + pGraphs.get(i).name + " " + pGraphs.get(i).nodes.size());
+		}
+	}
+
+	public static void readOccFile(Map<String, Integer> predToOcc, String fname) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(fname));
+		String line = null;
+		String currentPred = null;
+		int currOcc = 0;
+		while ((line = br.readLine()) != null) {
+			if (line.equals("")) {
+				continue;
+			} else if (line.startsWith("predicate:")) {
+				if (currentPred != null) {
+					// System.out.println("pred: "+currentPred+" "+currOcc);
+					predToOcc.put(currentPred, currOcc);
+				}
+				currentPred = line.substring(11);
+				currOcc = 0;
+			} else if (line.startsWith("inv idx")) {
+				predToOcc.put(currentPred, currOcc);
+				break;
+			} else {
+				int colIdx = line.lastIndexOf(":");
+				int occ = (int) Float.parseFloat(line.substring(colIdx + 2));
+				currOcc += occ;
+			}
+		}
+		br.close();
+	}
+
+	public static void setPredToOcc(String root) {
+		PGraph.predToOcc = new HashMap<>();
+
+		File folder = new File(root);
+		File[] files = folder.listFiles();
+		Arrays.sort(files);
+
+		for (File f : files) {
+
+			String fname = f.getName();
+
+			// if (fname.contains("_sim") || fname.contains("_tProp") ||
+			// fname.contains("_emb")) {
+			// continue;
+			// }
+
+			if (!fname.contains("_rels.txt")) {
+				continue;
+			}
+
+			System.out.println("occ f name: " + fname);
+
+			try {
+				PGraph.readOccFile(PGraph.predToOcc, root + fname);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public enum FeatName {

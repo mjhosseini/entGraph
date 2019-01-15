@@ -84,7 +84,7 @@ public class LevyProcessing {
 		PrintWriter train = new PrintWriter(root + "train1.txt");
 		PrintWriter dev = new PrintWriter(root + "dev1.txt");
 		PrintWriter test = new PrintWriter(root + "test1.txt");
-		
+
 		int ds = -1;
 		String qt_qp = "";
 
@@ -522,29 +522,30 @@ public class LevyProcessing {
 		// System.out.println("lineId: "+fixIdx+" "+typeIdx);
 
 	}
-	
+
 	static void extractRelationsCCG(String fname) throws IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(root + fname + "_s.txt"));
 		BufferedReader brDelim = new BufferedReader(new FileReader(root + fname + "_s2.txt"));
 		BufferedReader brOrig = new BufferedReader(new FileReader(root + fname + ".txt"));
-		
-		
+
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
-		PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA"+DistrTyping.numTopics+"rels_l.txt"));
+		// PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels.txt"));
+		// PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA" +
+		// DistrTyping.numTopics + "rels_l.txt"));
 
 		while ((line = br.readLine()) != null) {
 			line2 = brDelim.readLine();
 			String[] ss = line.split("\t");
-			
+
 			String lineOrig = brOrig.readLine();
 			String[] ssOrig = lineOrig.split("\t");
-			
+
 			Map<String, String> tokenToType1 = Util.getSimpleNERTypeSent(ssOrig[0]);
 			Map<String, String> tokenToType2 = Util.getSimpleNERTypeSent(ssOrig[1]);
-			
+
 			String rel1 = "", rel2 = "";
 			String[] ss2 = line2.split("\t");
 			String[] rel1Args = new String[] { ss2[0].split(",")[0].trim().toLowerCase(),
@@ -552,8 +553,8 @@ public class LevyProcessing {
 			String[] rel2Args = new String[] { ss2[1].split(",")[0].trim().toLowerCase(),
 					ss2[1].split(",")[2].trim().toLowerCase() };
 			try {
-				rel1 = prExt.extractPredArgsStrsForceFinding(ss[0] + ".", rel1Args[0], rel1Args[1],true);
-				rel2 = prExt.extractPredArgsStrsForceFinding(ss[1] + ".", rel2Args[0], rel2Args[1],true);
+				rel1 = prExt.extractPredArgsStrsForceFinding(ss[0] + ".", rel1Args[0], rel1Args[1], true);
+				rel2 = prExt.extractPredArgsStrsForceFinding(ss[1] + ".", rel2Args[0], rel2Args[1], true);
 			} catch (ArgumentValidationException | InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -569,7 +570,7 @@ public class LevyProcessing {
 			System.out.println("rel1: " + rel1);
 
 			String LDArel1 = "", LDArel2 = "";
-			String LDAtypes1 = "";//, LDAtypes2 = "";
+			String LDAtypes1 = "";// , LDAtypes2 = "";
 
 			if (!rel1.equals("")) {
 				String[] rel1ss = rel1.split(" ");
@@ -578,15 +579,15 @@ public class LevyProcessing {
 
 				// no backup for figerTypes
 				String lt1 = Util.linkAndType(rel1ss[1], rel1ss[4].charAt(0) == 'E',
-						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER,tokenToType1);
+						EntailGraphFactoryAggregator.typeScheme != TypeScheme.FIGER, tokenToType1);
 				String lt2 = Util.linkAndType(rel1ss[2], rel1ss[4].charAt(1) == 'E',
-						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER,tokenToType1);
+						EntailGraphFactoryAggregator.typeScheme != TypeScheme.FIGER, tokenToType1);
 
 				System.out.println(line + " " + lt1 + " " + lt2);
 
 				if (lemmas[1].equals("false")) {
 					LDArel1 = rel1ss[0] + " " + rel1ss[1] + " " + rel1ss[2];// no change. e.g.: (write.1,write.2)
-									// dramatist hamlet
+					// dramatist hamlet
 					LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[1], rel1ss[2]);
 					rel1 = rel1ss[0] + " " + lt1 + " " + lt2;
 				} else {
@@ -595,40 +596,41 @@ public class LevyProcessing {
 					rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
 				}
 			}
-			
+
 			if (!rel2.equals("")) {
 				String[] rel2ss = rel2.split(" ");
 				String[] lemmas = Util.getPredicateLemma(rel2ss[0], true);
 				rel2ss[0] = lemmas[0];
 
 				String lt1 = Util.linkAndType(rel2ss[1], rel2ss[4].charAt(0) == 'E',
-						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER, tokenToType2);
+						EntailGraphFactoryAggregator.typeScheme != TypeScheme.FIGER, tokenToType2);
 				String lt2 = Util.linkAndType(rel2ss[2], rel2ss[4].charAt(1) == 'E',
-						EntailGraphFactoryAggregator.typeScheme!=TypeScheme.FIGER, tokenToType2);
+						EntailGraphFactoryAggregator.typeScheme != TypeScheme.FIGER, tokenToType2);
 
 				System.out.println(line + " " + lt1 + " " + lt2);
 
 				if (lemmas[1].equals("false")) {
 					LDArel2 = rel2ss[0] + " " + rel2ss[1] + " " + rel2ss[2];// no change. e.g.: (write.1,write.2)
-									// dramatist hamlet
-//					LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[1], rel2ss[2]);
+					// dramatist hamlet
+					// LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[1], rel2ss[2]);
 					rel2 = rel2ss[0] + " " + lt1 + " " + lt2;
 				} else {
 					LDArel2 = rel2ss[0] + " " + rel2ss[2] + " " + rel2ss[1];
-//					LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[2], rel2ss[1]);
+					// LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[2], rel2ss[1]);
 					rel2 = rel2ss[0] + " " + lt2 + " " + lt1;
 				}
 			}
 
 			op.println(rel1 + "\t" + rel2 + "\t" + ss[2]);
-			
-			//We'll assume that the LDAtypes are inherited only from the LHS of Levy (q)
-			opLDA.println(LDArel1 + "\t" + LDArel2 + "\t" + ss[2]+"\t"+LDAtypes1);
+
+			// We'll assume that the LDAtypes are inherited only from the LHS of Levy (q)
+			// opLDA.println(LDArel1 + "\t" + LDArel2 + "\t" + ss[2] + "\t" + LDAtypes1);
 		}
 		br.close();
 		op.close();
 		brDelim.close();
-		opLDA.close();
+		// opLDA.close();
+		brOrig.close();
 
 	}
 
@@ -677,7 +679,7 @@ public class LevyProcessing {
 				}
 				type1 = "type" + t1;
 				type2 = "type" + t2;
-				ret += type1 + "#" + type2 + " " + (prob / sum)+" ";// sum up to 1!
+				ret += type1 + "#" + type2 + " " + (prob / sum) + " ";// sum up to 1!
 			}
 		}
 		return ret.trim();
@@ -753,17 +755,13 @@ public class LevyProcessing {
 			// String line = scCCG.nextLine();
 			String lineOrig = scOrig.nextLine();
 			System.out.println(lineOrig);
-			
-			
-			
-			
+
 			String[] parts = lineOrig.split("\t");
 			String[] rel1Parts = parts[0].split(",");
 			String[] rel2Parts = parts[1].split(",");
-			
+
 			Map<String, String> tokenToType1 = Util.getSimpleNERTypeSent(parts[0]);
 			Map<String, String> tokenToType2 = Util.getSimpleNERTypeSent(parts[1]);
-			
 
 			String rel1Str;
 			if (rel1Parts.length > 1) {
@@ -779,7 +777,7 @@ public class LevyProcessing {
 				if (lt1.endsWith("thing")) {
 					lt1 = Util.linkAndType(arg1.split(" ")[arg1.split(" ").length - 1], isEnt1, true, tokenToType1);
 				}
-				String lt2 = Util.linkAndType(arg2, isEnt2, true,tokenToType1);
+				String lt2 = Util.linkAndType(arg2, isEnt2, true, tokenToType1);
 				if (lt2.endsWith("thing")) {
 					lt2 = Util.linkAndType(arg2.split(" ")[arg2.split(" ").length - 1], isEnt2, true, tokenToType1);
 				}
@@ -864,10 +862,13 @@ public class LevyProcessing {
 		ConstantsAgg.isTyped = true;
 		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
 		ConstantsAgg.isCCG = true;
-		
+
 		// String[] fileNames = new String[] { "all_new", "all_new_dir" };//
-		String[] fileNames = new String[] { "all", "train1", "dev1", "test1", "all_new", "train_new", "dev_new",
-				"test_new", "all_new_dir", "train_new_dir", "dev_new_dir", "test_new_dir" };//
+		// String[] fileNames = new String[] { "all", "train1", "dev1", "test1",
+		// "all_new", "train_new", "dev_new",
+		// "test_new", "all_new_dir", "train_new_dir", "dev_new_dir", "test_new_dir"
+		// };//
+		String[] fileNames = new String[] { "naacl_levy_format" };//
 
 		for (String fname : fileNames) {
 			fixNEs(fname);
@@ -947,8 +948,8 @@ public class LevyProcessing {
 		// split_preds();
 		// split_chunks_unordered();
 
-//		convertDSToRelsCCG();
-		
+		convertDSToRelsCCG();
+
 		// formOIEDSAll();
 		// testTime1();
 		// splitBasedOnPrevDS(root + "all_new.txt");

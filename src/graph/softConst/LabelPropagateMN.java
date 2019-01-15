@@ -24,6 +24,7 @@ public class LabelPropagateMN implements Runnable {
 	List<PGraph> thispGraphs;
 	int runIdx;// 0: propagate, 1: average
 	int threadIdx;
+
 	public LabelPropagateMN(List<PGraph> allpGraphs, int threadIdx, int numThreads, int runIdx) {
 		if (runIdx == 0) {
 			this.allpGraphs = allpGraphs;
@@ -118,6 +119,80 @@ public class LabelPropagateMN implements Runnable {
 		}
 	}
 
+	// label propagate inside a graph!
+	void propagateLabelWithinGraphsTrans() {
+
+		for (PGraph pgraph : thispGraphs) {
+			System.out.println("mn prop within graphs trans: " + pgraph.fname + " " + threadIdx);
+			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gPrev = pgraph.g0;
+
+			// Parallelize inside a graph (we only parallelize for large graphs!)
+			int sortIdx = pgraph.sortIdx;
+			int numThreadsWithinGraph = (sortIdx < 10) ? 10 : (sortIdx < 15 ? 5 : 1);
+//			int numThreadsWithinGraph = 1;
+			System.out.println("numThreadsWithingGraph trans: " + pgraph.name + " " + numThreadsWithinGraph);
+
+			final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreadsWithinGraph);
+			ThreadPoolExecutor threadPool = new ThreadPoolExecutor(numThreadsWithinGraph, numThreadsWithinGraph, 600,
+					TimeUnit.SECONDS, queue);
+			// to silently discard rejected tasks. :add new
+			// ThreadPoolExecutor.DiscardPolicy()
+
+			threadPool.setRejectedExecutionHandler(new RejectedExecutionHandler() {
+				@Override
+				public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+					// this will block if the queue is full
+					try {
+						executor.getQueue().put(r);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+
+			// int batchSize = pgraph.g0.vertexSet().size() / numThreadsWithinGraph;
+			for (int threadIdx = 0; threadIdx < numThreadsWithinGraph; threadIdx++) {
+				// int start = threadIdx * batchSize;
+				// int end = (threadIdx == numThreadsWithinGraph - 1) ?
+				// pgraph.g0.vertexSet().size()
+				// : ((threadIdx + 1) * batchSize);
+
+				LabelPropagationMNWithinGraphTrans lpmwg = new LabelPropagationMNWithinGraphTrans(threadIdx,
+						numThreadsWithinGraph, pgraph);
+
+				threadPool.execute(lpmwg);
+			}
+
+			threadPool.shutdown();
+			// Wait hopefully all threads are finished. If not, forget about it!
+			try {
+				threadPool.awaitTermination(200, TimeUnit.HOURS);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+
+			// Now, add 1 to denom for the edges that are newly affected by transitivity 
+			// because we didn't know which numerators are zero
+			// until now
+			for (int i = 0; i < pgraph.gMN.vertexSet().size(); i++) {
+				if (i % 100 == 0) {
+					System.out.println("1,2 k: " + i + " " + pgraph.name);
+				}
+				for (DefaultWeightedEdge e : pgraph.gMN.outgoingEdgesOf(i)) {
+					int j = gPrev.getEdgeTarget(e);
+					
+//					double denom = pgraph.edgeToMNWeight.get(p + "#" + q);
+
+					LabelPropagationMNWithinGraph.addDenomNewEdge(pgraph, i, j);//TODO: maybe we can do more efficient here
+				}
+			}
+
+			System.out.println("done within graphs trans: " + pgraph.fname + " " + threadIdx);
+			System.out.println("num operations: " + numOperations);
+
+		}
+	}
+
 	// typePropagate
 	void propagateLabelBetweenGraphs() {
 
@@ -129,7 +204,7 @@ public class LabelPropagateMN implements Runnable {
 			// Parallelize inside a graph (we only parallelize for large graphs!)
 			int sortIdx = pgraph.sortIdx;
 			int numThreadsBetweenGraph = (sortIdx < 10) ? 10 : (sortIdx < 15 ? 5 : 1);
-//			int numThreadsBetweenGraph = 1;
+			// int numThreadsBetweenGraph = 1;
 			System.out.println("numThreadsBetweenGraph: " + pgraph.name + " " + numThreadsBetweenGraph);
 
 			final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreadsBetweenGraph);
@@ -257,17 +332,20 @@ public class LabelPropagateMN implements Runnable {
 							double w;
 							if (c > 0) {
 								w = (c - ConstantsSoftConst.lmbda) / denom;
-							} else {//this never happens as everything in c is pos, and so is c!
+							} else {// this never happens as everything in c is pos, and so is c!
 								w = (c + ConstantsSoftConst.lmbda) / denom;
 							}
 
 							// System.out.println(
 							// "avg: " + pgraph.idx2node.get(p).id + " " + pgraph.idx2node.get(q).id + " ");
 							// System.out.println("avg: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
-
-							if (w > 1.01) {
-								System.out.println("bug: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
-								System.out.println(pgraph.nodes.get(p).id + " " + pgraph.nodes.get(q).id + " ");
+							if (ConstantsSoftConst.lmbda3 == 0) {
+								if (w > 1.01) {
+									System.out.println("bug: " + w + " " + gMN.getEdgeWeight(e) + " " + denom);
+									System.out.println(pgraph.nodes.get(p).id + " " + pgraph.nodes.get(q).id + " ");
+								}
+							} else {
+								w = Math.min(1, Math.max(w, 0));
 							}
 							gMN.setEdgeWeight(e, w);
 
@@ -304,9 +382,10 @@ public class LabelPropagateMN implements Runnable {
 			gs.add(pgraph.g0);
 			gs.add(pgraph.gMN);
 
-			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_')) + ConstantsSoftConst.tPropSuffix;
+			String fnameTProp = pgraph.fname.substring(0, pgraph.fname.lastIndexOf('_'))
+					+ ConstantsSoftConst.tPropSuffix;
 			writeTPropResults(pgraph, gs, fnameTProp);
-			System.out.println("results written for: "+fnameTProp);
+			System.out.println("results written for: " + fnameTProp);
 		}
 	}
 
@@ -317,12 +396,17 @@ public class LabelPropagateMN implements Runnable {
 			System.out.println("between prop done!");
 			allpGraphs = null;
 		} else if (runIdx == 1) {
+			LabelPropagationMNWithinGraphTrans.numVio = 0;
+			propagateLabelWithinGraphsTrans();
+//			ConstantsSoftConst.lmbda3 *= .9;
+			System.out.println("within prop trans done!");
+		} else if (runIdx == 2) {
 			propagateLabelWithinGraphs();
 			System.out.println("within prop done!");
 			System.out.println("thread Idx +" + threadIdx + " done");
-		} else if (runIdx == 2) {
-			getAvg();
 		} else if (runIdx == 3) {
+			getAvg();
+		} else if (runIdx == 4) {
 			writeResults();
 		}
 	}

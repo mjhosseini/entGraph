@@ -14,6 +14,7 @@ import org.jgrapht.alg.GabowStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
+import constants.ConstantsGraphs;
 import constants.ConstantsTrans;
 import graph.Edge;
 import graph.Node;
@@ -28,7 +29,6 @@ public class TransClUtils {
 	int[] node2comp;
 	PrintStream op;
 	int N;
-	static boolean debug = false;
 	ConnectivityChecker connChecker;
 
 	public TransClUtils(PGraph pgraph, PrintStream op, double lmbda, boolean checkFrgVio,
@@ -71,14 +71,14 @@ public class TransClUtils {
 		int idx2 = node2comp[j];
 		assert idx1 != idx2;
 		int numVio = 0;
-		
+
 		for (DefaultEdge e : scc.outgoingEdgesOf(idx1)) {
 			int idx3 = scc.getEdgeTarget(e);
 			if (idx3 == idx1 || idx3 == idx2) {
 				continue;
 			}
 			if (!scc.containsEdge(idx3, idx2) && !scc.containsEdge(idx2, idx3)) {
-				if (debug) {
+				if (ConstantsTrans.writeDebug) {
 					System.out.println("frg vio: " + idx1 + " " + idx2 + " " + idx3);
 					writeComponent(pgraph, scc, idx1);
 					writeComponent(pgraph, scc, idx2);
@@ -105,7 +105,7 @@ public class TransClUtils {
 		int idx2 = node2comp[j];
 		assert idx1 != idx2;
 
-		q.add(new Edge(idx1, idx2, 0));
+		q.add(new Edge(idx1, idx2, 0, pgraph));
 		Set<Long> seenEdges = new HashSet<>();
 		seenEdges.add((long) (idx1) + (long) N * idx2);
 
@@ -124,12 +124,22 @@ public class TransClUtils {
 				for (int ii : nodes1) {
 					for (int jj : nodes2) {
 						float sim = pgraph.getW(ii, jj);
+						if (ConstantsTrans.writeDebug) {
+							System.out.println(
+									"potentially adding: " + pgraph.nodes.get(ii).id + " " + pgraph.nodes.get(jj).id
+											+ " " + (sim - this.lmbda) + " " + Edge.getConfidence(ii, jj, pgraph));
+						}
 						if (connChecker != null) {
 							if (connChecker.isConnected(ii, jj) == 0) {
 								return 0;// We can't do this!
 							}
 						}
-						sumSims += sim - this.lmbda;
+						if (ConstantsGraphs.sortEdgesConfidenceBased) {// TODO: maybe remove below
+							sumSims += (sim - this.lmbda) * Edge.getConfidence(ii, jj, pgraph);
+						} else {
+							sumSims += (sim - this.lmbda);
+							// ConstantsTrans.discountNegScoresHTL *
+						}
 					}
 				}
 			}
@@ -138,7 +148,7 @@ public class TransClUtils {
 			for (DefaultEdge ee : scc.incomingEdgesOf(idx1)) {
 				int k = scc.getEdgeSource(ee);
 				if (k != idx2 && !scc.containsEdge(k, idx2) && !seenEdges.contains((long) k + (long) N * idx2)) {
-					q.add(new Edge(k, idx2, 0));
+					q.add(new Edge(k, idx2, 0, pgraph));
 					seenEdges.add((long) k + (long) N * idx2);
 				}
 			}
@@ -146,12 +156,12 @@ public class TransClUtils {
 			for (DefaultEdge ee : scc.outgoingEdgesOf(idx2)) {
 				int k = scc.getEdgeTarget(ee);
 				if (k != idx1 && !scc.containsEdge(idx1, k) && !seenEdges.contains((long) idx1 + (long) N * k)) {
-					q.add(new Edge(idx1, k, 0));
+					q.add(new Edge(idx1, k, 0, pgraph));
 					seenEdges.add((long) idx1 + (long) N * k);
 				}
 			}
 		}
-		if (debug) {
+		if (ConstantsTrans.writeDebug) {
 			System.out.println("sumSims: " + sumSims);
 		}
 
@@ -160,17 +170,17 @@ public class TransClUtils {
 		} else {
 			boolean loopAdded = false;
 			for (long x : seenEdges) {
-				if (debug) {
+				if (ConstantsTrans.writeDebug) {
 					System.out.println("set to true");
 				}
 				idx1 = (int) (x % N);
 				idx2 = (int) (x / N);
-				if (debug) {
+				if (ConstantsTrans.writeDebug) {
 					System.out.println("adding edge: " + idx1 + " " + idx2);
 				}
 				scc.addEdge(idx1, idx2);
 				if (scc.containsEdge(idx2, idx1)) {
-					if (debug) {
+					if (ConstantsTrans.writeDebug) {
 						System.out.println("loop added");
 					}
 					loopAdded = true;
@@ -242,12 +252,12 @@ public class TransClUtils {
 		}
 
 		int idx = 0;
-		System.out.println("num all edges: " + pgraph.name+ " " + sortedEdges.size());
+		System.out.println("num all edges: " + pgraph.name + " " + sortedEdges.size());
 
 		for (Edge e : sortedEdges) {
 			float sim = e.sim - (float) lmbda;
 			if (sim <= 0) {
-				break;
+				continue;
 			}
 			int i = e.i;
 			int j = e.j;
@@ -266,22 +276,22 @@ public class TransClUtils {
 				continue;
 			}
 
-			if (debug) {
-				System.out.println("checking: " + idx + " " + i + "=>" + j + " " + sim + " " + pgraph.nodes.get(i).id
-						+ " " + pgraph.nodes.get(j).id);
+			if (ConstantsTrans.writeDebug) {
+				System.out.println("checking: " + idx + " " + i + "=>" + j + " " + sim + " " + (e.sim * e.confidence)
+						+ " " + pgraph.nodes.get(i).id + " " + pgraph.nodes.get(j).id);
 			}
 
-			if (debug) {
+			if (ConstantsTrans.writeDebug) {
 				System.out.println("no frg vio");
 			}
 			int tr = get_tr_cl_edges_scc(scc, node2comp, i, j);
 			boolean loopAdded = tr == 2;
-			if (debug) {
+			if (ConstantsTrans.writeDebug) {
 				System.out.println("anyAdded: " + (tr > 0));
 			}
 
 			if (loopAdded) {
-				if (debug) {
+				if (ConstantsTrans.writeDebug) {
 					System.out.println("loop added");
 				}
 				updateSCC();

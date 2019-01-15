@@ -154,8 +154,8 @@ public class PredicateVector extends SimplePredicateVector {
 	}
 	
 	int getNumApsToRetain() {
-		if (EntailGraphFactoryAggregator.predNumArgPairs.containsKey(this.predicate)) {
-			int NSBasedAllowed = EntailGraphFactoryAggregator.predNumArgPairs.get(this.predicate);
+		if (EntailGraphFactoryAggregator.predNumArgPairsNS.containsKey(this.predicate)) {
+			int NSBasedAllowed = EntailGraphFactoryAggregator.predNumArgPairsNS.get(this.predicate);
 			if (NSBasedAllowed<ConstantsAgg.numArgPairsNSBasedAlwaysAllowed) {
 				return ConstantsAgg.numArgPairsNSBasedAlwaysAllowed;
 			}

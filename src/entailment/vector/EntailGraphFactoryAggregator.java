@@ -69,7 +69,8 @@ public class EntailGraphFactoryAggregator {
 																										// and shape
 																										// parameters
 	public static Map<String,int[]> cutOffsNS;
-	public static Map<String,Integer> predNumArgPairs;
+	public static Map<String,Integer> predNumArgPairsNS;
+	public static Map<String,Integer> type2RankNS;
 	
 	static {
 		// assert iterateAllArgPairs != anchorBasedScores;
@@ -116,7 +117,7 @@ public class EntailGraphFactoryAggregator {
 		if (ConstantsAgg.cutoffBasedonNSGraphs) {
 			try {
 				cutOffsNS = getAllCutoffs();
-				predNumArgPairs = getAllPredArgPairSizes();
+				predNumArgPairsNS = getAllPredArgPairSizes();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -149,6 +150,7 @@ public class EntailGraphFactoryAggregator {
 		BufferedReader br = new BufferedReader(new FileReader("NS_sizes.txt"));
 		String line;
 		Map<String,int[]> ret = new HashMap<>();
+		List<SimpleSpot> typeSizes = new ArrayList<>();
 		while ((line = br.readLine())!=null) {
 			String[] ss = line.split("\t");
 			String types = ss[0];
@@ -159,7 +161,19 @@ public class EntailGraphFactoryAggregator {
 			sizes[1] = Integer.parseInt(ss[2]);
 			ret.put(types, sizes);
 			ret.put(type_reverse, sizes);
+			typeSizes.add(new SimpleSpot(types, sizes[0]));
 		}
+		
+		Collections.sort(typeSizes,Collections.reverseOrder());
+		int i=0;
+		type2RankNS = new HashMap<>();
+		for (SimpleSpot ss: typeSizes) {
+			type2RankNS.put(ss.spot, i);
+			String[] ps = ss.spot.split("#");
+			type2RankNS.put(ps[1]+"#"+ps[0], i);
+			i++;
+		}
+		
 		br.close();
 		return ret;
 	}

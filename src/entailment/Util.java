@@ -149,8 +149,13 @@ public class Util {
 		modals = new HashSet<String>();
 		String[] modalsList = new String[] { "can", "could", "may", "might", "must", "shall", "should", "will", "would",
 				"ought" };
+		
 		for (String s : modalsList) {
 			modals.add(s);
+		}
+		
+		if (ConstantsAgg.keepWillTense) {
+			modals.remove("will");
 		}
 
 		try {
@@ -1269,6 +1274,7 @@ public class Util {
 		String curLine = null;
 		ArrayList<String> curPrArgs = new ArrayList<String>();
 		ArrayList<String> curPrArgs_unary = new ArrayList<String>();
+		List<String> curSemParses = new ArrayList<>();
 
 		// int firstIdxToPrint = 0;
 		// int numPrintAtOnce = 1000000;
@@ -1302,9 +1308,10 @@ public class Util {
 						String prArgLine = null;
 						curPrArgs = new ArrayList<String>();
 						curPrArgs_unary = new ArrayList<String>();
+						curSemParses = new ArrayList<>();
 
 						while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")
-								&& !prArgLine.equals("#unary rels:")) {
+								&& !prArgLine.equals("#unary rels:") && !prArgLine.equals("semantic parses:")) {
 							// System.out.println("pr arg line: " + prArgLine);
 							String pred = null;
 							String arg1 = null;
@@ -1369,7 +1376,7 @@ public class Util {
 						jObj.add("rels", rels);
 
 						if (prArgLine.equals("#unary rels:")) {
-							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")  && !prArgLine.equals("semantic parses:")) {
 								// System.out.println("pr arg line: " + prArgLine);
 								String pred = null;
 								String arg = null;
@@ -1418,6 +1425,28 @@ public class Util {
 							rels_unary.add(rel);
 						}
 						jObj.add("rels_unary", rels_unary);
+						
+						
+						if (prArgLine.equals("semantic parses:")) {
+							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+
+								if (!prArgLine.startsWith("[") || !prArgLine.endsWith("]")) {
+									throw new RuntimeException("bad semantic parse");
+								} else {
+									curSemParses.add(prArgLine);
+								}
+
+							}
+						}
+
+						JsonArray semParses = new JsonArray();
+						for (int i = 0; i < curSemParses.size(); i++) {
+							JsonObject semParse = new JsonObject();
+							semParse.addProperty("parse", curSemParses.get(i));
+							semParses.add(semParse);
+						}
+						
+						jObj.add("semParses", semParses);
 
 						System.out.println(jObj);
 
@@ -1468,8 +1497,9 @@ public class Util {
 		String line;
 		int lineNumbers = 0;
 		String curLine = null;
-		ArrayList<String> curPrArgs = new ArrayList<String>();
-		ArrayList<String> curPrArgs_unary = new ArrayList<String>();
+		List<String> curPrArgs = new ArrayList<String>();
+		List<String> curPrArgs_unary = new ArrayList<String>();
+		List<String> curSemParses = new ArrayList<>();
 
 		// int firstIdxToPrint = 0;
 		// int numPrintAtOnce = 1000000;
@@ -1509,9 +1539,10 @@ public class Util {
 						String prArgLine = null;
 						curPrArgs = new ArrayList<String>();
 						curPrArgs_unary = new ArrayList<>();
+						curSemParses = new ArrayList<>();
 
 						while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")
-								&& !prArgLine.equals("#unary rels:")) {
+								&& !prArgLine.equals("#unary rels:") && !prArgLine.equals("semantic parses:")) {
 							// System.out.println("pr arg line: " + prArgLine);
 							String pred = null;
 							String arg1 = null;
@@ -1589,7 +1620,8 @@ public class Util {
 						jObj.add("rels", rels);
 
 						if (prArgLine.equals("#unary rels:")) {
-							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")
+									&& !prArgLine.equals("semantic parses:")) {
 								// System.out.println("pr arg line: " + prArgLine);
 								String pred = null;
 								String arg = null;
@@ -1645,6 +1677,33 @@ public class Util {
 							rels_unary.add(rel);
 						}
 						jObj.add("rels_unary", rels_unary);
+
+						boolean hasSemParses = false;
+
+						if (prArgLine.equals("semantic parses:")) {
+							hasSemParses = true;
+							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
+
+								if (!prArgLine.startsWith("[") || !prArgLine.endsWith("]")) {
+									throw new RuntimeException("bad semantic parse");
+								} else {
+									curSemParses.add(prArgLine);
+								}
+
+							}
+						}
+
+						if (!hasSemParses) {
+							curSemParses = new ArrayList<>();
+						}
+						
+						JsonArray semParses = new JsonArray();
+						for (int i = 0; i < curSemParses.size(); i++) {
+							JsonObject semParse = new JsonObject();
+							semParse.addProperty("parse", curSemParses.get(i));
+							semParses.add(semParse);
+						}
+						jObj.add("semParses", semParses);
 
 						int lineIdInt = Integer.parseInt(lineId);
 						if (lineIdInt > maxIdx) {
@@ -2352,7 +2411,9 @@ public class Util {
 		// }
 		// System.out.println(isGeneric("los angeles", allPOSTags));
 		//
-		convertToPArgFormat(args);
+//		convertToPArgFormat(args);
+		
+		convertPredArgsToJsonUnsorted(args);
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);
