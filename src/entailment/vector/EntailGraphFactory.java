@@ -236,11 +236,11 @@ public class EntailGraphFactory implements Runnable {
 					
 					String[] predicateLemma;
 					if (!ConstantsAgg.rawExtractions && !EntailGraphFactoryAggregator.isForeign) {
-						predicateLemma = Util.getPredicateLemma(pred, ConstantsAgg.isCCG);
+						predicateLemma = Util.getPredicateNormalized(pred, ConstantsAgg.isCCG);
 						if (predicateLemma==null) {
 							System.err.println(pred);
 							System.err.println("predlemma is null");
-							predicateLemma = Util.getPredicateLemma(pred, ConstantsAgg.isCCG);
+							predicateLemma = Util.getPredicateNormalized(pred, ConstantsAgg.isCCG);
 						}
 					} else {
 						predicateLemma = new String[] { pred, "false" };

@@ -89,8 +89,8 @@ public class Util {
 		}
 	}
 
-	static Map<String, String[]> predToLemma = new ConcurrentHashMap<>();
-	static Map<String, String> predToLemma_unary = new ConcurrentHashMap<>();
+	static Map<String, String[]> predToNormalized = new ConcurrentHashMap<>();
+	static Map<String, String> predToNormalized_unary = new ConcurrentHashMap<>();
 
 	static HashSet<String> modals;
 	public static Set<String> stopPreds;
@@ -149,11 +149,11 @@ public class Util {
 		modals = new HashSet<String>();
 		String[] modalsList = new String[] { "can", "could", "may", "might", "must", "shall", "should", "will", "would",
 				"ought" };
-		
+
 		for (String s : modalsList) {
 			modals.add(s);
 		}
-		
+
 		if (ConstantsAgg.keepWillTense) {
 			modals.remove("will");
 		}
@@ -353,9 +353,9 @@ public class Util {
 
 	}
 
-	// (visited.As.2,visited.during.2) => [(visit.as.2,visit.during.2),False]
+	// (visited.As.2,visited.during.2) => [(visited.as.2,visited.during.2),False]
 	// the second arg shows whether the name has been reversed
-	public static String[] getPredicateLemma(String pred, boolean isCCG) {
+	public static String[] getPredicateNormalized(String pred, boolean isCCG) {
 
 		String[] ret = new String[2];
 		if (!ConstantsAgg.normalizePredicate) {
@@ -365,8 +365,8 @@ public class Util {
 		}
 
 		String pred0 = pred;
-		if (predToLemma.containsKey(pred)) {
-			return predToLemma.get(pred);
+		if (predToNormalized.containsKey(pred)) {
+			return predToNormalized.get(pred);
 		}
 
 		if (!isCCG) {
@@ -380,7 +380,7 @@ public class Util {
 			pred = pred.replace(" ", "_");
 			ret[0] = pred;
 			ret[1] = "false";
-			predToLemma.put(pred0, ret);
+			predToNormalized.put(pred0, ret);
 			return ret;
 		}
 		String prePred = "";
@@ -392,7 +392,7 @@ public class Util {
 		if (!pred.startsWith("(") || !pred.endsWith(")") || !pred.contains(",")) {
 			ret[0] = pred;
 			ret[1] = "false";
-			predToLemma.put(pred0, ret);
+			predToNormalized.put(pred0, ret);
 			return ret;
 		}
 		pred = pred.substring(1, pred.length() - 1);
@@ -403,7 +403,7 @@ public class Util {
 		ArrayList<String> myParts = new ArrayList<String>();
 		for (String part : parts) {
 
-			myParts.add(getPartLemm(part));
+			myParts.add(getPartNormalize(part));
 
 		}
 		String firstPart = myParts.get(0);
@@ -431,27 +431,27 @@ public class Util {
 		} else {
 			ret[1] = "true";
 		}
-		predToLemma.put(pred0, ret);
+		predToNormalized.put(pred0, ret);
 		return ret;
 	}
 
-	public static String getPredicateLemma_unary(String pred, boolean isCCG) {
+	public static String getPredicateNormalized_unary(String pred, boolean isCCG) {
 		assert isCCG;
 		String ret = "";
 		if (!ConstantsAgg.normalizePredicate) {
 			return pred;
 		}
 
-		if (predToLemma_unary.containsKey(pred)) {
-			return predToLemma_unary.get(pred);
+		if (predToNormalized_unary.containsKey(pred)) {
+			return predToNormalized_unary.get(pred);
 		}
 
 		pred = pred.toLowerCase();
 		// String[] parts = pred.split(",");
 
-		ret = getPartLemm(pred);
+		ret = getPartNormalize(pred);
 
-		predToLemma_unary.put(pred, ret);
+		predToNormalized_unary.put(pred, ret);
 		return ret;
 	}
 
@@ -478,13 +478,13 @@ public class Util {
 		pred = pred.toLowerCase();
 		String[] parts = pred.split(",");
 		String[] parts2 = parts[0].split("\\.");
-		String ret = getPartLemm(parts2[0]);
+		String ret = getPartNormalize(parts2[0]);
 
 		return ret;
 	}
 
 	// visited.As.2 => visit.as.2
-	private static String getPartLemm(String s) {
+	private static String getPartNormalize(String s) {
 		// String[] parts = s.split("\\.");
 		String[] parts = StringUtils.split(s, ".");
 
@@ -495,16 +495,10 @@ public class Util {
 				ii++;
 				continue;
 			}
-			String lemma;
-			if (EntailGraphFactoryAggregator.lemmatizePredWords) {
-				lemma = getLemma(part);
-			} else {
-				lemma = part;
-			}
 			if (ii < parts.length - 1) {
-				ret.append(lemma + ".");
+				ret.append(part + ".");
 			} else {
-				ret.append(lemma);
+				ret.append(part);
 			}
 			ii++;
 		}
@@ -1376,7 +1370,8 @@ public class Util {
 						jObj.add("rels", rels);
 
 						if (prArgLine.equals("#unary rels:")) {
-							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")  && !prArgLine.equals("semantic parses:")) {
+							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")
+									&& !prArgLine.equals("semantic parses:")) {
 								// System.out.println("pr arg line: " + prArgLine);
 								String pred = null;
 								String arg = null;
@@ -1425,8 +1420,7 @@ public class Util {
 							rels_unary.add(rel);
 						}
 						jObj.add("rels_unary", rels_unary);
-						
-						
+
 						if (prArgLine.equals("semantic parses:")) {
 							while ((prArgLine = br.readLine()) != null && !prArgLine.equals("")) {
 
@@ -1445,7 +1439,7 @@ public class Util {
 							semParse.addProperty("parse", curSemParses.get(i));
 							semParses.add(semParse);
 						}
-						
+
 						jObj.add("semParses", semParses);
 
 						System.out.println(jObj);
@@ -1696,7 +1690,7 @@ public class Util {
 						if (!hasSemParses) {
 							curSemParses = new ArrayList<>();
 						}
-						
+
 						JsonArray semParses = new JsonArray();
 						for (int i = 0; i < curSemParses.size(); i++) {
 							JsonObject semParse = new JsonObject();
@@ -1842,7 +1836,7 @@ public class Util {
 				String pred = parts[0];
 
 				// System.out.println("pred: "+pred);
-				String[] predicateLemma = Util.getPredicateLemma(pred, true);
+				String[] predicateLemma = Util.getPredicateNormalized(pred, true);
 
 				pred = predicateLemma[0];
 				// pred = Util.getPredicateSimple(pred);
@@ -2411,8 +2405,8 @@ public class Util {
 		// }
 		// System.out.println(isGeneric("los angeles", allPOSTags));
 		//
-//		convertToPArgFormat(args);
-		
+		// convertToPArgFormat(args);
+
 		convertPredArgsToJsonUnsorted(args);
 
 		// System.out.println(normalizeArg("The two books"));

@@ -203,7 +203,7 @@ public class SNLIProcessing {
 
 		if (!rel1.equals("")) {
 			String[] rel1ss = rel1.split(" ");
-			String[] lemmas = Util.getPredicateLemma(rel1ss[0], true);
+			String[] lemmas = Util.getPredicateNormalized(rel1ss[0], true);
 			rel1ss[0] = lemmas[0];
 
 			// no backup for figerTypes
@@ -226,7 +226,7 @@ public class SNLIProcessing {
 
 		if (!rel1.equals("")) {
 			String[] rel1ss = rel1.split(" ");
-			String lemma = Util.getPredicateLemma_unary(rel1ss[0], true);
+			String lemma = Util.getPredicateNormalized_unary(rel1ss[0], true);
 			rel1ss[0] = lemma;
 
 			// no backup for figerTypes

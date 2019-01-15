@@ -43,7 +43,22 @@ public class Scripts {
 		String line;
 		while ((line = br.readLine()) != null) {
 			String[] ss = line.split("\t");
-			System.out.println(ss[1] + "\t" + ss[0] + "\t" + ss[2]);
+			String[] ss1 = ss[0].split(",");
+			String[] ss2 = ss[1].split(",");
+			boolean shouldAdd = true;
+			for (int i=0; i<ss1.length; i++) {
+				if (ss1[i].trim().equals("")) {
+					shouldAdd = false;
+					break;
+				}
+				if (ss2[i].trim().equals("")) {
+					shouldAdd = false;
+					break;
+				}
+			}
+			if (shouldAdd) {
+				System.out.println(ss[1] + "\t" + ss[0] + "\t" + ss[2]);
+			}
 		}
 		br.close();
 	}

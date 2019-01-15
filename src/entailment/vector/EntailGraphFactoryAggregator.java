@@ -50,7 +50,7 @@ public class EntailGraphFactoryAggregator {
 
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
 	public static boolean isForeign = false;
-	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
+//	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
 	// if it has been already lemmatized in rel extraction, must be false.
 
 	public static final int smoothParam = 0;// 0 means no smoothing
@@ -305,7 +305,7 @@ public class EntailGraphFactoryAggregator {
 
 					String[] predicateLemma;
 					if (!EntailGraphFactoryAggregator.isForeign) {
-						predicateLemma = Util.getPredicateLemma(pred, ConstantsAgg.isCCG);
+						predicateLemma = Util.getPredicateNormalized(pred, ConstantsAgg.isCCG);
 					} else {
 						predicateLemma = new String[] { pred, "false" };
 					}

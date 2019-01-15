@@ -99,7 +99,7 @@ public class Stats {
 
 				numAllRels++;
 
-				pred = Util.getPredicateLemma(pred, true)[0];
+				pred = Util.getPredicateNormalized(pred, true)[0];
 				if (!relCount.containsKey(pred)) {
 					relCount.put(pred, 1);
 				} else {

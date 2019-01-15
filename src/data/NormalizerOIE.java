@@ -40,7 +40,7 @@ public class NormalizerOIE implements Runnable {
 			ss[0] = Util.normalizeArg(ss[0]);
 			ss[1] = Util.normalizeArg(ss[1]);
 
-			ss[2] = Util.getPredicateLemma(ss[2], false)[0];
+			ss[2] = Util.getPredicateNormalized(ss[2], false)[0];
 
 			String normalized = ss[0] + "\t" + ss[1] + "\t" + ss[2] + "\t" + ss[3];
 			op.println(normalized);

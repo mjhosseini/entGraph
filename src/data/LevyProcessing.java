@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.api.client.util.Types;
 
 import constants.ConstantsAgg;
+import constants.ConstantsParsing;
 import entailment.PredicateArgumentExtractor;
 import entailment.Util;
 import entailment.entityLinking.DistrTyping;
@@ -538,6 +539,8 @@ public class LevyProcessing {
 
 		while ((line = br.readLine()) != null) {
 			line2 = brDelim.readLine();
+//			System.err.println(line);
+//			System.err.println(line2);
 			String[] ss = line.split("\t");
 
 			String lineOrig = brOrig.readLine();
@@ -574,7 +577,7 @@ public class LevyProcessing {
 
 			if (!rel1.equals("")) {
 				String[] rel1ss = rel1.split(" ");
-				String[] lemmas = Util.getPredicateLemma(rel1ss[0], true);
+				String[] lemmas = Util.getPredicateNormalized(rel1ss[0], true);
 				rel1ss[0] = lemmas[0];
 
 				// no backup for figerTypes
@@ -586,20 +589,21 @@ public class LevyProcessing {
 				System.out.println(line + " " + lt1 + " " + lt2);
 
 				if (lemmas[1].equals("false")) {
-					LDArel1 = rel1ss[0] + " " + rel1ss[1] + " " + rel1ss[2];// no change. e.g.: (write.1,write.2)
+					// LDArel1 = rel1ss[0] + " " + rel1ss[1] + " " + rel1ss[2];// no change. e.g.:
+					// (write.1,write.2)
 					// dramatist hamlet
-					LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[1], rel1ss[2]);
+					// LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[1], rel1ss[2]);
 					rel1 = rel1ss[0] + " " + lt1 + " " + lt2;
 				} else {
-					LDArel1 = rel1ss[0] + " " + rel1ss[2] + " " + rel1ss[1];
-					LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[2], rel1ss[1]);
+					// LDArel1 = rel1ss[0] + " " + rel1ss[2] + " " + rel1ss[1];
+//					LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[2], rel1ss[1]);
 					rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
 				}
 			}
 
 			if (!rel2.equals("")) {
 				String[] rel2ss = rel2.split(" ");
-				String[] lemmas = Util.getPredicateLemma(rel2ss[0], true);
+				String[] lemmas = Util.getPredicateNormalized(rel2ss[0], true);
 				rel2ss[0] = lemmas[0];
 
 				String lt1 = Util.linkAndType(rel2ss[1], rel2ss[4].charAt(0) == 'E',
@@ -610,12 +614,13 @@ public class LevyProcessing {
 				System.out.println(line + " " + lt1 + " " + lt2);
 
 				if (lemmas[1].equals("false")) {
-					LDArel2 = rel2ss[0] + " " + rel2ss[1] + " " + rel2ss[2];// no change. e.g.: (write.1,write.2)
+					// LDArel2 = rel2ss[0] + " " + rel2ss[1] + " " + rel2ss[2];// no change. e.g.:
+					// (write.1,write.2)
 					// dramatist hamlet
 					// LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[1], rel2ss[2]);
 					rel2 = rel2ss[0] + " " + lt1 + " " + lt2;
 				} else {
-					LDArel2 = rel2ss[0] + " " + rel2ss[2] + " " + rel2ss[1];
+					// LDArel2 = rel2ss[0] + " " + rel2ss[2] + " " + rel2ss[1];
 					// LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[2], rel2ss[1]);
 					rel2 = rel2ss[0] + " " + lt2 + " " + lt1;
 				}
@@ -766,7 +771,7 @@ public class LevyProcessing {
 			String rel1Str;
 			if (rel1Parts.length > 1) {
 				String rel1 = rel1Parts[1].trim();
-				rel1 = Util.getPredicateLemma(rel1, false)[0];
+				rel1 = Util.getPredicateNormalized(rel1, false)[0];
 
 				String arg1 = rel1Parts[0];
 				boolean isEnt1 = !Util.isGeneric(arg1, Util.getAllPOSTags(arg1));
@@ -790,7 +795,7 @@ public class LevyProcessing {
 			String rel2Str;
 			if (rel2Parts.length > 1) {
 				String rel2 = rel2Parts[1].trim();
-				rel2 = Util.getPredicateLemma(rel2, false)[0];
+				rel2 = Util.getPredicateNormalized(rel2, false)[0];
 
 				String arg1 = rel2Parts[0];
 				boolean isEnt1 = !Util.isGeneric(arg1, Util.getAllPOSTags(arg1));
@@ -831,9 +836,9 @@ public class LevyProcessing {
 			String[] ss = line.split("\t");
 			String[] relParts0 = ss[0].split(",");
 			String[] relParts1 = ss[1].split(",");
-			ss[0] = relParts0[0].trim() + ", " + Util.getPredicateLemma(relParts0[1].trim(), false)[0] + ", "
+			ss[0] = relParts0[0].trim() + ", " + Util.getPredicateNormalized(relParts0[1].trim(), false)[0] + ", "
 					+ relParts0[2].trim();
-			ss[1] = relParts1[0].trim() + ", " + Util.getPredicateLemma(relParts1[1].trim(), false)[0] + ", "
+			ss[1] = relParts1[0].trim() + ", " + Util.getPredicateNormalized(relParts1[1].trim(), false)[0] + ", "
 					+ relParts1[2].trim();
 			op.println(ss[0] + "\t" + ss[1] + "\t" + ss[2]);
 		}
@@ -852,7 +857,8 @@ public class LevyProcessing {
 		} else if (allPrevInstances.contains(cand2)) {
 			return true;
 		}
-		throw new RuntimeException("horrible bug");
+		// throw new RuntimeException("horrible bug");
+		return false;
 	}
 
 	static void convertDSToRelsCCG() throws IOException {
@@ -942,6 +948,7 @@ public class LevyProcessing {
 	}
 
 	public static void main(String[] args) throws IOException {
+		ConstantsParsing.nbestParses = 10;
 		// countUniques(root + "re-annotated-full.tsv");
 		// makeCandEnts();
 		// split_chunks();
