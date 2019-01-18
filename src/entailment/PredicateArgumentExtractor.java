@@ -2,6 +2,7 @@ package entailment;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -9,6 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -357,7 +362,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinkedHashSet<String> unaryRels = new LinkedHashSet<>();
 		Set<Integer> notInterestingEventIdxes = new HashSet<>();// e.g., cigarettes at the bar: cigarettes as an event
 
-		for (List<LexicalGraph> graphs : allGraphs) {//each graph is for one sentence
+		for (List<LexicalGraph> graphs : allGraphs) {// each graph is for one sentence
 			if (graphs.size() > 0) {
 
 				// System.out.println("syn ind: "+syntaxIdx + " "+
@@ -735,8 +740,54 @@ public class PredicateArgumentExtractor implements Runnable {
 			}
 		}
 
+		if (ConstantsParsing.filterUntensed) {
+			mainStr = filterUntensedRels(mainStr);
+		}
+
 		String[] ret = new String[] { mainStr, mainStrOnlyNEs, dsStr, foundInteresting + "", unaryRelsStr };
 		return ret;
+
+	}
+
+	// Prevents complex tenses from being doubled. Eg returns only
+	// [(receiving.2,receiving.will.1) gift obama 4 GE 0]
+	// instead of also (receiving.1,receiving.2) obama gift 4 EG 0.
+	// Then turns receiving.will.2, receiving.have.2 into receiving.will.have.2
+	String filterUntensedRels(String mainStr) {
+		System.out.println("Initial mainStr" + mainStr);
+
+		String[] mainRels = mainStr.split("\n");
+		String[] tenseSignals = new String[] { ".will", ".have", ".has", ".had", ".is", ".was" };
+
+		Pattern p = Pattern.compile("(\\(.+\\.)([\\d]+)(,.+\\.)([\\d]+)\\) (\\S+) (\\S+)(.*)([EG])([EG])(.*)");
+
+		for (String rel : mainRels) {
+			if (rel.startsWith("semantic parses:")) {
+				break;
+			}
+			if (stringContainsItemFromList(rel, tenseSignals)) {
+
+				for (String str : tenseSignals) {
+					rel = rel.replace(str, "");
+				}
+
+				Matcher m = p.matcher(rel);
+				m.matches();
+				String swappedRel = m.group(1) + m.group(4) + m.group(3) + m.group(2) + ") " + m.group(6) + " "
+						+ m.group(5) + m.group(7) + m.group(9) + m.group(8) + m.group(10);
+				if (Arrays.asList(mainRels).contains(swappedRel)) {
+					mainRels = ArrayUtils.removeElement(mainRels, swappedRel);
+				}
+
+			}
+		}
+		mainStr = String.join("\n", mainRels);
+		System.out.println("Final mainstr:\n" + mainStr);
+		return mainStr;
+	}
+
+	public static boolean stringContainsItemFromList(String inputStr, String[] items) {
+		return Arrays.stream(items).parallel().anyMatch(inputStr::contains);
 	}
 
 	Set<String> getUnaryRelsFromBinary(String mainStr) {
@@ -1457,12 +1508,22 @@ public class PredicateArgumentExtractor implements Runnable {
 	// }
 
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
+		if (ConstantsParsing.tenseParseTest) {
+			tenseMain(args);
+			System.exit(0);
+		}
+
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "Doan scores late in OT to lift Coyotes by Avs, 3-2";
-//		String s = "President Barack Obama intends to nominate B. Todd Jones as his choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms and Explosives. Cameron said the coalition's main aim was to stay ahead in the \\\"global race\\\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
+		String s = "Doan might visit London";
+		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
+		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
+		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
+		// the \\\"global race\\\" and namechecked India, China, Indonesia, Malaysia,
+		// Brazil, Mexico and Turkey as examples of countries that Britain would fall
+		// behind without reforms.";
 		// String s = "Cameron said the coalition's main aim was to stay ahead in the
 		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
 		// Mexico and Turkey as examples of countries that Britain would fall behind
@@ -1506,6 +1567,61 @@ public class PredicateArgumentExtractor implements Runnable {
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);
 		// System.out.println(exPrss[4]);
+	}
+
+	public static void tenseMain(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
+		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
+
+		TensePair[] tenseSentences = new TensePair[] {
+				// new TensePair("Past Simple","Obama received a gift."),
+				// new TensePair("Past Passive","A gift was received by Obama"),
+				// new TensePair("Present Simple","Obama receives a gift."),
+				// new TensePair("Future Simple","Obama will receive gift."),
+				// new TensePair("Past Perfect","Obama had received a gift."),
+				// new TensePair("Present Perfect","Obama has received a gift."),
+				// new TensePair("Future Perfect","Obama will have received a gift."),
+				// new TensePair("Future Passive", "A gift will be received by Obama"),
+				// new TensePair("Past Progressive","Obama was receiving a gift"),
+				// new TensePair("Present Progressive","Obama is receiving a gift."),
+				// new TensePair("Future Progressive","Obama will be receiving a gift."),
+				// new TensePair("Past Perfect Progressive","Obama had been receiving a gift"),
+				// new TensePair("Present Perfect Progressive","Obama has been receiving a
+				// gift"),
+//				new TensePair("Future Perfect Progressive", "Barack Obama will have been receiving a gift on Monday")
+				 new TensePair("Future Perfect Progressive","John has visited London on Monday")
+		};
+
+		for (TensePair s : tenseSentences) {
+			System.out.println("before Util" + s.tenseSentence());
+			String sent = Util.preprocess(s.tenseSentence());
+			System.out.println("after Util" + sent);
+			String[] exPrss = prEx.extractPredArgsStrs(sent, 0, true, true, null);
+
+			// String mainRels = exPrss[0];
+			// System.out.println(mainRels);
+			System.out.println("Finished parsing");
+			// System.out.println("pre-processed s: " + s);
+
+			// System.out.println(exPrss[4]);
+		}
+	}
+
+	static class TensePair {
+		private final String tense;
+		private final String tenseSentence;
+
+		public TensePair(String aTense, String aTenseSentence) {
+			tense = aTense;
+			tenseSentence = aTenseSentence;
+		}
+
+		public String tense() {
+			return tense;
+		}
+
+		public String tenseSentence() {
+			return tenseSentence;
+		}
 	}
 
 	public static boolean isEntity(String pos) {

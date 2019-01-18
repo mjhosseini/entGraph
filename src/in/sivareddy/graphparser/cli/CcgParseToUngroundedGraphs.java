@@ -80,7 +80,13 @@ public class CcgParseToUngroundedGraphs {
 		String markupFile = Paths.get(dataFolder, "candc_markedup.modified").toString();
 		String unaryRulesFile = Paths.get(dataFolder, "unary_rules.txt").toString();
 		String binaryRulesFile = Paths.get(dataFolder, "binary_rules.txt").toString();
-		String specialCasesFile = Paths.get(dataFolder, "lexicon_specialCases.txt").toString();
+		String specialCasesFile;
+		if (ConstantsParsing.tenseParseTest) {
+			specialCasesFile = Paths.get(dataFolder, "lexicon_specialCases_tensed.txt").toString();
+		}
+		else {
+			specialCasesFile = Paths.get(dataFolder, "lexicon_specialCases.txt").toString();
+		}
 		String specialCasesQuestionsFile = Paths.get(dataFolder, "lexicon_specialCases_questions_vanilla.txt")
 				.toString();
 
