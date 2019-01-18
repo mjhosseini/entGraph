@@ -572,8 +572,8 @@ public class LevyProcessing {
 			System.out.println("rel2: " + rel2);
 			System.out.println("rel1: " + rel1);
 
-			String LDArel1 = "", LDArel2 = "";
-			String LDAtypes1 = "";// , LDAtypes2 = "";
+//			String LDArel1 = "", LDArel2 = "";
+//			String LDAtypes1 = "";// , LDAtypes2 = "";
 
 			if (!rel1.equals("")) {
 				String[] rel1ss = rel1.split(" ");

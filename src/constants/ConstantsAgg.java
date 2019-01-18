@@ -19,7 +19,7 @@ public class ConstantsAgg {
 	public static final boolean backupToStanNER = false;// You can make this true, but it will take some good time to
 														// run!
 	public static boolean removeEventEventModifiers = true;
-	public static boolean removeStopPreds = true;
+	public static boolean removeStopPreds = false;
 	public static boolean cutoffBasedonNSGraphs = true;// use NSpike-based cutoffs
 	public static String NSSizesAddress = "NS_sizes.txt";
 
@@ -48,7 +48,7 @@ public class ConstantsAgg {
 	// public static String simsFolder =
 	// "typedEntGrDirC_aida_typed_NSSize_predBasedEx_"+minArgPairForPred+"_"+minPredForArgPair;
 
-	public static String simsFolder = "typedEntGrDir_NSBased_f20_nostop_" + minArgPairForPred + "_"
+	public static String simsFolder = "typedEntGrDir_NSBased_f20_thing100_30_" + minArgPairForPred + "_"
 			+ minPredForArgPair + "_GG";
 
 	// public static String simsFolder = "typedEntGrDir_aida" + minArgPairForPred +

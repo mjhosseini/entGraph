@@ -70,9 +70,9 @@ public class Util {
 	public static StanfordCoreNLP stanPipelineSimple;// up to lemma
 	public static StanfordCoreNLP stanPipelineSimple2;// up to ssplit
 	static BiuNormalizer biuNormalizer;
-	static String defaultEntTypesFName = "entTypes.txt";
-	static String defaultGenTypesFName = "genTypes.txt";
-	static String defaultEntToWikiFName = "entToWiki.txt";
+//	static String defaultEntTypesFName = "entTypes.txt";
+//	static String defaultGenTypesFName = "genTypes.txt";
+//	static String defaultEntToWikiFName = "entToWiki.txt";
 	static String defaultEntToFigerType = "freebase_types/entity2Types.txt";
 	static Map<String, String> stan2Figer;
 	// public static Map<String, String> entToType = null;

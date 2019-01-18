@@ -93,6 +93,10 @@ public class EntailGraph extends SimpleEntailGraph {
 
 	int getNSBasedPredCutoff() {
 		
+		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
+			return 100;//TODO: be careful
+		}
+		
 		List<Integer> a = new ArrayList<>();
 		for (PredicateVector pvec : pvecs) {
 			a.add(pvec.argIdxes.size());
@@ -110,6 +114,10 @@ public class EntailGraph extends SimpleEntailGraph {
 	}
 
 	int getNSBasedAPCutoff() {
+		
+		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
+			return 30;//TODO: be careful
+		}
 
 		List<Integer> a = new ArrayList<>();
 		for (double i : argPairIdxToCount.values()) {
