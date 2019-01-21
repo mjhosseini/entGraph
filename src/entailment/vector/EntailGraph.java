@@ -94,7 +94,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedPredCutoff() {
 		
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 100;//TODO: be careful
+			return 60;//TODO: be careful
 		}
 		
 		List<Integer> a = new ArrayList<>();
@@ -116,7 +116,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedAPCutoff() {
 		
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 30;//TODO: be careful
+			return 60;//TODO: be careful
 		}
 
 		List<Integer> a = new ArrayList<>();

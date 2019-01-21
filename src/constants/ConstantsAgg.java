@@ -48,7 +48,7 @@ public class ConstantsAgg {
 	// public static String simsFolder =
 	// "typedEntGrDirC_aida_typed_NSSize_predBasedEx_"+minArgPairForPred+"_"+minPredForArgPair;
 
-	public static String simsFolder = "typedEntGrDir_NSBased_f20_thing100_30_" + minArgPairForPred + "_"
+	public static String simsFolder = "typedEntGrDir_NSBased_f20_thing60_60_" + minArgPairForPred + "_"
 			+ minPredForArgPair + "_GG";
 
 	// public static String simsFolder = "typedEntGrDir_aida" + minArgPairForPred +
