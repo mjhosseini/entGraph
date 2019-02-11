@@ -14,8 +14,8 @@ public class ConstantsParsing {
 	public static boolean writeUnaryRels = false;
 	public static boolean writeDebugString = false;
 	public static boolean writeSemParse = true;
-	public static boolean filterUntensed = true;// for deduplicating when a tense is added, eg [receiving; receiving.will]->[receiving.will]
-	public static boolean tenseParseTest = true;// for testing parses on tense pair lists. turn off writeSemParse
+	public static boolean filterUntensed = false;// for deduplicating when a tense is added, eg [receiving; receiving.will]->[receiving.will]
+	public static boolean tenseParseTest = false;// for testing parses on tense pair lists. turn off writeSemParse
 	
 	public static boolean snli = true;// a few good hacks for the snli ds
 	public static int nbestParses = 1;

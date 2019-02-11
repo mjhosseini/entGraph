@@ -33,10 +33,13 @@ public class LevyProcessing {
 	static String root = "data/ent/";
 	static Set<String> allPrevInstances;// instances in the levy set. Useful to
 										// see if sth has been swapped!
+	public static boolean processLevy = false;
 
 	static {
-		String fname = root + "all.txt";
-		allPrevInstances = getInstances(fname);
+		if (processLevy) {
+			String fname = root + "all.txt";
+			allPrevInstances = getInstances(fname);
+		}
 	}
 
 	static Set<String> getInstances(String fname) {
@@ -524,7 +527,7 @@ public class LevyProcessing {
 
 	}
 
-	static void extractRelationsCCG(String fname) throws IOException {
+	static void extractRelationsCCG(String fname, boolean longestRel) throws IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(root + fname + "_s.txt"));
 		BufferedReader brDelim = new BufferedReader(new FileReader(root + fname + "_s2.txt"));
@@ -556,8 +559,8 @@ public class LevyProcessing {
 			String[] rel2Args = new String[] { ss2[1].split(",")[0].trim().toLowerCase(),
 					ss2[1].split(",")[2].trim().toLowerCase() };
 			try {
-				rel1 = prExt.extractPredArgsStrsForceFinding(ss[0] + ".", rel1Args[0], rel1Args[1], true);
-				rel2 = prExt.extractPredArgsStrsForceFinding(ss[1] + ".", rel2Args[0], rel2Args[1], true);
+				rel1 = prExt.extractPredArgsStrsForceFinding(ss[0] + ".", rel1Args[0], rel1Args[1], longestRel, true);
+				rel2 = prExt.extractPredArgsStrsForceFinding(ss[1] + ".", rel2Args[0], rel2Args[1], longestRel, true);
 			} catch (ArgumentValidationException | InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -849,6 +852,9 @@ public class LevyProcessing {
 
 	// Whether it's the swap of q_arg, ...
 	static boolean isSwapped(String line) {
+		if (!processLevy) {
+			return false;
+		}
 		String[] ss = line.split("\t");
 		String cand = ss[0] + "\t" + ss[1];
 		String cand2 = ss[1] + "\t" + ss[0];
@@ -874,11 +880,14 @@ public class LevyProcessing {
 		// "all_new", "train_new", "dev_new",
 		// "test_new", "all_new_dir", "train_new_dir", "dev_new_dir", "test_new_dir"
 		// };//
-		String[] fileNames = new String[] { "naacl_levy_format" };//
+		String[] fileNames = new String[] { "zeichner" };//
+		
 
 		for (String fname : fileNames) {
+			boolean longestRel = fname.contains("zeichner");
+			System.out.println("longest rel: "+longestRel);
 			fixNEs(fname);
-			extractRelationsCCG(fname);
+			extractRelationsCCG(fname, longestRel);
 		}
 	}
 

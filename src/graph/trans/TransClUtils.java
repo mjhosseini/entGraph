@@ -134,12 +134,12 @@ public class TransClUtils {
 								return 0;// We can't do this!
 							}
 						}
-						if (ConstantsGraphs.sortEdgesConfidenceBased) {// TODO: maybe remove below
-							sumSims += (sim - this.lmbda) * Edge.getConfidence(ii, jj, pgraph);
-						} else {
-							sumSims += (sim - this.lmbda);
-							// ConstantsTrans.discountNegScoresHTL *
-						}
+						// if (ConstantsGraphs.sortEdgesConfidenceBased) {// TODO: maybe remove below
+						// sumSims += (sim - this.lmbda) * Edge.getConfidence(ii, jj, pgraph);
+						// } else {
+						sumSims += (sim - this.lmbda);
+						// ConstantsTrans.discountNegScoresHTL *
+						// }
 					}
 				}
 			}

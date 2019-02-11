@@ -42,8 +42,8 @@ public class TypePropagateMN {
 	public static long numBetaAll = 0;
 
 	public TypePropagateMN(String root) {
-		ConstantsGraphs.suffix = "_sim.txt";
-		ConstantsGraphs.edgeThreshold = .01f;// All TACL experiments
+//		ConstantsGraphs.suffix = "_sim.txt";
+//		ConstantsGraphs.edgeThreshold = .01f;// All TACL experiments
 		ConstantsTrans.formBinaryGraph = false;
 
 		if (ConstantsSoftConst.sizeBasedPropagation) {
@@ -148,6 +148,8 @@ public class TypePropagateMN {
 			if (pgraph.nodes.size() == 0) {
 				continue;
 			}
+			
+			pgraph.setSortedEdges();
 
 			pgraph.g0 = pgraph.formWeightedGraph(pgraph.sortedEdges, pgraph.nodes.size());
 
@@ -171,9 +173,9 @@ public class TypePropagateMN {
 			gc++;
 		}
 		
-		for (PGraph pgraph: PGraph.pGraphs) {
-			pgraph.setSortedEdges();
-		}
+//		for (PGraph pgraph: PGraph.pGraphs) {
+//			pgraph.setSortedEdges();
+//		}
 
 		Collections.sort(PGraph.pGraphs, Collections.reverseOrder());
 
@@ -887,7 +889,7 @@ public class TypePropagateMN {
 			// now let's put g0 = gMN
 			if (iter != ConstantsSoftConst.numIters - 1) {
 				for (PGraph pgraph : PGraph.pGraphs) {
-					pgraph.g0 = pgraph.gMN;//TODO: be very careful, put this back.
+					pgraph.g0 = pgraph.gMN;
 				}
 			}
 			System.out.println("num trans vio: "+LabelPropagationMNWithinGraphTrans.numVio);

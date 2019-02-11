@@ -46,7 +46,7 @@ public class Scripts {
 			String[] ss1 = ss[0].split(",");
 			String[] ss2 = ss[1].split(",");
 			boolean shouldAdd = true;
-			for (int i=0; i<ss1.length; i++) {
+			for (int i = 0; i < ss1.length; i++) {
 				if (ss1[i].trim().equals("")) {
 					shouldAdd = false;
 					break;
@@ -294,39 +294,38 @@ public class Scripts {
 
 		}
 	}
-	
+
 	static void convertDecomposableAttentionProbsToFlat(String fname) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(fname));
 		String line = null;
 		JsonParser jsonParser = new JsonParser();
 		boolean ignore = false;
-		while ((line=br.readLine())!=null) {
+		while ((line = br.readLine()) != null) {
 			if (line.startsWith("input:")) {
 				line = line.replace("input: ", "");
-//				System.out.println(line);
+				// System.out.println(line);
 				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 				String label = jObj.get("gold_label").getAsString();
-//				System.out.println(label);
+				// System.out.println(label);
 				if (label.equals("-")) {
 					ignore = true;
 				}
 				continue;
-			}
-			else if(line.equals("")) {
+			} else if (line.equals("")) {
 				continue;
 			}
 			if (ignore) {
 				ignore = false;
 				continue;
 			}
-			line = line.replace("prediction:  ","");
-//			System.out.println(line);
+			line = line.replace("prediction:  ", "");
+			// System.out.println(line);
 			JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
-			String probs = jObj.get("label_probs")+"";
-//			System.out.println(probs);
-			probs = probs.replace("[", "").replace("]","").replace(","," ");
+			String probs = jObj.get("label_probs") + "";
+			// System.out.println(probs);
+			probs = probs.replace("[", "").replace("]", "").replace(",", " ");
 			String[] ss = probs.split(" ");
-			System.out.println(ss[0]+" "+ss[2]+" "+ss[1]);
+			System.out.println(ss[0] + " " + ss[2] + " " + ss[1]);
 		}
 	}
 
@@ -786,7 +785,60 @@ public class Scripts {
 
 		br.close();
 	}
-	
+
+	static void makeDirFromAll(String f_all, String f_dir, String f_rels_all) throws IOException {
+		String root = "../../python/gfiles/ent/";
+		BufferedReader br = new BufferedReader(new FileReader(root + f_dir));
+		Set<String> dir_lines = new HashSet<>();
+		String line = null;
+		while ((line = br.readLine()) != null) {
+			dir_lines.add(line);
+		}
+
+		br.close();
+
+		br = new BufferedReader(new FileReader(root + f_all));
+		BufferedReader br_rels = new BufferedReader(new FileReader(root + f_rels_all));
+		while ((line = br.readLine()) != null) {
+			String line2 = br_rels.readLine();
+			if (dir_lines.contains(line)) {
+				System.out.println(line2);
+			}
+		}
+		br_rels.close();
+		br.close();
+
+	}
+
+	static String getCommaTriple(String rel, String triple) {
+		// System.out.println(rel + "##" + triple);
+		int idx1 = triple.indexOf(" " + rel + " ");
+		// System.out.println(idx1);
+		String ret = triple.substring(0, idx1) + ", " + rel + ", " + triple.substring(idx1 + rel.length() + 2);
+		// System.out.println("ret: "+ret);
+		return ret;
+	}
+
+	static void convertZeichnerToLevyFormat(String fname) throws IOException {
+		String root = "../../python/gfiles/ent/";
+		BufferedReader br = new BufferedReader(new FileReader(root + fname));
+		String line = null;
+		Set<String> allProcessedLines = new HashSet<>();
+		while ((line = br.readLine()) != null) {
+			line = line.replace("@R@", "");
+			String[] ss = line.split("\t");
+
+			String commaTriple1 = getCommaTriple(ss[0], ss[2]);
+			String commaTriple2 = getCommaTriple(ss[1], ss[3]);
+			String label = ss[4].equals("Yes") ? "True" : "False";
+			allProcessedLines.add(commaTriple2 + "\t" + commaTriple1 + "\t" + label);
+		}
+		br.close();
+		for (String s : allProcessedLines) {
+			System.out.println(s);
+		}
+	}
+
 	public static void main(String[] args) throws IOException, ArgumentValidationException, InterruptedException {
 
 		// re-annotated-full.tsv was first swapped (to be the same as Levy),
@@ -798,11 +850,17 @@ public class Scripts {
 		// makeEntTypes();
 		// testEntTypes();
 		// trueCase();
-		
-//		convertDecomposableAttentionProbsToFlat(args[0]);
-		swapDS("../../python/gfiles/ent/naacl_levy_format.txt");
 
-//		extractRelationsSNLIAll();
+		// getCommaTriple(rel, triple)
+
+		convertZeichnerToLevyFormat("zeichner0.txt");
+
+		// convertDecomposableAttentionProbsToFlat(args[0]);
+		// swapDS("../../python/gfiles/ent/naacl_levy_format.txt");
+
+		// makeDirFromAll("test.txt","test_dir.txt","test_rels.txt");
+
+		// extractRelationsSNLIAll();
 
 		// getAllRemainedPredicates("../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/");
 		// formLDAInput("../../python/gfiles/typedEntGrDir_aida_figer_3_3_b/");

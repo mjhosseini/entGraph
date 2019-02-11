@@ -16,16 +16,16 @@ public class ConstantsTrans {
 	public static boolean shouldWrite = true;
 	public static boolean formBinaryGraph = true;
 	public static boolean transitive = true;// otherwise, plain graph!
-	public static boolean confAvg = false;//should be true when crossGraph is on!
+	public static boolean confAvg = false;//must be false
 	public static int numTransThreads = 16;
 	// public static FeatName featName = FeatName.Iter;
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 //	public static String graphPostFix = "_" + transMethod + "_conf_noconfE_test"+".txt";
-	public static String graphPostFix = "_" + transMethod + "_conf_nodisc_san"+".txt";
+	public static String graphPostFix = "_" + transMethod + "_conf_nodisc_noconfE_san"+".txt";
 //	public static double discountNegScoresHTL = 1;
 	static {
 		if (!checkFrgVio && transMethod == PGraph.TransitiveMethod.HTLFRG) {
-			graphPostFix = "HTL_conf_nodisc_san.txt";
+			graphPostFix = "HTL_conf_nodisc_noconfE_san.txt";
 		}
 
 	}

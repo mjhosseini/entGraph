@@ -44,6 +44,8 @@ public class PGraph implements Comparable<PGraph> {
 		featNameToStr.put(FeatName.BINC, "binc");
 		featNameToStr.put(FeatName.WeedPMIPr, "weed's pmi precision sim");
 		featNameToStr.put(FeatName.Iter, "iter 1");
+		featNameToStr.put(FeatName.rw, "rand walk 0 sims");
+		
 	}
 
 	public static int allEdges = 0;
@@ -589,7 +591,7 @@ public class PGraph implements Comparable<PGraph> {
 	}
 
 	public enum FeatName {
-		Cos, WeedProb, WeedPMI, Lin, BINC, WeedPMIPr, Iter
+		Cos, WeedProb, WeedPMI, Lin, BINC, WeedPMIPr, Iter, rw
 	}
 
 	public enum TransitiveMethod {

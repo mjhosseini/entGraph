@@ -138,10 +138,10 @@ public class PredicateArgumentExtractor implements Runnable {
 		// }
 	}
 
-	public String extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean debug)
+	public String extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean longestRel, boolean debug)
 			throws ArgumentValidationException, IOException, InterruptedException {
 		// parser.nbestParses = 10;
-		String[] ret = extractPredArgsStrsForceFinding(text, arg1, arg2, true, debug);
+		String[] ret = extractPredArgsStrsForceFinding(text, arg1, arg2, true, longestRel, debug);
 		// parser.nbestParses = 1;
 		// if (ret[1].equals("false")) {
 		// System.out.println("bad VP "+ text);
@@ -162,7 +162,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	// Do your best to find a good one. That means, rel, arg1, arg2 be different
 	// indexes
 	// dsStr,argMatch?
-	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP,
+	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP, boolean longestRel,
 			boolean debug) throws ArgumentValidationException, IOException, InterruptedException {
 		// System.out.println(text);
 		String ret = "";
@@ -266,6 +266,9 @@ public class PredicateArgumentExtractor implements Runnable {
 				if (predArgsStrs[3].equals("true")) {// not same indexes
 					// System.out.println("weird: " + thisDSStr + " " + arg1 + "
 					// " + arg2);
+					if (longestRel) {//to be used for Zeichner's data that wants to trick with implicative verbs, etc
+						thisDSStr = getLongestRel(thisDSStr);
+					}
 					return new String[] { thisDSStr, "true" };
 				} else {
 					thisPartlyMatch = true;
@@ -294,8 +297,29 @@ public class PredicateArgumentExtractor implements Runnable {
 				System.out.println("not matched: " + text);
 			}
 		}
+		
+		if (longestRel) {//to be used for Zeichner's data that wants to trick with implicative verbs, etc
+			ret = getLongestRel(ret);
+		}
+		
 		return new String[] { ret, "false" };
 	}
+	
+	public String getLongestRel(String ret) {
+		String[] ss = ret.split("\\$\\$");
+		System.out.println("num $$ split: "+ss.length);
+		String l = ss[0];
+		for (int i=1; i<ss.length; i++) {
+			if (ss[i].length()>l.length()) {
+				System.out.println("using longer rel: "+ ss[i]);
+				l = ss[i];
+			}
+		}
+		ret = l;
+		return ret;
+	}
+	
+	
 
 	public String[] extractPredArgsStrs(String text)
 			throws ArgumentValidationException, IOException, InterruptedException {
@@ -429,6 +453,8 @@ public class PredicateArgumentExtractor implements Runnable {
 				for (Edge<LexicalItem> edge : ungroundedGraph.getEdges()) {
 					allEventIdxes.put(edge.getMediator().getWordPosition(), edge);
 				}
+				
+				//a function to decide test and aspect for each index
 
 				for (Edge<LexicalItem> edge : ungroundedGraph.getEdges()) {
 					ArrayList<BinaryRelInfo> relInfos = new ArrayList<>();
@@ -1508,6 +1534,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	// }
 
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
+		ConstantsParsing.nbestParses = 10;//TODO: be careful
 		if (ConstantsParsing.tenseParseTest) {
 			tenseMain(args);
 			System.exit(0);
@@ -1517,7 +1544,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "Doan might visit London";
+		String s = "Austin is the state capital of Texas.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
