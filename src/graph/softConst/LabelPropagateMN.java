@@ -309,7 +309,7 @@ public class LabelPropagateMN implements Runnable {
 			for (int p = 0; p < curN; p++) {
 				for (DefaultWeightedEdge e : gMN.outgoingEdgesOf(p)) {
 					int q = gMN.getEdgeTarget(e);
-					if (p == q) {
+					if (ConstantsSoftConst.forceSelfEdgeOne && p == q) {
 						gMN.setEdgeWeight(e, 1);
 					} else {
 						double c = gMN.getEdgeWeight(e);

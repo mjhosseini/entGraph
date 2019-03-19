@@ -73,7 +73,7 @@ public class Util {
 //	static String defaultEntTypesFName = "entTypes.txt";
 //	static String defaultGenTypesFName = "genTypes.txt";
 //	static String defaultEntToWikiFName = "entToWiki.txt";
-	static String defaultEntToFigerType = "freebase_types/entity2Types.txt";
+	static String defaultEntToFigerType = "data/freebase_types/entity2Types.txt";
 	static Map<String, String> stan2Figer;
 	// public static Map<String, String> entToType = null;
 	// public static Map<String, String> genToType = null;
@@ -178,7 +178,7 @@ public class Util {
 		stopPreds = new HashSet<>();
 		Scanner sc = null;
 		try {
-			sc = new Scanner(new File("stops.txt"));
+			sc = new Scanner(new File("data/util_files/stops.txt"));
 			while (sc.hasNext()) {
 				stopPreds.add(sc.nextLine());
 			}
@@ -1252,6 +1252,7 @@ public class Util {
 		boolean shouldLink = Boolean.parseBoolean(args[1]);
 		boolean useContext = Boolean.parseBoolean(args[2]);// aidalight
 		HashMap<String, HashMap<String, String>> artIdToEntToWiki = null;
+		Set<String> lineIds = new HashSet<>();
 
 		String AIDAPath = args[4];
 
@@ -1297,7 +1298,10 @@ public class Util {
 						jObj.addProperty("date", date);
 						jObj.addProperty("articleId", articleId);
 						jObj.addProperty("lineId", lineId);
-
+						if (lineIds.contains(lineId)) {
+							continue;
+						}
+						lineIds.add(lineId);
 						// Now, let's read all the pred_arg lines
 						String prArgLine = null;
 						curPrArgs = new ArrayList<String>();
@@ -2321,7 +2325,7 @@ public class Util {
 
 	static void testNERStan() throws FileNotFoundException {
 
-		Scanner sc2 = new Scanner(new File("freebase_types/types.map"));
+		Scanner sc2 = new Scanner(new File("data/freebase_types/types.map"));
 		Set<String> figers = new HashSet<>();
 		while (sc2.hasNext()) {
 			String line = sc2.nextLine();

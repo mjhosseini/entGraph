@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -16,22 +17,19 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import constants.ConstantsAgg;
-import constants.ConstantsRWalk;
 import entailment.randWalk.RandWalkMatrix;
 import entailment.vector.EntailGraphFactoryAggregator.LinkPredModel;
 import entailment.vector.EntailGraphFactoryAggregator.ProbModel;
-import graph.softConst.LabelPropagationMNWithinGraph;
 
 public class EntailGraph extends SimpleEntailGraph {
 
-	// static final int numSimilarsToShow = 40;
 	static final int numSimilarsToShow = 1000000000;// inf!
-	ArrayList<String> argPairs = new ArrayList<String>();// when we cutoff, we don't change this, but some won't be used
-	HashMap<String, Integer> argPairToIdx = new HashMap<>();// same as above when we cutoff
-	HashMap<Integer, Double> argPairIdxToCount = new HashMap<>();// number of predicates
-	HashMap<Integer, Double> argPairIdxToOcc = new HashMap<>();// number of seen times
+	List<String> argPairs = new ArrayList<String>();// when we cutoff, we don't change this, but some won't be used
+	Map<String, Integer> argPairToIdx = new HashMap<>();// same as above when we cutoff
+	Map<Integer, Double> argPairIdxToCount = new HashMap<>();// number of predicates
+	Map<Integer, Double> argPairIdxToOcc = new HashMap<>();// number of seen times, used for rand walk, etc
 
-	private ArrayList<PredicateVector> pvecs = new ArrayList<PredicateVector>();
+	private List<PredicateVector> pvecs = new ArrayList<PredicateVector>();
 
 	double numTuples;
 	int nnz;
@@ -40,11 +38,11 @@ public class EntailGraph extends SimpleEntailGraph {
 	boolean writeInfo = false;
 	final int minPredForArgPair;// min num of unique predicates for
 
-	ArrayList<InvertedIdx> invertedIdxes;
+	List<InvertedIdx> invertedIdxes;
 	boolean unary = false;
 
 	@Override
-	public ArrayList<SimplePredicateVector> getPvecs() {
+	public List<SimplePredicateVector> getPvecs() {
 		ArrayList<SimplePredicateVector> ret = new ArrayList<>();
 		for (PredicateVector pvec : pvecs) {
 			ret.add(pvec);
@@ -94,7 +92,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedPredCutoff() {
 		
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 60;//TODO: be careful
+			return 100;//TODO: be careful
 		}
 		
 		List<Integer> a = new ArrayList<>();
@@ -116,7 +114,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedAPCutoff() {
 		
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 60;//TODO: be careful
+			return 100;//TODO: be careful
 		}
 
 		List<Integer> a = new ArrayList<>();
@@ -166,7 +164,7 @@ public class EntailGraph extends SimpleEntailGraph {
 			predCutoff = Math.max(predCutoff, getNSBasedPredCutoff());
 		}
 
-		ArrayList<PredicateVector> pvecsTmp = pvecs;
+		List<PredicateVector> pvecsTmp = pvecs;
 		pvecs = new ArrayList<PredicateVector>();
 		predToIdx = new HashMap<String, Integer>();
 		int id = 0;

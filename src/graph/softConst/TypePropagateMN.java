@@ -65,6 +65,9 @@ public class TypePropagateMN {
 	static void memStat() {
 		int mb = 1024 * 1024;
 		long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
+		System.out.println("total memory: "+ (Runtime.getRuntime().totalMemory()/mb));
+		System.out.println("free memory: "+ (Runtime.getRuntime().freeMemory()/mb));
+		System.out.println("max memory: "+ (Runtime.getRuntime().maxMemory()/mb));
 		System.out.println("usedMb: " + usedMb);
 	}
 
@@ -116,7 +119,7 @@ public class TypePropagateMN {
 		for (File f : files) {
 
 			String fname = f.getName();
-//			if (gc == 5) {
+//			if (gc == 10) {
 //				break;
 //			}
 
@@ -277,7 +280,7 @@ public class TypePropagateMN {
 
 			predTypeCompatibility.put(key1, score1);
 			predTypeCompatibility.put(key1p, score1);
-			System.out.println("key1: " + key1 + " " + score1);
+//			System.out.println("key1: " + key1 + " " + score1);
 			// System.out.println("p key1: " + key1p + " " + score1);
 		}
 
@@ -709,6 +712,7 @@ public class TypePropagateMN {
 		// // graph's edges! Not consistent with MN again.
 		// }
 		else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
+//			System.out.println("returning 0: "+ pgraph_neigh.types +" doesn't have "+pred_p);
 			return 0;
 		} else if (ConstantsSoftConst.lmbda2 == 0) {
 			return 0;
@@ -798,9 +802,8 @@ public class TypePropagateMN {
 			ret = beta1 + beta2;
 		}
 
-		// String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain +
-		// "#" + tp2_plain + "#";
-		// System.out.println("beta: "+ret+" "+key1);
+//		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
+//		System.out.println("beta: "+ret+" "+key1);
 		if (ret > .9) {
 			numBetaOne++;
 		}
@@ -841,8 +844,10 @@ public class TypePropagateMN {
 				pgraph.gMN = new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
 				for (int i = 0; i < N; i++) {
 					pgraph.gMN.addVertex(i);
-					DefaultWeightedEdge ee = pgraph.gMN.addEdge(i, i);
-					pgraph.gMN.setEdgeWeight(ee, 1);
+					if (ConstantsSoftConst.forceSelfEdgeOne) {
+						DefaultWeightedEdge ee = pgraph.gMN.addEdge(i, i);
+						pgraph.gMN.setEdgeWeight(ee, 1);
+					}
 				}
 				pgraph.edgeToMNWeight = new ConcurrentHashMap<>();
 

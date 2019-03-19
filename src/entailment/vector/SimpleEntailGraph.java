@@ -2,27 +2,28 @@ package entailment.vector;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import constants.ConstantsAgg;
 
 //Useful summary out of EntailGraph, mainly for the sake of memory consumption 
 public class SimpleEntailGraph {
-	HashMap<String, Integer> predToIdx = new HashMap<>();
-	private ArrayList<SimplePredicateVector> pvecs;
+	Map<String, Integer> predToIdx = new HashMap<>();
+	private List<SimplePredicateVector> pvecs;
 	boolean writeSims;
 	PrintStream graphOp2;
 	String types;
 	
-	public ArrayList<SimplePredicateVector> getPvecs() {
+	public List<SimplePredicateVector> getPvecs() {
 		return pvecs;
 	}
 
-	public void setPvecs(ArrayList<SimplePredicateVector> pvecs) {
+	public void setPvecs(List<SimplePredicateVector> pvecs) {
 		this.pvecs = pvecs;
 	}
 

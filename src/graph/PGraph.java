@@ -24,6 +24,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import constants.ConstantsGraphs;
 import constants.ConstantsMNEmbIter;
+import constants.ConstantsSoftConst;
 import entailment.Util;
 import graph.EmbIter.MNEmbIter;
 
@@ -143,8 +144,10 @@ public class PGraph implements Comparable<PGraph> {
 		// System.out.println("sorted edges: "+sortedEdges);
 		for (int i = 0; i < N; i++) {
 			g0.addVertex(i);
-			DefaultWeightedEdge ee = g0.addEdge(i, i);
-			g0.setEdgeWeight(ee, 1);
+			if (ConstantsSoftConst.forceSelfEdgeOne) {
+				DefaultWeightedEdge ee = g0.addEdge(i, i);
+				g0.setEdgeWeight(ee, 1);
+			}
 		}
 
 		for (Edge e : sortedEdges) {

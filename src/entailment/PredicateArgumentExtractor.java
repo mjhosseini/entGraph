@@ -138,8 +138,8 @@ public class PredicateArgumentExtractor implements Runnable {
 		// }
 	}
 
-	public String extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean longestRel, boolean debug)
-			throws ArgumentValidationException, IOException, InterruptedException {
+	public String extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean longestRel,
+			boolean debug) throws ArgumentValidationException, IOException, InterruptedException {
 		// parser.nbestParses = 10;
 		String[] ret = extractPredArgsStrsForceFinding(text, arg1, arg2, true, longestRel, debug);
 		// parser.nbestParses = 1;
@@ -162,8 +162,8 @@ public class PredicateArgumentExtractor implements Runnable {
 	// Do your best to find a good one. That means, rel, arg1, arg2 be different
 	// indexes
 	// dsStr,argMatch?
-	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP, boolean longestRel,
-			boolean debug) throws ArgumentValidationException, IOException, InterruptedException {
+	public String[] extractPredArgsStrsForceFinding(String text, String arg1, String arg2, boolean acceptNP,
+			boolean longestRel, boolean debug) throws ArgumentValidationException, IOException, InterruptedException {
 		// System.out.println(text);
 		String ret = "";
 		int syntaxIdx = 0;
@@ -266,7 +266,8 @@ public class PredicateArgumentExtractor implements Runnable {
 				if (predArgsStrs[3].equals("true")) {// not same indexes
 					// System.out.println("weird: " + thisDSStr + " " + arg1 + "
 					// " + arg2);
-					if (longestRel) {//to be used for Zeichner's data that wants to trick with implicative verbs, etc
+					if (longestRel) {// to be used for Zeichner's data that wants to trick with implicative verbs,
+										// etc
 						thisDSStr = getLongestRel(thisDSStr);
 					}
 					return new String[] { thisDSStr, "true" };
@@ -297,29 +298,28 @@ public class PredicateArgumentExtractor implements Runnable {
 				System.out.println("not matched: " + text);
 			}
 		}
-		
-		if (longestRel) {//to be used for Zeichner's data that wants to trick with implicative verbs, etc
+
+		if (longestRel) {// to be used for Zeichner's data that wants to trick with implicative verbs,
+							// etc
 			ret = getLongestRel(ret);
 		}
-		
+
 		return new String[] { ret, "false" };
 	}
-	
+
 	public String getLongestRel(String ret) {
 		String[] ss = ret.split("\\$\\$");
-		System.out.println("num $$ split: "+ss.length);
+		System.out.println("num $$ split: " + ss.length);
 		String l = ss[0];
-		for (int i=1; i<ss.length; i++) {
-			if (ss[i].length()>l.length()) {
-				System.out.println("using longer rel: "+ ss[i]);
+		for (int i = 1; i < ss.length; i++) {
+			if (ss[i].length() > l.length()) {
+				System.out.println("using longer rel: " + ss[i]);
 				l = ss[i];
 			}
 		}
 		ret = l;
 		return ret;
 	}
-	
-	
 
 	public String[] extractPredArgsStrs(String text)
 			throws ArgumentValidationException, IOException, InterruptedException {
@@ -396,6 +396,13 @@ public class PredicateArgumentExtractor implements Runnable {
 				}
 
 				LexicalGraph ungroundedGraph = graphs.get(syntaxIdx);
+				
+				
+				if (ConstantsParsing.writeDebugString) {
+					System.out.println(ungroundedGraph);
+				}
+				
+				
 
 				// System.out.println(ungroundedGraph.getSyntacticParse());
 
@@ -453,8 +460,8 @@ public class PredicateArgumentExtractor implements Runnable {
 				for (Edge<LexicalItem> edge : ungroundedGraph.getEdges()) {
 					allEventIdxes.put(edge.getMediator().getWordPosition(), edge);
 				}
-				
-				//a function to decide test and aspect for each index
+
+				// a function to decide test and aspect for each index
 
 				for (Edge<LexicalItem> edge : ungroundedGraph.getEdges()) {
 					ArrayList<BinaryRelInfo> relInfos = new ArrayList<>();
@@ -519,6 +526,11 @@ public class PredicateArgumentExtractor implements Runnable {
 					if (eventTypeStrNeg.equals("NEG")) {
 						negated = !negated;
 					}
+					
+					if (ConstantsParsing.writeDebugString) {
+						System.out.println("negated: "+negated);
+					}
+
 					if (!eventTypeStrParticle.equals("")) {
 						String eventStr = edge.getMediator().getWord();
 						if (ConstantsParsing.lemmatizePred) {
@@ -1534,7 +1546,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	// }
 
 	public static void main(String[] args) throws ArgumentValidationException, IOException, InterruptedException {
-		ConstantsParsing.nbestParses = 10;//TODO: be careful
+		ConstantsParsing.nbestParses = 1;// TODO: be careful
 		if (ConstantsParsing.tenseParseTest) {
 			tenseMain(args);
 			System.exit(0);
@@ -1544,7 +1556,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "Austin is the state capital of Texas.";
+		String s = "Egypt: One week before the referendum on the Sharia-heavy constitution, some 50,000 Muslims marched through the provincial capital of Asyut, chanting that Egypt will be “Islamic, Islamic, despite the Christians.” At their head rode several bearded men on horseback with swords in scabbards on their hips, evoking images of early Muslims conquering Christian Egypt in the 7th Century. They traveled through mainly Christian districts, where residents, fearing attacks, shuttered down their stores and stayed in their homes. On voting day, Christian voting was minimal. Some of those few Christians who did try to go to polling stations were pelted by stones.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
@@ -1614,9 +1626,10 @@ public class PredicateArgumentExtractor implements Runnable {
 				// new TensePair("Past Perfect Progressive","Obama had been receiving a gift"),
 				// new TensePair("Present Perfect Progressive","Obama has been receiving a
 				// gift"),
-//				new TensePair("Future Perfect Progressive", "Barack Obama will have been receiving a gift on Monday")
-				 new TensePair("Future Perfect Progressive","John has visited London on Monday")
-		};
+				// new TensePair("Future Perfect Progressive", "Barack Obama will have been
+				// receiving a gift on Monday")
+//				new TensePair("Future Perfect Progressive", "John did not manage to arrive in London on Monday.") };
+				new TensePair("Future Perfect Progressive", "Barcelona did not manage to win the game.") };
 
 		for (TensePair s : tenseSentences) {
 			System.out.println("before Util" + s.tenseSentence());
@@ -1624,8 +1637,8 @@ public class PredicateArgumentExtractor implements Runnable {
 			System.out.println("after Util" + sent);
 			String[] exPrss = prEx.extractPredArgsStrs(sent, 0, true, true, null);
 
-			// String mainRels = exPrss[0];
-			// System.out.println(mainRels);
+			String mainRels = exPrss[0];
+			System.out.println(mainRels);
 			System.out.println("Finished parsing");
 			// System.out.println("pre-processed s: " + s);
 

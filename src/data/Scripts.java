@@ -838,6 +838,28 @@ public class Scripts {
 			System.out.println(s);
 		}
 	}
+	
+	public static void getNAACLFormatCosSubset(String fname_orig, String fname_sub, String fname_cos) throws IOException {
+		String root = "/Users/javadhosseini/Documents/python/gfiles/ent/";
+		System.out.println("file name: "+(root + fname_orig));
+		BufferedReader br_orig = new BufferedReader(new FileReader(root + fname_orig));
+		BufferedReader br_sub = new BufferedReader(new FileReader(root + fname_sub));
+		BufferedReader br_cos = new BufferedReader(new FileReader(root + fname_cos));
+		
+		Set<String> lines_sub = new HashSet<>();
+		String line = null;
+		while ((line=br_sub.readLine())!=null) {
+			lines_sub.add(line);
+		}
+		
+		while ((line=br_orig.readLine())!=null) {
+			String score = br_cos.readLine();
+			if (lines_sub.contains(line)) {
+				System.out.println(score);
+			}
+		}
+		
+	}
 
 	public static void main(String[] args) throws IOException, ArgumentValidationException, InterruptedException {
 
@@ -853,7 +875,8 @@ public class Scripts {
 
 		// getCommaTriple(rel, triple)
 
-		convertZeichnerToLevyFormat("zeichner0.txt");
+//		convertZeichnerToLevyFormat("zeichner0.txt");
+		getNAACLFormatCosSubset("naacl_levy_format0.txt", "naacl_levy_format.txt", "TEA_cos_w2v.txt");
 
 		// convertDecomposableAttentionProbsToFlat(args[0]);
 		// swapDS("../../python/gfiles/ent/naacl_levy_format.txt");

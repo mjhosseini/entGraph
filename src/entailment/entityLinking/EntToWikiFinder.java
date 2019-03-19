@@ -1,8 +1,10 @@
 package entailment.entityLinking;
 
 import java.net.URISyntaxException;
+
 import java.util.ArrayList;
 import java.util.List;
+
 
 import it.cnr.isti.hpc.dexter.rest.client.DexterRestClient;
 import it.cnr.isti.hpc.dexter.rest.domain.CandidateEntity;
@@ -10,6 +12,7 @@ import it.cnr.isti.hpc.dexter.rest.domain.CandidateSpot;
 import it.cnr.isti.hpc.dexter.rest.domain.SpottedDocument;
 
 public class EntToWikiFinder implements Runnable {
+	
 
 	static ArrayList<String> entToWikiStrs = new ArrayList<String>();
 	static DexterRestClient client;

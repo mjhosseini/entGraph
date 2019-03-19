@@ -34,7 +34,7 @@ import it.cnr.isti.hpc.dexter.rest.domain.CandidateSpot;
 import it.cnr.isti.hpc.dexter.rest.domain.SpottedDocument;
 
 public class LinesHandler {
-	
+
 	int numPortionsToSkip;
 	BufferedReader br;
 	int lineNumber;
@@ -130,7 +130,8 @@ public class LinesHandler {
 		}
 
 		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(ConstantsParsing.numThreads);
-		threadPool = new ThreadPoolExecutor(ConstantsParsing.numThreads, ConstantsParsing.numThreads, 600, TimeUnit.SECONDS, queue);
+		threadPool = new ThreadPoolExecutor(ConstantsParsing.numThreads, ConstantsParsing.numThreads, 600,
+				TimeUnit.SECONDS, queue);
 		// to silently discard rejected tasks. :add new
 		// ThreadPoolExecutor.DiscardPolicy()
 
@@ -223,6 +224,24 @@ public class LinesHandler {
 					writeConvertedToEntityLinked();
 				}
 			}
+
+			if (lineNumber % 5000 == 0) {
+				// write the current lineNumber
+				PrintStream op = new PrintStream(new File("offset.txt"));
+				op.println(lineNumber);
+				op.close();
+			}
+		}
+
+		// See if memory has exceeded and we should run for continue!
+		if (memoryExceed) {
+			// write the current lineNumber
+			PrintStream op = new PrintStream(new File("offset.txt"));
+			op.println(lineNumber);
+			op.close();
+		} else {// delete offset.txt as everything is done :)
+			File f = new File("offset.txt");
+			f.delete();
 		}
 
 		System.err.println("threadpool: " + threadPool.getActiveCount() + " " + threadPool.getPoolSize() + " "
@@ -244,17 +263,6 @@ public class LinesHandler {
 		}
 
 		System.err.println("all time: " + (System.currentTimeMillis() - time0));
-
-		// See if memory has exceeded and we should run for continue!
-		if (memoryExceed) {
-			// write the current lineNumber
-			PrintStream op = new PrintStream(new File("offset.txt"));
-			op.println(lineNumber);
-			op.close();
-		} else {// delete offset.txt as everything is done :)
-			File f = new File("offset.txt");
-			f.delete();
-		}
 
 		System.exit(0);
 	}
