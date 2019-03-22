@@ -25,8 +25,8 @@ public class ConstantsAgg {
 	public static String NSSizesAddress = "NS_sizes.txt";
 
 	// cutoffs
-	public static int minArgPairForPred = 0;// 100;
-	public static int minPredForArgPair = 0;// 20;// min num of unique predicates for argpair
+	public static int minArgPairForPred = 3;// 100;
+	public static int minPredForArgPair = 3;// 20;// min num of unique predicates for argpair
 	// when NS based num aps, we allow x aps for each pred, even if not in NS
 	public static int numArgPairsNSBasedAlwaysAllowed = 0;// default: 10
 	public static int numTopTypePairs = 20;// the big types, used in NSbased sizes
