@@ -90,11 +90,11 @@ public class EntailGraph extends SimpleEntailGraph {
 	}
 
 	int getNSBasedPredCutoff() {
-		
+
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 100;//TODO: be careful
+			return 60;// TODO: be careful
 		}
-		
+
 		List<Integer> a = new ArrayList<>();
 		for (PredicateVector pvec : pvecs) {
 			a.add(pvec.argIdxes.size());
@@ -112,9 +112,9 @@ public class EntailGraph extends SimpleEntailGraph {
 	}
 
 	int getNSBasedAPCutoff() {
-		
+
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 100;//TODO: be careful
+			return 60;// TODO: be careful
 		}
 
 		List<Integer> a = new ArrayList<>();
@@ -139,10 +139,10 @@ public class EntailGraph extends SimpleEntailGraph {
 		if (pvecs.size() <= 1) {
 			return;// not interested in graphs with one node!!!
 		}
-		
-		boolean shouldCutoffNSBased = ConstantsAgg.cutoffBasedonNSGraphs && EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)
-				&& EntailGraphFactoryAggregator.type2RankNS.get(types) < ConstantsAgg.numTopTypePairs; 
-		
+
+		boolean shouldCutoffNSBased = ConstantsAgg.cutoffBasedonNSGraphs
+				&& EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)
+				&& EntailGraphFactoryAggregator.type2RankNS.get(types) < ConstantsAgg.numTopTypePairs;
 
 		// cutoff arg-pairs
 		int argPAirCutoff = minPredForArgPair;
@@ -707,8 +707,15 @@ public class EntailGraph extends SimpleEntailGraph {
 				double val1 = invIdx.vals.get(i);
 
 				double PMI1 = invIdx.PMIs.get(i);
-				String leftInterval1 = invIdx.maxLeftTimes.get(i);
-				String rightInterval1 = invIdx.minRightTimes.get(i);
+				
+				String leftInterval1 = null;
+				String rightInterval1 = null;
+				
+				if (ConstantsAgg.useTimeEx) {
+					leftInterval1 = invIdx.maxLeftTimes.get(i);
+					rightInterval1 = invIdx.minRightTimes.get(i);
+				}
+				
 				PredicateVector pvec1 = pvecs.get(pvecIdx1);
 
 				if (val1 == 0) {
@@ -721,8 +728,15 @@ public class EntailGraph extends SimpleEntailGraph {
 					int pvecIdx2 = invIdx.samplesIdxes.get(j);
 					double val2 = invIdx.vals.get(j);
 					double PMI2 = invIdx.PMIs.get(j);
-					String leftInterval2 = invIdx.maxLeftTimes.get(j);
-					String rightInterval2 = invIdx.minRightTimes.get(j);
+					
+					String leftInterval2 = null;
+					String rightInterval2 = null;
+					
+					if (ConstantsAgg.useTimeEx) {
+						leftInterval2 = invIdx.maxLeftTimes.get(j);
+						rightInterval2 = invIdx.minRightTimes.get(j);
+					}
+					
 					PredicateVector pvec2 = pvecs.get(pvecIdx2);
 
 					if (unary && !EntailGraphFactory.acceptablePredPairs
@@ -856,6 +870,7 @@ public class EntailGraph extends SimpleEntailGraph {
 
 	void addBinaryRelation(String pred, String featName, String timeInterval, double count, double threshold,
 			double preComputedScore) {
+		EntailGraphFactoryAggregator.numAllTuplesPlusReverse++;
 		if (!predToIdx.containsKey(pred)) {
 			PredicateVector pvec = new PredicateVector(pred, predToIdx.size(), this);
 			predToIdx.put(pred, pvec.uniqueId);
@@ -872,7 +887,9 @@ public class EntailGraph extends SimpleEntailGraph {
 			argPairs.add(featName);
 
 			argPairIdxToCount.put(idx, 0.0);
-			argPairIdxToOcc.put(idx, 0.0);
+			if (ConstantsAgg.computeProbELSims) {
+				argPairIdxToOcc.put(idx, 0.0);
+			}
 		}
 
 		int pairIdx = argPairToIdx.get(featName);
@@ -994,8 +1011,12 @@ public class EntailGraph extends SimpleEntailGraph {
 
 			for (int idx : pvec.argIdxes) {
 				int arrIdx = pvec.argIdxToArrayIdx.get(idx);
-				invertedIdxes.get(idx).addIdxVal(i, pvec.vals.get(arrIdx), pvec.minRightIntervals.get(arrIdx),
-						pvec.maxLeftIntervals.get(arrIdx));
+				if (!ConstantsAgg.useTimeEx) {
+					invertedIdxes.get(idx).addIdxVal(i, pvec.vals.get(arrIdx), null, null);
+				} else {
+					invertedIdxes.get(idx).addIdxVal(i, pvec.vals.get(arrIdx), pvec.minRightIntervals.get(arrIdx),
+							pvec.maxLeftIntervals.get(arrIdx));
+				}
 			}
 		}
 

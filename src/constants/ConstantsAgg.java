@@ -14,22 +14,24 @@ public class ConstantsAgg {
 	public static boolean useTimeEx = false;
 	public static boolean isCCG = true;
 	public static boolean isTyped = true;
-	public static final boolean normalizePredicate = true;// if rawExtraction, wouldn't matter.
+	public static boolean isForeign = true;
+	public static final boolean normalizePredicate = false;// if rawExtraction, wouldn't matter.
 	public static final boolean keepWillTense = false;// Must be false for normal entailment graphs 
 	public static final boolean backupToStanNER = false;// You can make this true, but it will take some good time to
 														// run!
-	public static boolean removeEventEventModifiers = true;
-	public static boolean removeStopPreds = true;
-	public static boolean cutoffBasedonNSGraphs = true;// use NSpike-based cutoffs
+	public static boolean removeEventEventModifiers = false;
+	public static boolean removeStopPreds = false;
+	public static boolean cutoffBasedonNSGraphs = false;// use NSpike-based cutoffs
 	public static String NSSizesAddress = "NS_sizes.txt";
 
 	// cutoffs
-	public static int minArgPairForPred = 3;// 100;
-	public static int minPredForArgPair = 3;// 20;// min num of unique predicates for argpair
+	public static int minArgPairForPred = 0;// 100;
+	public static int minPredForArgPair = 0;// 20;// min num of unique predicates for argpair
 	// when NS based num aps, we allow x aps for each pred, even if not in NS
 	public static int numArgPairsNSBasedAlwaysAllowed = 0;// default: 10
 	public static int numTopTypePairs = 20;// the big types, used in NSbased sizes
 	public static int maxPredsTotal = -1;// 35000;
+	public static int maxPredsTotalTypeBased = -1;//use if memory issue even before applying the cutoffs (and forming graphs)
 	public static final int minPredForArg = -1;// min num of unique predicates for
 	public static final int numThreads = 20;
 
@@ -43,13 +45,13 @@ public class ConstantsAgg {
 
 	// public static String relAddress = "news_gen8_p.json";
 	// public static String relAddress = "news_genC.json";
-	public static String relAddress = "news_genC_GG.json";
+	public static String relAddress = "binary_relations_sabine_sample.json";
 
 	// public static String simsFolder =
 	// "typedEntGrDirC_aida_typed_NSSize_predBasedEx_"+minArgPairForPred+"_"+minPredForArgPair;
 
-	public static String simsFolder = "typedEntGrDirC_NSBased_f20_thing100_100_" + minArgPairForPred + "_"
-			+ minPredForArgPair + "_GG";
+	public static String simsFolder = "typedEntGrDir_german_" + minArgPairForPred + "_"
+			+ minPredForArgPair;
 
 	// public static String simsFolder = "typedEntGrDir_aida" + minArgPairForPred +
 	// "_"
@@ -57,6 +59,10 @@ public class ConstantsAgg {
 
 	public static boolean computeProbELSims = false;
 	public static boolean linkPredBasedRandWalk = false;
+	
+	// public static boolean lemmatizePredWords = false;// whether we should
+	// lemmatize each word in the predicate.
+	// if it has been already lemmatized in rel extraction, must be false.
 
 	// ####################################################################################################
 	// ConvE untyped

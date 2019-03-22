@@ -5,6 +5,8 @@ import java.util.ArrayList;
 
 import org.maltparser.core.helper.HashMap;
 
+import constants.ConstantsAgg;
+
 public class InvertedIdx {
 	int uniqueIdx;
 	ArrayList<Integer> samplesIdxes;
@@ -20,8 +22,10 @@ public class InvertedIdx {
 		this.uniqueIdx = uniqueIdx;
 		this.samplesIdxes = new ArrayList<Integer>();
 		this.vals = new ArrayList<>();
-		this.minRightTimes = new ArrayList<>();
-		this.maxLeftTimes = new ArrayList<>();
+		if (ConstantsAgg.useTimeEx) {
+			this.minRightTimes = new ArrayList<>();
+			this.maxLeftTimes = new ArrayList<>();
+		}
 		this.PMIs = new ArrayList<>();
 		this.sampleIdxToArrIdx = new HashMap<Integer, Integer>();
 	}
@@ -30,8 +34,10 @@ public class InvertedIdx {
 		sampleIdxToArrIdx.put(idx, samplesIdxes.size());
 		samplesIdxes.add(idx);
 		vals.add(value);
-		minRightTimes.add(minRightTime);
-		maxLeftTimes.add(maxLeftTime);
+		if (ConstantsAgg.useTimeEx) {
+			minRightTimes.add(minRightTime);
+			maxLeftTimes.add(maxLeftTime);
+		}
 		PMIs.add(-1.0);
 	}
 	

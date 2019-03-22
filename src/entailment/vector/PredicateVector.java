@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import constants.ConstantsAgg;
@@ -14,12 +15,12 @@ import entailment.Util;
 public class PredicateVector extends SimplePredicateVector {
 	// Don't store a HashMap here so that after the pvecs are formed, the speed
 	// will be high.
-	ArrayList<Integer> argIdxes;// we store in sparse format
-	ArrayList<Double> vals;
-	ArrayList<String> minRightIntervals;
-	ArrayList<String> maxLeftIntervals;
-	ArrayList<Double> PMIs;
-	HashMap<Integer, Integer> argIdxToArrayIdx;
+	List<Integer> argIdxes;// we store in sparse format
+	List<Double> vals;
+	List<String> minRightIntervals;
+	List<String> maxLeftIntervals;
+	List<Double> PMIs;
+	Map<Integer, Integer> argIdxToArrayIdx;
 	// HashSet<String> ents;
 	EntailGraph entGraph;
 
@@ -42,14 +43,16 @@ public class PredicateVector extends SimplePredicateVector {
 		this.argIdxes = new ArrayList<Integer>();
 		this.argIdxToArrayIdx = new HashMap<Integer, Integer>();
 		this.vals = new ArrayList<Double>();
-		this.minRightIntervals = new ArrayList<>();
-		this.maxLeftIntervals = new ArrayList<>();
+		if (ConstantsAgg.useTimeEx) {
+			this.minRightIntervals = new ArrayList<>();
+			this.maxLeftIntervals = new ArrayList<>();
+		}
 		this.similarityInfos = new HashMap<Integer, SimilaritiesInfo>();
 		// this.ents = new HashSet<String>();
 		this.entGraph = entGraph;
 	}
 
-	// adds the idx of an arg-pair. It returns whether this idx has been added
+	// adds the idx of an arg-pair. It records whether this idx has been added
 	// for the first time
 	void addArgPair(int idx, String timeInterval, double count) {
 		if (!argIdxToArrayIdx.containsKey(idx)) {
@@ -59,38 +62,25 @@ public class PredicateVector extends SimplePredicateVector {
 			if (ConstantsAgg.useTimeEx) {
 				minRightIntervals.add("3000-01-01");
 				maxLeftIntervals.add("1000-01-01");
-			} else {
-				minRightIntervals.add(null);
-				maxLeftIntervals.add(null);
 			}
 
 			double prevCount = entGraph.argPairIdxToCount.get(idx);
 
 			if (EntailGraphFactoryAggregator.typeScheme != EntailGraphFactoryAggregator.TypeScheme.LDA) {
-				entGraph.argPairIdxToCount.put(idx, prevCount + 1);// TODO:
-																	// should we
-																	// care
-																	// about
-																	// this in
-																	// cutoffs?
+				entGraph.argPairIdxToCount.put(idx, prevCount + 1);
 
 			} else {
-				entGraph.argPairIdxToCount.put(idx, prevCount + count);// TODO:
-																		// should
-																		// we
-																		// care
-																		// about
-																		// this
-																		// in
-																		// cutoffs?
+				entGraph.argPairIdxToCount.put(idx, prevCount + count);
 			}
 			EntailGraphFactoryAggregator.allNonZero++;
 		}
 		int arrIdx = argIdxToArrayIdx.get(idx);
 		vals.set(arrIdx, vals.get(arrIdx) + count);
 
-		double prevOcc = entGraph.argPairIdxToOcc.get(idx);
-		entGraph.argPairIdxToOcc.put(idx, prevOcc + count);
+		if (ConstantsAgg.computeProbELSims) {
+			double prevOcc = entGraph.argPairIdxToOcc.get(idx);
+			entGraph.argPairIdxToOcc.put(idx, prevOcc + count);
+		}
 		// if (EntailGraphFactoryAggregator.typeScheme !=
 		// EntailGraphFactoryAggregator.TypeScheme.LDA) {
 		// double prevCount = entGraph.argPairIdxToCount.get(idx);

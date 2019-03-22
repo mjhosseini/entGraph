@@ -45,6 +45,7 @@ public class RandWalkMatrix {
 	MySparseMatrix mat;
 	MySparseMatrix matNoHub;
 	List<MySparseMatrix> randWalkMats;
+	public static int numAllStoredTriples = 0;
 	static Set<String> hubs;
 	static int numAllSeenEdges = 0;
 
@@ -382,9 +383,9 @@ public class RandWalkMatrix {
 						String pred_orig = pred + "#thing_1#thing_2";
 						String pred_reverse = pred + "#thing_2#thing_1";
 
-						EntailGraphFactoryAggregator.numAllStoredTriples++;
-						if (EntailGraphFactoryAggregator.numAllStoredTriples % 100000 == 0) {
-							System.err.println(EntailGraphFactoryAggregator.numAllStoredTriples);
+						RandWalkMatrix.numAllStoredTriples++;
+						if (RandWalkMatrix.numAllStoredTriples % 100000 == 0) {
+							System.err.println(RandWalkMatrix.numAllStoredTriples);
 							System.err.println("triple to score size: " + ret.size());
 
 							int mb = 1024 * 1024;

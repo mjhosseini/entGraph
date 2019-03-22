@@ -26,6 +26,8 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -159,7 +161,7 @@ public class Util {
 		}
 
 		try {
-			Scanner sc = new Scanner(new File("prepositions.txt"));
+			Scanner sc = new Scanner(new File("data/prepositions.txt"));
 			prepositions = new HashSet<>();
 			while (sc.hasNext()) {
 				prepositions.add(sc.nextLine().toLowerCase());
@@ -178,7 +180,7 @@ public class Util {
 		stopPreds = new HashSet<>();
 		Scanner sc = null;
 		try {
-			sc = new Scanner(new File("data/util_files/stops.txt"));
+			sc = new Scanner(new File("data/stops.txt"));
 			while (sc.hasNext()) {
 				stopPreds.add(sc.nextLine());
 			}
@@ -983,7 +985,7 @@ public class Util {
 		if (!ConstantsAgg.isTyped) {
 			return "thing";
 		}
-		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
+		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER && !ConstantsAgg.isForeign) {
 			if (entToFigerType == null) {
 				try {
 					loadFigerTypes(defaultEntToFigerType);
@@ -1032,6 +1034,11 @@ public class Util {
 				}
 			}
 			System.err.println("always use figer!");
+			try {
+				throw new RuntimeErrorException(null);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			System.exit(0);
 			return type;
 		}

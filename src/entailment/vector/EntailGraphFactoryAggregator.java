@@ -44,15 +44,12 @@ public class EntailGraphFactoryAggregator {
 	public static Set<String> dsRawPredPairs = new LinkedHashSet<>();
 	public static Map<String, Map<String, Double>> dsPredToPredToScore = new ConcurrentHashMap<String, Map<String, Double>>();
 	public static Set<String> anchorArgPairs;
-	public static HashSet<String> acceptablePreds;
+	public static Set<String> acceptablePreds;
+	public static Map<String, Set<String>> typesToAcceptablePreds;
 
 	// These parameters are intended to be fixed, or not parameters anymore!
 
 	public static TypeScheme typeScheme = TypeScheme.FIGER;
-	public static boolean isForeign = false;
-//	public static boolean lemmatizePredWords = false;// whether we should lemmatize each word in the predicate.
-	// if it has been already lemmatized in rel extraction, must be false.
-
 	public static final int smoothParam = 0;// 0 means no smoothing
 	public static boolean anchorBasedScores = false;// add anchor-based args to the prev args
 
@@ -68,40 +65,45 @@ public class EntailGraphFactoryAggregator {
 																										// tune scale
 																										// and shape
 																										// parameters
-	public static Map<String,int[]> cutOffsNS;
-	public static Map<String,Integer> predNumArgPairsNS;
-	public static Map<String,Integer> type2RankNS;
-	
+	public static Map<String, int[]> cutOffsNS;
+	public static Map<String, Integer> predNumArgPairsNS;
+	public static Map<String, Integer> type2RankNS;
+
+	static int allNonZero = 0;
+	static int allEdgeCounts = 0;
+	static int numAllTuples = 0;
+	static int numAllTuplesPlusReverse = 0;
+
 	static {
 		// assert iterateAllArgPairs != anchorBasedScores;
-		if (ConstantsAgg.GBooksCCG) {
-			relAddress = "gbooks_dir/gbooks_ccg.txt";
-			simsFolder = "typedEntGrDir_gbooks_figer_30_30";
-		} else if (isForeign) {
-			// relAddress = "binary_relations.json";
-			// simsFolder = "typedEntGrDir_German";
-			relAddress = "binary_rels_chinese.txt";
-			simsFolder = "typedEntGrDir_Chinese";
-		} else {
-			// relAddress = "news_gen8_aida.json";
-			relAddress = ConstantsAgg.relAddress;
-			// relAddress = "news_genC_aida.json";
-			// relAddress = "gbooks_norm.txt";
-			// simsFolder = "typedEntGrDir_aida_figer_5_5_a";
-			// simsFolder = "typedEntGrDir_aida_figer_10_10";
-			// simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
-			// simsFolder = "typedEntGrDir_gbooks_onlyLevy";
-			// simsFolder = "typedEntGrDir_NS_onlyLevy_san";
-			// simsFolder = "typedEntGrDir_aida_untyped_40_40";
-			// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel";
-			// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel_10_.25_T1";
-			// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_cos";
-			simsFolder = ConstantsAgg.simsFolder;
-			// simsFolder = "typedEntGrDir_aida_untyped_40_40_transE_Anchor2";
-			// simsFolder = "typedEntGrDir_aida_untyped_40_40_anchor";
-			// simsFolder = "typedEntGrDir_gbooks_all_20_20";
-			// simsFolder = "untypedEntGrDirC_aida_50_50_20K";
-		}
+		// if (ConstantsAgg.GBooksCCG) {
+		// relAddress = "gbooks_dir/gbooks_ccg.txt";
+		// simsFolder = "typedEntGrDir_gbooks_figer_30_30";
+		// } else if (ConstantsAgg.isForeign) {
+		// // relAddress = "binary_relations.json";
+		// // simsFolder = "typedEntGrDir_German";
+		// relAddress = "binary_rels_chinese.txt";
+		// simsFolder = "typedEntGrDir_Chinese";
+		// } else {
+		// relAddress = "news_gen8_aida.json";
+		relAddress = ConstantsAgg.relAddress;
+		// relAddress = "news_genC_aida.json";
+		// relAddress = "gbooks_norm.txt";
+		// simsFolder = "typedEntGrDir_aida_figer_5_5_a";
+		// simsFolder = "typedEntGrDir_aida_figer_10_10";
+		// simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
+		// simsFolder = "typedEntGrDir_gbooks_onlyLevy";
+		// simsFolder = "typedEntGrDir_NS_onlyLevy_san";
+		// simsFolder = "typedEntGrDir_aida_untyped_40_40";
+		// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel";
+		// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel_10_.25_T1";
+		// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_cos";
+		simsFolder = ConstantsAgg.simsFolder;
+		// simsFolder = "typedEntGrDir_aida_untyped_40_40_transE_Anchor2";
+		// simsFolder = "typedEntGrDir_aida_untyped_40_40_anchor";
+		// simsFolder = "typedEntGrDir_gbooks_all_20_20";
+		// simsFolder = "untypedEntGrDirC_aida_50_50_20K";
+		// }
 
 		if (ConstantsAgg.maxPredsTotal != -1) {// we should just look at maxPT predicates, no other cutoff
 			// minArgPairForPred = 0;
@@ -113,11 +115,19 @@ public class EntailGraphFactoryAggregator {
 				e.printStackTrace();
 			}
 		}
-		
+
 		if (ConstantsAgg.cutoffBasedonNSGraphs) {
 			try {
 				cutOffsNS = getAllCutoffs();
 				predNumArgPairsNS = getAllPredArgPairSizes();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (ConstantsAgg.maxPredsTotalTypeBased != -1) {
+			try {
+				formAcceptablePredsTypeBased();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -145,17 +155,17 @@ public class EntailGraphFactoryAggregator {
 			}
 		}
 	}
-	
-	public static Map<String,int[]> getAllCutoffs() throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader("NS_sizes.txt"));
+
+	public static Map<String, int[]> getAllCutoffs() throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("data/NS_sizes.txt"));
 		String line;
-		Map<String,int[]> ret = new HashMap<>();
+		Map<String, int[]> ret = new HashMap<>();
 		List<SimpleSpot> typeSizes = new ArrayList<>();
-		while ((line = br.readLine())!=null) {
+		while ((line = br.readLine()) != null) {
 			String[] ss = line.split("\t");
 			String types = ss[0];
 			String[] t_ss = types.split("#");
-			String type_reverse = t_ss[1] + "#" + t_ss[0]; 
+			String type_reverse = t_ss[1] + "#" + t_ss[0];
 			int[] sizes = new int[2];
 			sizes[0] = Integer.parseInt(ss[1]);
 			sizes[1] = Integer.parseInt(ss[2]);
@@ -163,26 +173,26 @@ public class EntailGraphFactoryAggregator {
 			ret.put(type_reverse, sizes);
 			typeSizes.add(new SimpleSpot(types, sizes[0]));
 		}
-		
-		Collections.sort(typeSizes,Collections.reverseOrder());
-		int i=0;
+
+		Collections.sort(typeSizes, Collections.reverseOrder());
+		int i = 0;
 		type2RankNS = new HashMap<>();
-		for (SimpleSpot ss: typeSizes) {
+		for (SimpleSpot ss : typeSizes) {
 			type2RankNS.put(ss.spot, i);
 			String[] ps = ss.spot.split("#");
-			type2RankNS.put(ps[1]+"#"+ps[0], i);
+			type2RankNS.put(ps[1] + "#" + ps[0], i);
 			i++;
 		}
-		
+
 		br.close();
 		return ret;
 	}
-	
-	public static Map<String,Integer> getAllPredArgPairSizes() throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader("NS_pred_sizes.txt"));
+
+	public static Map<String, Integer> getAllPredArgPairSizes() throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("data/NS_pred_sizes.txt"));
 		String line;
-		Map<String,Integer> ret = new HashMap<>();
-		while ((line = br.readLine())!=null) {
+		Map<String, Integer> ret = new HashMap<>();
+		while ((line = br.readLine()) != null) {
 			String[] ss = line.split("\t");
 			String pred = ss[0];
 			int size = Integer.parseInt(ss[1]);
@@ -232,8 +242,6 @@ public class EntailGraphFactoryAggregator {
 		}
 		return ret;
 	}
-
-	public static int numAllStoredTriples = 0;
 
 	public static Map<String, double[]> loadEmbeddings(String fname) throws IOException {
 		Map<String, double[]> x2emb = new HashMap<>();
@@ -304,7 +312,7 @@ public class EntailGraphFactoryAggregator {
 					}
 
 					String[] predicateLemma;
-					if (!EntailGraphFactoryAggregator.isForeign) {
+					if (!ConstantsAgg.isForeign) {
 						predicateLemma = Util.getPredicateNormalized(pred, ConstantsAgg.isCCG);
 					} else {
 						predicateLemma = new String[] { pred, "false" };
@@ -342,8 +350,136 @@ public class EntailGraphFactoryAggregator {
 		br.close();
 	}
 
-	static int allNonZero = 0;
-	static int allEdgeCounts = 0;
+	// a quick scan over the corpus and find the highest counts
+	static void formAcceptablePredsTypeBased() throws IOException {
+		typesToAcceptablePreds = new HashMap<>();
+		Map<String, Map<String, Integer>> relCounts = new HashMap<>();
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relAddress), "UTF-8"));
+
+		int lineNumbers = 0;
+		JsonParser jsonParser = new JsonParser();
+
+		// long t0;
+		// long sharedTime = 0;
+
+		String line;
+		while ((line = br.readLine()) != null) {
+			lineNumbers++;
+			// if (lineNumbers == 100000) {
+			// break;
+			// }
+			if (lineNumbers % 100000 == 0) {
+				System.out.println("quick scan: " + lineNumbers);
+			}
+			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
+				continue;
+			}
+			try {
+				List<String> relStrs = new ArrayList<>();
+
+				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
+
+				// typedOp.println("line: " + newsLine);
+				JsonArray jar = jObj.get("rels").getAsJsonArray();
+				for (int i = 0; i < jar.size(); i++) {
+					JsonObject relObj = jar.get(i).getAsJsonObject();
+					String relStr = relObj.get("r").getAsString();
+					relStrs.add(relStr);
+					relStr = relStr.substring(1, relStr.length() - 1);
+					String[] parts = relStr.split("::");
+					String pred = parts[0];
+
+					String type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', null);
+					String type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', null);
+
+					if (!Util.acceptablePredFormat(pred, ConstantsAgg.isCCG)) {
+						continue;
+					}
+
+					String[] predicateLemma;
+					if (!ConstantsAgg.isForeign) {
+						predicateLemma = Util.getPredicateNormalized(pred, ConstantsAgg.isCCG);
+					} else {
+						predicateLemma = new String[] { pred, "false" };
+					}
+
+					pred = predicateLemma[0];
+
+					if (pred.equals("")) {
+						continue;
+					}
+
+					String types = type1 + "#" + type2;
+					String types_reverse = type2 + "#" + type1;
+
+					relCounts.putIfAbsent(types, new HashMap<String, Integer>());
+					relCounts.putIfAbsent(types_reverse, new HashMap<String, Integer>());
+
+					if (type1.equals(type2)) {
+
+						String typeD = type1 + "_1" + "#" + type1 + "_2";
+						String typeR = type1 + "_2" + "#" + type1 + "_1";
+
+						String predD = pred + "#" + typeD;
+						String predR = pred + "#" + typeR;
+
+						relCounts.get(types).putIfAbsent(predD, 0);
+						relCounts.get(types).put(predD, relCounts.get(types).get(predD) + 1);
+
+						relCounts.get(types).putIfAbsent(predR, 0);
+						relCounts.get(types).put(predR, relCounts.get(types).get(predR) + 1);
+
+					} else {
+						String predD = pred + "#" + type1 + "#" + type2;
+
+						relCounts.get(types).putIfAbsent(predD, 0);
+						relCounts.get(types_reverse).putIfAbsent(predD, 0);
+
+						relCounts.get(types).put(predD, relCounts.get(types).get(predD) + 1);
+						relCounts.get(types_reverse).put(predD, relCounts.get(types_reverse).get(predD) + 1);
+
+					}
+
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		br.close();
+
+		for (String types : relCounts.keySet()) {
+			typesToAcceptablePreds.put(types, new LinkedHashSet<>());
+			List<SimpleSpot> ss = new ArrayList<>();
+			Map<String, Integer> thisRelCounts = relCounts.get(types);
+			for (String pred : thisRelCounts.keySet()) {
+				// System.out.println("pred's count: "+pred + " " + thisRelCounts.get(pred));
+				ss.add(new SimpleSpot(pred, thisRelCounts.get(pred)));
+			}
+
+			Collections.sort(ss, Collections.reverseOrder());
+
+			boolean shouldCutoffNSBased = ConstantsAgg.cutoffBasedonNSGraphs
+					&& EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)
+					&& EntailGraphFactoryAggregator.type2RankNS.get(types) < ConstantsAgg.numTopTypePairs;
+
+			int numAllowedUB = ConstantsAgg.maxPredsTotalTypeBased;// an upper bound
+			if (shouldCutoffNSBased && EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)) {
+				// we still multiply by 1+eps because we will cutoff based on aparis first and
+				// don't want to bias the results...
+				numAllowedUB = (int) (EntailGraphFactoryAggregator.cutOffsNS.get(types)[0] * 1.1);
+			}
+
+			System.out.println("all acceptable preds for : " + types);
+			for (int i = 0; i < Math.min(ss.size(), numAllowedUB); i++) {
+				SimpleSpot s = ss.get(i);
+				typesToAcceptablePreds.get(types).add(s.spot);
+				System.out.println(s.spot + " " + s.count);
+			}
+		}
+
+	}
 
 	public EntailGraphFactoryAggregator() {
 		try {
@@ -361,15 +497,13 @@ public class EntailGraphFactoryAggregator {
 				dsPaths = new String[] { root + "all_new_rels_oie.txt" };
 			}
 
-			
-
 			if (ConstantsAgg.onlyDSPreds) {
 				for (String dsPath : dsPaths) {
 					Util.fillDSPredsandPairs(dsPath, dsPreds, dsRawPredPairs);
 				}
-				
+
 				System.err.println("num dspreds: " + dsPreds.size());
-				
+
 				System.err.println("all DS Rels" + dsPreds.size());
 				for (String s : dsPreds) {
 					System.err.println(s);
@@ -503,7 +637,7 @@ public class EntailGraphFactoryAggregator {
 		HashSet<String> allTypes = new HashSet<>();
 
 		allTypes.add("thing");
-		if (ConstantsAgg.isTyped && !EntailGraphFactoryAggregator.isForeign) {
+		if (ConstantsAgg.isTyped && !ConstantsAgg.isForeign) {
 			if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 				for (String s : Util.getEntToFigerType().values()) {
 					allTypes.add(s);
