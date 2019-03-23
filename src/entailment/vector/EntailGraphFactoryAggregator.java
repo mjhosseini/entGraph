@@ -661,7 +661,7 @@ public class EntailGraphFactoryAggregator {
 			else {
 				Scanner sc;
 				try {
-					sc = new Scanner(new File("german_types.txt"));
+					sc = new Scanner(new File(ConstantsAgg.foreinTypesAddress));
 					while (sc.hasNextLine()) {
 						String s = sc.nextLine();
 						allTypes.add(s);

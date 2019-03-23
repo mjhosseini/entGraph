@@ -46,7 +46,7 @@ public class ConstantsAgg {
 	// public static String relAddress = "news_gen8_p.json";
 	// public static String relAddress = "news_genC.json";
 	public static String relAddress = "binary_relations_sabine_sample.json";
-	public static String foreinTypesAddress = "german_types.txt";//only important if isForeign=True
+	public static String foreinTypesAddress = "data/german_types.txt";//only important if isForeign=True
 
 	// public static String simsFolder =
 	// "typedEntGrDirC_aida_typed_NSSize_predBasedEx_"+minArgPairForPred+"_"+minPredForArgPair;
