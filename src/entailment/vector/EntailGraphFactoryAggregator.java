@@ -634,31 +634,45 @@ public class EntailGraphFactoryAggregator {
 
 	void assignTypesToEntGrFacts() {
 		System.out.println("assigning types");
-		HashSet<String> allTypes = new HashSet<>();
+		Set<String> allTypes = new HashSet<>();
 
 		allTypes.add("thing");
-		if (ConstantsAgg.isTyped && !ConstantsAgg.isForeign) {
-			if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
-				for (String s : Util.getEntToFigerType().values()) {
-					allTypes.add(s);
+		if (ConstantsAgg.isTyped) {
+			if (!ConstantsAgg.isForeign) {
+				if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
+					for (String s : Util.getEntToFigerType().values()) {
+						allTypes.add(s);
+					}
+				}
+				// else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.GKG) {
+				// for (String s : Util.entToType.values()) {
+				// allTypes.add(s);
+				// }
+				// for (String s : Util.genToType.values()) {
+				// allTypes.add(s);
+				// }
+				// }
+				else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
+					for (int i = 0; i < DistrTyping.numTopics; i++) {
+						allTypes.add("type" + i);
+					}
 				}
 			}
-			// else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.GKG) {
-			// for (String s : Util.entToType.values()) {
-			// allTypes.add(s);
-			// }
-			// for (String s : Util.genToType.values()) {
-			// allTypes.add(s);
-			// }
-			// }
-			else if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
-				for (int i = 0; i < DistrTyping.numTopics; i++) {
-					allTypes.add("type" + i);
+			else {
+				Scanner sc;
+				try {
+					sc = new Scanner(new File("german_types.txt"));
+					while (sc.hasNextLine()) {
+						String s = sc.nextLine();
+						allTypes.add(s);
+					}
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
 				}
 			}
 		}
 
-		ArrayList<String> allTypesArr = new ArrayList<>();
+		List<String> allTypesArr = new ArrayList<>();
 
 		for (String s : allTypes) {
 
@@ -670,7 +684,7 @@ public class EntailGraphFactoryAggregator {
 		System.out.println("alltypes size: " + allTypes.size());
 
 		for (int i = 0; i < allTypesArr.size(); i++) {
-			// System.out.println("type: " +allTypesArr.get(i) );
+//			System.out.println("type: " +allTypesArr.get(i) );
 			int r = (int) (Math.random() * ConstantsAgg.numThreads);
 			// entGrFacts[r].acceptableTypes.add(allTypesArr.get(i));
 
@@ -678,6 +692,7 @@ public class EntailGraphFactoryAggregator {
 				String t1 = allTypesArr.get(i) + "#" + allTypesArr.get(j);
 				String t2 = allTypesArr.get(j) + "#" + allTypesArr.get(i);
 				r = (int) (Math.random() * ConstantsAgg.numThreads);
+				System.out.println("adding " + t1 +" to thread "+r);
 				entGrFacts[r].acceptableTypes.add(t1);
 				entGrFacts[r].acceptableTypes.add(t2);
 			}

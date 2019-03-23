@@ -985,7 +985,7 @@ public class Util {
 		if (!ConstantsAgg.isTyped) {
 			return "thing";
 		}
-		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER && !ConstantsAgg.isForeign) {
+		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER) {
 			if (entToFigerType == null) {
 				try {
 					loadFigerTypes(defaultEntToFigerType);

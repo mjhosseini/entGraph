@@ -142,7 +142,7 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
-			System.out.println(line);
+//			System.out.println(line);
 
 			// if (lineNumbers == 100000) {
 			// break;// TODO: remove this
@@ -298,7 +298,7 @@ public class EntailGraphFactory implements Runnable {
 						if (ConstantsAgg.isTyped) {
 							type1 = parts[3];// .substring(1);
 							type2 = parts[4];// .substring(1);
-							System.out.println("types foreign: " + type1 + " " + type2);
+//							System.out.println("types foreign: " + type1 + " " + type2);
 						} else {
 							type1 = "thing";
 							type2 = "thing";
@@ -330,8 +330,7 @@ public class EntailGraphFactory implements Runnable {
 					 * 
 					 * 
 					 */
-					if (!ConstantsAgg.isForeign
-							&& EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
+					if (EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
 							&& !acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
 						continue;
@@ -617,7 +616,7 @@ public class EntailGraphFactory implements Runnable {
 
 		boolean rev = (forceRev || (!thisType.equals(type1 + "#" + type2)) && !type1.equals("") && !type2.equals(""));
 
-		if (!ConstantsAgg.isForeign && !acceptableTypes.contains(thisType)) {
+		if (!acceptableTypes.contains(thisType)) {
 			// System.out.println("returning because not covered: " + thisType +
 			// " " + threadNum);
 			return rev;// this is because of

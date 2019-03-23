@@ -25,8 +25,8 @@ public class ConstantsAgg {
 	public static String NSSizesAddress = "NS_sizes.txt";
 
 	// cutoffs
-	public static int minArgPairForPred = 3;// 100;
-	public static int minPredForArgPair = 3;// 20;// min num of unique predicates for argpair
+	public static int minArgPairForPred = 0;// 100;
+	public static int minPredForArgPair = 0;// 20;// min num of unique predicates for argpair
 	// when NS based num aps, we allow x aps for each pred, even if not in NS
 	public static int numArgPairsNSBasedAlwaysAllowed = 0;// default: 10
 	public static int numTopTypePairs = 20;// the big types, used in NSbased sizes
@@ -46,6 +46,7 @@ public class ConstantsAgg {
 	// public static String relAddress = "news_gen8_p.json";
 	// public static String relAddress = "news_genC.json";
 	public static String relAddress = "binary_relations_sabine_sample.json";
+	public static String foreinTypesAddress = "german_types.txt";//only important if isForeign=True
 
 	// public static String simsFolder =
 	// "typedEntGrDirC_aida_typed_NSSize_predBasedEx_"+minArgPairForPred+"_"+minPredForArgPair;
