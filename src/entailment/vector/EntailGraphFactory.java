@@ -142,11 +142,11 @@ public class EntailGraphFactory implements Runnable {
 
 		String line;
 		while ((line = br.readLine()) != null) {
-//			System.out.println(line);
+			// System.out.println(line);
 
-			// if (lineNumbers == 100000) {
-			// break;// TODO: remove this
-			// }
+//			if (lineNumbers == 100000) {
+//				break;// TODO: remove this
+//			}
 			//
 			if (lineNumbers > 0 && lineNumbers % 1000000 == 0 && ConstantsAgg.backupToStanNER) {
 				Util.renewStanfordParser();
@@ -298,7 +298,7 @@ public class EntailGraphFactory implements Runnable {
 						if (ConstantsAgg.isTyped) {
 							type1 = parts[3];// .substring(1);
 							type2 = parts[4];// .substring(1);
-//							System.out.println("types foreign: " + type1 + " " + type2);
+							// System.out.println("types foreign: " + type1 + " " + type2);
 						} else {
 							type1 = "thing";
 							type2 = "thing";
@@ -306,6 +306,7 @@ public class EntailGraphFactory implements Runnable {
 
 					} else if (!ConstantsAgg.useTimeEx) {
 						try {
+
 							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
 							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
 						} catch (Exception e) {
@@ -334,34 +335,6 @@ public class EntailGraphFactory implements Runnable {
 							&& !acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
 						continue;
-					}
-
-					if (ConstantsAgg.maxPredsTotalTypeBased > 0
-							&& EntailGraphFactoryAggregator.typesToAcceptablePreds.containsKey(type1 + "#" + type2)) {
-
-						Set<String> thisAcceptablePreds = EntailGraphFactoryAggregator.typesToAcceptablePreds
-								.get(type1 + "#" + type2);
-
-						if (type1.equals(type2)) {
-
-							String typeD = type1 + "_1" + "#" + type1 + "_2";
-							String typeR = type1 + "_2" + "#" + type1 + "_1";
-
-							String predD = pred + "#" + typeD;
-							String predR = pred + "#" + typeR;
-
-							if (!thisAcceptablePreds.contains(predD) && !thisAcceptablePreds.contains(predR)) {
-//								System.out.println(pred + " not accepable for " + type1 + "#" + type2);
-								continue;
-							}
-						} else {
-							String predD = pred + "#" + type1 + "#" + type2;
-
-							if (!thisAcceptablePreds.contains(predD)) {
-//								System.out.println(pred + " not accepable for " + type1 + "#" + type2);
-								continue;
-							}
-						}
 					}
 
 					// if (!EntailGraphFactoryAggregator.isCCG) {
@@ -395,12 +368,69 @@ public class EntailGraphFactory implements Runnable {
 						type2 = tmp;
 					}
 
+					if (ConstantsAgg.removeGGFromTopPairs
+							&& EntailGraphFactoryAggregator.type2RankNS.containsKey(type1 + "#" + type2)
+							&& EntailGraphFactoryAggregator.type2RankNS
+									.get(type1 + "#" + type2) < ConstantsAgg.numTopTypePairs
+							&& parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G') {
+//						System.out.println("continue, both GG: " + pred + " " + arg1 + " " + arg2);
+						continue;
+					}
+
+//					if (ConstantsAgg.maxPredsTotalTypeBased > 0
+//							&& EntailGraphFactoryAggregator.typesToAcceptablePreds.containsKey(type1 + "#" + type2)) {
+//
+//						Set<String> thisAcceptablePreds = EntailGraphFactoryAggregator.typesToAcceptablePreds
+//								.get(type1 + "#" + type2);
+//						Set<String> thisAcceptableArgPairs = EntailGraphFactoryAggregator.typesToAcceptableArgPairs
+//								.get(type1 + "#" + type2);
+//
+//						if (type1.equals(type2)) {
+//
+//							String typeD = type1 + "_1" + "#" + type1 + "_2";
+//							String typeR = type1 + "_2" + "#" + type1 + "_1";
+//
+//							String predD = pred + "#" + typeD;
+//							String predR = pred + "#" + typeR;
+//
+//							String argPairD = arg1 + "#" + arg2;
+//							String argPairR = arg2 + "#" + arg1;
+//
+//							if (!thisAcceptablePreds.contains(predD) && !thisAcceptablePreds.contains(predR)) {
+//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+//								continue;
+//							}
+//
+//							if (!thisAcceptableArgPairs.contains(argPairD)
+//									&& !thisAcceptableArgPairs.contains(argPairR)) {
+//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+//								continue;
+//							}
+//
+//						} else {
+//							String predD = pred + "#" + type1 + "#" + type2;
+//
+//							if (!thisAcceptablePreds.contains(predD)) {
+//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+//								continue;
+//							}
+//
+//							String argPairD = arg1 + "#" + arg2;
+//							if (!thisAcceptableArgPairs.contains(argPairD)) {
+//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+//								continue;
+//							}
+//
+//						}
+//					}
+
 					// System.out.println("pred args: "+pred+" "+arg1+" "+arg2);//TODO: remove
 
 					// Now we have pred, arg1 and arg2 and type1 and type2
 
 					// typedOp.println(pred + "#" + type1 + "#" + type2 + "::" + arg1 + "::" +
 					// arg2);
+					
 					if (allPredCounts.containsKey(pred)) {
 						allPredCounts.put(pred, allPredCounts.get(pred) + 1);
 					} else {

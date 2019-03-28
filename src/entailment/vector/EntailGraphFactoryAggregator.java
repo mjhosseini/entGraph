@@ -33,6 +33,7 @@ import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
 import entailment.randWalk.RandWalkMatrix;
+import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 //This is to do multithreading over EntGrFactory
 public class EntailGraphFactoryAggregator {
@@ -46,6 +47,7 @@ public class EntailGraphFactoryAggregator {
 	public static Set<String> anchorArgPairs;
 	public static Set<String> acceptablePreds;
 	public static Map<String, Set<String>> typesToAcceptablePreds;
+	public static Map<String, Set<String>> typesToAcceptableArgPairs;
 
 	// These parameters are intended to be fixed, or not parameters anymore!
 
@@ -125,13 +127,13 @@ public class EntailGraphFactoryAggregator {
 			}
 		}
 
-		if (ConstantsAgg.maxPredsTotalTypeBased != -1) {
-			try {
-				formAcceptablePredsTypeBased();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+//		if (ConstantsAgg.maxPredsTotalTypeBased != -1) {
+//			try {
+//				formAcceptablePredsAndArgPairsTypeBased();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
 
 		// if (embBasedScores) {
 		RandWalkMatrix.relsToEmbed = new HashMap<>();
@@ -283,9 +285,7 @@ public class EntailGraphFactoryAggregator {
 		String line;
 		while ((line = br.readLine()) != null) {
 			lineNumbers++;
-			// if (lineNumbers == 100000) {
-			// break;
-			// }
+			
 			if (lineNumbers % 100000 == 0) {
 				System.out.println("quick scan: " + lineNumbers);
 			}
@@ -293,7 +293,6 @@ public class EntailGraphFactoryAggregator {
 				continue;
 			}
 			try {
-				ArrayList<String> relStrs = new ArrayList<>();
 
 				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 
@@ -302,7 +301,7 @@ public class EntailGraphFactoryAggregator {
 				for (int i = 0; i < jar.size(); i++) {
 					JsonObject relObj = jar.get(i).getAsJsonObject();
 					String relStr = relObj.get("r").getAsString();
-					relStrs.add(relStr);
+					
 					relStr = relStr.substring(1, relStr.length() - 1);
 					String[] parts = relStr.split("::");
 					String pred = parts[0];
@@ -350,136 +349,236 @@ public class EntailGraphFactoryAggregator {
 		br.close();
 	}
 
-	// a quick scan over the corpus and find the highest counts
-	static void formAcceptablePredsTypeBased() throws IOException {
-		typesToAcceptablePreds = new HashMap<>();
-		Map<String, Map<String, Integer>> relCounts = new HashMap<>();
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relAddress), "UTF-8"));
+//	// a quick scan over the corpus and find the highest counts
+//	static void formAcceptablePredsAndArgPairsTypeBased() throws IOException {
+//		typesToAcceptablePreds = new HashMap<>();
+//		typesToAcceptableArgPairs = new HashMap<>();
+//		
+//		Map<String, Map<String, Integer>> relCounts = new HashMap<>();
+//		Map<String, Map<String, Integer>> argPairCounts = new HashMap<>();
+//
+//		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relAddress), "UTF-8"));
+//
+//		int lineNumbers = 0;
+//		JsonParser jsonParser = new JsonParser();
+//
+//		// long t0;
+//		// long sharedTime = 0;
+//
+//		String line;
+//		while ((line = br.readLine()) != null) {
+//			lineNumbers++;
+////			if (lineNumbers == 100000) {
+////				break;
+////			}
+//			if (lineNumbers % 100000 == 0) {
+//				System.out.println("quick scan: " + lineNumbers);
+//			}
+//			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
+//				continue;
+//			}
+//			try {
+//				
+//				//start: exactly copied from EGA
+//				
+//				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
+//
+//				// typedOp.println("line: " + newsLine);
+//				JsonArray jar = jObj.get("rels").getAsJsonArray();
+//				for (int i = 0; i < jar.size(); i++) {
+//					JsonObject relObj = jar.get(i).getAsJsonObject();
+//					String relStr = relObj.get("r").getAsString();
+//					relStr = relStr.substring(1, relStr.length() - 1);
+//					String[] parts = relStr.split("::");
+//					String pred = parts[0];
+//
+//					if (!Util.acceptablePredFormat(pred, ConstantsAgg.isCCG)) {
+//						continue;
+//					}
+//					
+//					
+//					String[] predicateLemma;
+//					if (!ConstantsAgg.isForeign) {
+//						predicateLemma = Util.getPredicateNormalized(pred, ConstantsAgg.isCCG);
+//					} else {
+//						predicateLemma = new String[] { pred, "false" };
+//					}
+//
+//					pred = predicateLemma[0];
+//					
+//					if (ConstantsAgg.removeStopPreds && Util.stopPreds.contains(pred)) {
+//						continue;
+//					}
+//					
+//					if (pred.equals("")) {
+//						continue;
+//					}
+//
+//					
+//					for (int j = 1; j < 3; j++) {
+//						parts[j] = Util.simpleNormalize(parts[j]);
+//					}
+//					
+//					String type1 = null, type2 = null;
+//
+//					if (ConstantsAgg.isForeign) {
+//						if (ConstantsAgg.isTyped) {
+//							type1 = parts[3];// .substring(1);
+//							type2 = parts[4];// .substring(1);
+////							System.out.println("types foreign: " + type1 + " " + type2);
+//						} else {
+//							type1 = "thing";
+//							type2 = "thing";
+//						}
+//
+//					} else if (!ConstantsAgg.useTimeEx) {
+//						try {
+//							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', null);
+//							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', null);
+//						} catch (Exception e) {
+//							System.out.println("t exception for: " + line);
+//						}
+//					} else {
+//						try {
+//							type1 = Util.getType(parts[1], true, null);
+//							type2 = Util.getType(parts[2], true, null);
+//						} catch (Exception e) {
+//							System.out.println("t exception for: " + line);
+//						}
+//					}
+//
+//					String arg1;
+//					String arg2;
+//
+//					// false means args are reversed.
+//					if (predicateLemma[1].equals("false")) {
+//						arg1 = parts[1];
+//						arg2 = parts[2];// type1 and type2 are fine
+//					} else {
+//						arg1 = parts[2];
+//						arg2 = parts[1];
+//						// let's swap type1 and type2
+//						String tmp = type1;
+//						type1 = type2;
+//						type2 = tmp;
+//					}
+//
+//					if (pred.equals("")) {
+//						continue;
+//					}
+//					
+//					//end: exactly copied from EGA. Now we have pred, arg1 (t1) and arg2 (t2)
+//					
+//					if (ConstantsAgg.removeGGFromTopPairs
+//							&& EntailGraphFactoryAggregator.type2RankNS.containsKey(type1 + "#" + type2)
+//							&& EntailGraphFactoryAggregator.type2RankNS
+//									.get(type1 + "#" + type2) < ConstantsAgg.numTopTypePairs
+//							&& parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G') {
+//						continue;
+//					}
+//
+//					String types = type1 + "#" + type2;
+//					String types_reverse = type2 + "#" + type1;
+//
+//					relCounts.putIfAbsent(types, new HashMap<String, Integer>());
+//					relCounts.putIfAbsent(types_reverse, new HashMap<String, Integer>());
+//					argPairCounts.putIfAbsent(types, new HashMap<String, Integer>());
+//					argPairCounts.putIfAbsent(types_reverse, new HashMap<String, Integer>());
+//
+//					if (type1.equals(type2)) {
+//
+//						String typeD = type1 + "_1" + "#" + type1 + "_2";
+//						String typeR = type1 + "_2" + "#" + type1 + "_1";
+//
+//						String predD = pred + "#" + typeD;
+//						String predR = pred + "#" + typeR;
+//
+//						relCounts.get(types).putIfAbsent(predD, 0);
+//						relCounts.get(types).put(predD, relCounts.get(types).get(predD) + 1);
+//						relCounts.get(types).putIfAbsent(predR, 0);
+//						relCounts.get(types).put(predR, relCounts.get(types).get(predR) + 1);
+//
+//						String argPairD = arg1 + "#" + arg2;
+//						String argPairR = arg2 + "#" + arg1;
+//
+//						argPairCounts.get(types).putIfAbsent(argPairD, 0);
+//						argPairCounts.get(types).put(argPairD, argPairCounts.get(types).get(argPairD) + 1);
+//						argPairCounts.get(types).putIfAbsent(argPairR, 0);
+//						argPairCounts.get(types).put(argPairR, argPairCounts.get(types).get(argPairR) + 1);
+//
+//					} else {
+//						String predD = pred + "#" + type1 + "#" + type2;
+//						String argPairD = arg1 + "#" + arg2;
+//
+//						relCounts.get(types).putIfAbsent(predD, 0);
+//						relCounts.get(types_reverse).putIfAbsent(predD, 0);
+//						relCounts.get(types).put(predD, relCounts.get(types).get(predD) + 1);
+//						relCounts.get(types_reverse).put(predD, relCounts.get(types_reverse).get(predD) + 1);
+//
+//						argPairCounts.get(types).putIfAbsent(argPairD, 0);
+//						argPairCounts.get(types).put(argPairD, argPairCounts.get(types).get(argPairD) + 1);
+//						argPairCounts.get(types_reverse).putIfAbsent(argPairD, 0);
+//						argPairCounts.get(types_reverse).put(argPairD,
+//								argPairCounts.get(types_reverse).get(argPairD) + 1);
+//
+//					}
+//
+//				}
+//
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//		}
+//
+//		br.close();
+//
+//		for (String types : relCounts.keySet()) {
+//			formAcceptableObjects(relCounts.get(types), types, typesToAcceptablePreds, 0);
+//			formAcceptableObjects(argPairCounts.get(types), types, typesToAcceptableArgPairs, 1);
+//		}
+//	}
 
-		int lineNumbers = 0;
-		JsonParser jsonParser = new JsonParser();
-
-		// long t0;
-		// long sharedTime = 0;
-
-		String line;
-		while ((line = br.readLine()) != null) {
-			lineNumbers++;
-			// if (lineNumbers == 100000) {
-			// break;
-			// }
-			if (lineNumbers % 100000 == 0) {
-				System.out.println("quick scan: " + lineNumbers);
-			}
-			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
-				continue;
-			}
-			try {
-				List<String> relStrs = new ArrayList<>();
-
-				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
-
-				// typedOp.println("line: " + newsLine);
-				JsonArray jar = jObj.get("rels").getAsJsonArray();
-				for (int i = 0; i < jar.size(); i++) {
-					JsonObject relObj = jar.get(i).getAsJsonObject();
-					String relStr = relObj.get("r").getAsString();
-					relStrs.add(relStr);
-					relStr = relStr.substring(1, relStr.length() - 1);
-					String[] parts = relStr.split("::");
-					String pred = parts[0];
-
-					String type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', null);
-					String type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', null);
-
-					if (!Util.acceptablePredFormat(pred, ConstantsAgg.isCCG)) {
-						continue;
-					}
-
-					String[] predicateLemma;
-					if (!ConstantsAgg.isForeign) {
-						predicateLemma = Util.getPredicateNormalized(pred, ConstantsAgg.isCCG);
-					} else {
-						predicateLemma = new String[] { pred, "false" };
-					}
-
-					pred = predicateLemma[0];
-
-					if (pred.equals("")) {
-						continue;
-					}
-
-					String types = type1 + "#" + type2;
-					String types_reverse = type2 + "#" + type1;
-
-					relCounts.putIfAbsent(types, new HashMap<String, Integer>());
-					relCounts.putIfAbsent(types_reverse, new HashMap<String, Integer>());
-
-					if (type1.equals(type2)) {
-
-						String typeD = type1 + "_1" + "#" + type1 + "_2";
-						String typeR = type1 + "_2" + "#" + type1 + "_1";
-
-						String predD = pred + "#" + typeD;
-						String predR = pred + "#" + typeR;
-
-						relCounts.get(types).putIfAbsent(predD, 0);
-						relCounts.get(types).put(predD, relCounts.get(types).get(predD) + 1);
-
-						relCounts.get(types).putIfAbsent(predR, 0);
-						relCounts.get(types).put(predR, relCounts.get(types).get(predR) + 1);
-
-					} else {
-						String predD = pred + "#" + type1 + "#" + type2;
-
-						relCounts.get(types).putIfAbsent(predD, 0);
-						relCounts.get(types_reverse).putIfAbsent(predD, 0);
-
-						relCounts.get(types).put(predD, relCounts.get(types).get(predD) + 1);
-						relCounts.get(types_reverse).put(predD, relCounts.get(types_reverse).get(predD) + 1);
-
-					}
-
-				}
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		br.close();
-
-		for (String types : relCounts.keySet()) {
-			typesToAcceptablePreds.put(types, new LinkedHashSet<>());
-			List<SimpleSpot> ss = new ArrayList<>();
-			Map<String, Integer> thisRelCounts = relCounts.get(types);
-			for (String pred : thisRelCounts.keySet()) {
-				// System.out.println("pred's count: "+pred + " " + thisRelCounts.get(pred));
-				ss.add(new SimpleSpot(pred, thisRelCounts.get(pred)));
-			}
-
-			Collections.sort(ss, Collections.reverseOrder());
-
-			boolean shouldCutoffNSBased = ConstantsAgg.cutoffBasedonNSGraphs
-					&& EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)
-					&& EntailGraphFactoryAggregator.type2RankNS.get(types) < ConstantsAgg.numTopTypePairs;
-
-			int numAllowedUB = ConstantsAgg.maxPredsTotalTypeBased;// an upper bound
-			if (shouldCutoffNSBased && EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)) {
-				// we still multiply by 1+eps because we will cutoff based on aparis first and
-				// don't want to bias the results...
-				numAllowedUB = (int) (EntailGraphFactoryAggregator.cutOffsNS.get(types)[0] * 1.1);
-			}
-
-			System.out.println("all acceptable preds for : " + types);
-			for (int i = 0; i < Math.min(ss.size(), numAllowedUB); i++) {
-				SimpleSpot s = ss.get(i);
-				typesToAcceptablePreds.get(types).add(s.spot);
-				System.out.println(s.spot + " " + s.count);
-			}
-		}
-
-	}
+//	// either preds or argpairs; cutoffIdx: 0 for preds and 1 for argPairs
+//	static void formAcceptableObjects(Map<String, Integer> thisObjCounts, String types,
+//			Map<String, Set<String>> typesToAcceptableObjects, int cutoffIdx) {
+//		typesToAcceptableObjects.put(types, new LinkedHashSet<>());
+//		List<SimpleSpot> ss = new ArrayList<>();
+//		for (String obj : thisObjCounts.keySet()) {
+//			// System.out.println("pred's count: "+pred + " " + thisRelCounts.get(pred));
+//			ss.add(new SimpleSpot(obj, thisObjCounts.get(obj)));
+//		}
+//
+//		Collections.sort(ss, Collections.reverseOrder());
+//		int numAllowedUB;
+//		if (cutoffIdx == 0) {
+//			numAllowedUB = ConstantsAgg.maxPredsTotalTypeBased;// an upper bound
+//		} else {
+//			numAllowedUB = ConstantsAgg.maxArgPairsTotalTypeBased;// an upper bound
+//		}
+//
+//		boolean shouldCutoffNSBased = ConstantsAgg.cutoffBasedonNSGraphs
+//				&& EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)
+//				&& EntailGraphFactoryAggregator.type2RankNS.get(types) < ConstantsAgg.numTopTypePairs;
+//
+//		if (shouldCutoffNSBased && EntailGraphFactoryAggregator.cutOffsNS.containsKey(types)) {
+//			// we still multiply by 1+eps because we will cutoff based on aparis first and
+//			// don't want to bias the results...
+//			numAllowedUB = (int) (EntailGraphFactoryAggregator.cutOffsNS.get(types)[cutoffIdx] * 1.1);
+//		}
+//
+//		System.out.println("num allowed for " + types + " " + (cutoffIdx == 0 ? "pred " : "argpairs ") + numAllowedUB);
+//		if (cutoffIdx == 0) {
+//			System.out.println("all acceptable preds for : " + types);
+//		} else {
+//			System.out.println("all acceptable argpairs for : " + types);
+//		}
+//
+//		for (int i = 0; i < Math.min(ss.size(), numAllowedUB); i++) {
+//			SimpleSpot s = ss.get(i);
+//			typesToAcceptableObjects.get(types).add(s.spot);
+//			System.out.println(s.spot + " " + s.count);
+//		}
+//	}
 
 	public EntailGraphFactoryAggregator() {
 		try {
@@ -657,8 +756,7 @@ public class EntailGraphFactoryAggregator {
 						allTypes.add("type" + i);
 					}
 				}
-			}
-			else {
+			} else {
 				Scanner sc;
 				try {
 					sc = new Scanner(new File(ConstantsAgg.foreinTypesAddress));
@@ -684,7 +782,7 @@ public class EntailGraphFactoryAggregator {
 		System.out.println("alltypes size: " + allTypes.size());
 
 		for (int i = 0; i < allTypesArr.size(); i++) {
-//			System.out.println("type: " +allTypesArr.get(i) );
+			// System.out.println("type: " +allTypesArr.get(i) );
 			int r = (int) (Math.random() * ConstantsAgg.numThreads);
 			// entGrFacts[r].acceptableTypes.add(allTypesArr.get(i));
 
@@ -692,7 +790,7 @@ public class EntailGraphFactoryAggregator {
 				String t1 = allTypesArr.get(i) + "#" + allTypesArr.get(j);
 				String t2 = allTypesArr.get(j) + "#" + allTypesArr.get(i);
 				r = (int) (Math.random() * ConstantsAgg.numThreads);
-				System.out.println("adding " + t1 +" to thread "+r);
+				System.out.println("adding " + t1 + " to thread " + r);
 				entGrFacts[r].acceptableTypes.add(t1);
 				entGrFacts[r].acceptableTypes.add(t2);
 			}

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -35,6 +36,10 @@ import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
 import entailment.vector.EntailGraphFactoryAggregator;
 import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
+import graph.Edge;
+import graph.Node;
+import graph.Oedge;
+import graph.PGraph;
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 
 public class Scripts {
@@ -838,27 +843,87 @@ public class Scripts {
 			System.out.println(s);
 		}
 	}
-	
-	public static void getNAACLFormatCosSubset(String fname_orig, String fname_sub, String fname_cos) throws IOException {
+
+	public static void getNAACLFormatCosSubset(String fname_orig, String fname_sub, String fname_cos)
+			throws IOException {
 		String root = "/Users/javadhosseini/Documents/python/gfiles/ent/";
-		System.out.println("file name: "+(root + fname_orig));
+		System.out.println("file name: " + (root + fname_orig));
 		BufferedReader br_orig = new BufferedReader(new FileReader(root + fname_orig));
 		BufferedReader br_sub = new BufferedReader(new FileReader(root + fname_sub));
 		BufferedReader br_cos = new BufferedReader(new FileReader(root + fname_cos));
-		
+
 		Set<String> lines_sub = new HashSet<>();
 		String line = null;
-		while ((line=br_sub.readLine())!=null) {
+		while ((line = br_sub.readLine()) != null) {
 			lines_sub.add(line);
 		}
-		
-		while ((line=br_orig.readLine())!=null) {
+
+		while ((line = br_orig.readLine()) != null) {
 			String score = br_cos.readLine();
 			if (lines_sub.contains(line)) {
 				System.out.println(score);
 			}
 		}
-		
+
+	}
+
+	public static void convertEntGraphToConstraints() throws FileNotFoundException {
+		PGraph pgraph = new PGraph(
+				"../../python/gfiles/typedEntGrDir_3_3_f_convE_ptyped_train_100_rw_c_ap0_L1/thing#thing_sim.txt");
+		PrintStream op = new PrintStream(new File("NS_thing1_thing2_cons_conve.txt"));
+		for (Node node : pgraph.nodes) {
+			for (Oedge oedge : node.oedges) {
+				String pred1 = node.id;
+				String pred2 = pgraph.nodes.get(oedge.nIdx).id;
+				double sim = oedge.sim / node.idx2oedges.get(node.idx).sim;
+				String dir = "";
+				String[] ss1 = pred1.split("#");
+				String[] ss2 = pred2.split("#");
+				if (!ss1[1].equals(ss2[1])) {
+					dir = "-";
+				}
+				op.println(dir + ss1[0] + "," + ss2[0] + "\t" + sim);
+			}
+		}
+		op.close();
+	}
+
+	public static void convertConsToEntGraph() throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("FB15k_cons.txt"));
+		String line = null;
+		Map<String, Map<String, Double>> pred2pred2score = new LinkedHashMap<>();
+		while ((line = br.readLine()) != null) {
+			String[] ss = line.split("\t");
+			double score = Double.parseDouble(ss[1]);
+			String[] ss_rels = ss[0].split(",");
+			boolean dir = true;
+			if (ss_rels[0].startsWith("-")) {
+				ss_rels[0] = ss_rels[0].substring(1);
+				dir = false;
+			}
+			ss_rels[0] += "#thing_1#thing_2";
+			if (dir) {
+				ss_rels[1] += "#thing_1#thing_2";
+			} else {
+				ss_rels[1] += "#thing_2#thing_1";
+			}
+			pred2pred2score.putIfAbsent(ss_rels[0], new LinkedHashMap<>());
+			pred2pred2score.get(ss_rels[0]).put(ss_rels[1], score);
+		}
+		br.close();
+
+		System.out.println("types: thing#thing, num preds: " + pred2pred2score.size());
+		for (String pred : pred2pred2score.keySet()) {
+			System.out.println("predicate: " + pred);
+			System.out.println("max num neighbors: " + (pred2pred2score.get(pred).size() + 1) + "\n\nAMIE+ sims");
+			System.out.println(pred + " 1.0");
+			for (String pred2 : pred2pred2score.get(pred).keySet()) {
+				double score = pred2pred2score.get(pred).get(pred2);
+				System.out.println(pred2 + " " + score);
+			}
+			System.out.println();
+		}
+
 	}
 
 	public static void main(String[] args) throws IOException, ArgumentValidationException, InterruptedException {
@@ -875,11 +940,15 @@ public class Scripts {
 
 		// getCommaTriple(rel, triple)
 
-//		convertZeichnerToLevyFormat("zeichner0.txt");
-		getNAACLFormatCosSubset("naacl_levy_format0.txt", "naacl_levy_format.txt", "TEA_cos_w2v.txt");
+		// convertZeichnerToLevyFormat("zeichner0.txt");
+		// getNAACLFormatCosSubset("naacl_levy_format0.txt", "naacl_levy_format.txt",
+		// "TEA_cos_w2v.txt");
 
 		// convertDecomposableAttentionProbsToFlat(args[0]);
 		// swapDS("../../python/gfiles/ent/naacl_levy_format.txt");
+
+		// convertConsToEntGraph();
+		convertEntGraphToConstraints();
 
 		// makeDirFromAll("test.txt","test_dir.txt","test_rels.txt");
 

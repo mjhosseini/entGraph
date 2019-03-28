@@ -11,6 +11,8 @@ import java.util.Set;
 
 import constants.ConstantsAgg;
 import entailment.Util;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 public class PredicateVector extends SimplePredicateVector {
 	// Don't store a HashMap here so that after the pvecs are formed, the speed
@@ -21,6 +23,9 @@ public class PredicateVector extends SimplePredicateVector {
 	List<String> maxLeftIntervals;
 	List<Double> PMIs;
 	Map<Integer, Integer> argIdxToArrayIdx;
+	
+//	Int2IntMap testmap = new Int2IntOpenHashMap();
+	
 	// HashSet<String> ents;
 	EntailGraph entGraph;
 
@@ -128,7 +133,7 @@ public class PredicateVector extends SimplePredicateVector {
 		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
 														// format
 		ArrayList<Double> vals = new ArrayList<>();
-		HashMap<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
+		Map<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
 
 		for (int i = 0; i < this.argIdxes.size(); i++) {
 			if (!toberemovedIdxes.contains(i)) {
@@ -206,9 +211,9 @@ public class PredicateVector extends SimplePredicateVector {
 	void cutoffInfreqArgPairsPredBased() {
 		Set<Integer> toberemovedIdxes = getNSPredBasedToBeRemovedArrIdxes();
 		
-		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
+		List<Integer> argIdxes = new ArrayList<>();// we store in sparse
 														// format
-		ArrayList<Double> vals = new ArrayList<>();
+		List<Double> vals = new ArrayList<>();
 		HashMap<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
 
 		for (int i = 0; i < this.argIdxes.size(); i++) {
