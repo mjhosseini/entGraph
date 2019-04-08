@@ -33,7 +33,6 @@ import entailment.Util;
 import entailment.entityLinking.DistrTyping;
 import entailment.entityLinking.SimpleSpot;
 import entailment.randWalk.RandWalkMatrix;
-import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 //This is to do multithreading over EntGrFactory
 public class EntailGraphFactoryAggregator {
@@ -724,11 +723,11 @@ public class EntailGraphFactoryAggregator {
 
 		op.close();
 
-		op = new PrintStream(new File("predDocs0.txt"));
-		for (String pred : EntailGraphFactory.predToDocument.keySet()) {
-			op.println(pred + "\tX\t" + EntailGraphFactory.predToDocument.get(pred).trim());
-		}
-		op.close();
+//		op = new PrintStream(new File("predDocs0.txt"));
+//		for (String pred : EntailGraphFactory.predToDocument.keySet()) {
+//			op.println(pred + "\tX\t" + EntailGraphFactory.predToDocument.get(pred).trim());
+//		}
+//		op.close();
 	}
 
 	void assignTypesToEntGrFacts() {

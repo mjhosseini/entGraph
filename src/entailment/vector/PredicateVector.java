@@ -23,9 +23,10 @@ public class PredicateVector extends SimplePredicateVector {
 	List<String> maxLeftIntervals;
 	List<Double> PMIs;
 	Map<Integer, Integer> argIdxToArrayIdx;
-	
-//	Int2IntMap testmap = new Int2IntOpenHashMap();
-	
+	// Int2IntMap argIdxToArrayIdx;
+
+	// Int2IntMap testmap = new Int2IntOpenHashMap();
+
 	// HashSet<String> ents;
 	EntailGraph entGraph;
 
@@ -47,6 +48,7 @@ public class PredicateVector extends SimplePredicateVector {
 		this.uniqueId = uniqueId;
 		this.argIdxes = new ArrayList<Integer>();
 		this.argIdxToArrayIdx = new HashMap<Integer, Integer>();
+		// this.argIdxToArrayIdx = new Int2IntOpenHashMap();
 		this.vals = new ArrayList<Double>();
 		if (ConstantsAgg.useTimeEx) {
 			this.minRightIntervals = new ArrayList<>();
@@ -55,6 +57,7 @@ public class PredicateVector extends SimplePredicateVector {
 		this.similarityInfos = new HashMap<Integer, SimilaritiesInfo>();
 		// this.ents = new HashSet<String>();
 		this.entGraph = entGraph;
+
 	}
 
 	// adds the idx of an arg-pair. It records whether this idx has been added
@@ -133,11 +136,12 @@ public class PredicateVector extends SimplePredicateVector {
 		ArrayList<Integer> argIdxes = new ArrayList<>();// we store in sparse
 														// format
 		ArrayList<Double> vals = new ArrayList<>();
-		Map<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
+		// Map<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
+		Int2IntMap argIdxToArrayIdx = new Int2IntOpenHashMap();
 
 		for (int i = 0; i < this.argIdxes.size(); i++) {
 			if (!toberemovedIdxes.contains(i)) {
-				argIdxToArrayIdx.put(this.argIdxes.get(i), vals.size());
+				argIdxToArrayIdx.put((int) this.argIdxes.get(i), (int) vals.size());
 				vals.add(this.vals.get(i));
 				argIdxes.add(this.argIdxes.get(i));
 			}
@@ -147,23 +151,21 @@ public class PredicateVector extends SimplePredicateVector {
 		this.vals = vals;
 		this.argIdxToArrayIdx = argIdxToArrayIdx;
 	}
-	
+
 	int getNumApsToRetain() {
 		if (EntailGraphFactoryAggregator.predNumArgPairsNS.containsKey(this.predicate)) {
 			int NSBasedAllowed = EntailGraphFactoryAggregator.predNumArgPairsNS.get(this.predicate);
-			if (NSBasedAllowed<ConstantsAgg.numArgPairsNSBasedAlwaysAllowed) {
+			if (NSBasedAllowed < ConstantsAgg.numArgPairsNSBasedAlwaysAllowed) {
 				return ConstantsAgg.numArgPairsNSBasedAlwaysAllowed;
-			}
-			else {
+			} else {
 				return NSBasedAllowed;
 			}
-			 
-		}
-		else {
+
+		} else {
 			return argIdxes.size();
 		}
 	}
-	
+
 	Set<Integer> getNSPredBasedToBeRemovedArrIdxes() {
 		int numAllowed = getNumApsToRetain();
 
@@ -171,38 +173,38 @@ public class PredicateVector extends SimplePredicateVector {
 		for (double i : vals) {
 			a.add((int) i);
 		}
-		
+
 		Set<Integer> ret = new HashSet<>();
-		
+
 		Collections.sort(a, Collections.reverseOrder());
 		if (numAllowed >= a.size()) {
 			return ret;
 		} else {
 			int cutoff = a.get(numAllowed - 1);
-			
-//			System.out.println("pred based cutoff: " + predicate +" "+ cutoff);
-			
+
+//			System.out.println("pred based cutoff: " + predicate + " " + cutoff);
+
 			Set<Integer> remainingIdxes = new HashSet<>();
-			
-			for (int i=0; i<vals.size(); i++) {
-				if (vals.get(i)>cutoff) {
+
+			for (int i = 0; i < vals.size(); i++) {
+				if (vals.get(i) > cutoff) {
 					remainingIdxes.add(i);
 				}
 			}
-			
-			for (int i=0; i<vals.size(); i++) {
-				if (vals.get(i)==cutoff && remainingIdxes.size()<=numAllowed) {
+
+			for (int i = 0; i < vals.size(); i++) {
+				if (vals.get(i) == cutoff && remainingIdxes.size() <= numAllowed) {
 					remainingIdxes.add(i);
 				}
 			}
-			
-			for (int i=0; i<vals.size(); i++) {
+
+			for (int i = 0; i < vals.size(); i++) {
 				if (!remainingIdxes.contains(i)) {
 					ret.add(i);
-//					System.out.println("removing: "+ entGraph.argPairs.get(argIdxes.get(i)));
+					// System.out.println("removing: "+ entGraph.argPairs.get(argIdxes.get(i)));
 				}
 			}
-			
+
 			return ret;
 		}
 	}
@@ -210,15 +212,16 @@ public class PredicateVector extends SimplePredicateVector {
 	// we only retain the first numAPsToRetain arg-pairs
 	void cutoffInfreqArgPairsPredBased() {
 		Set<Integer> toberemovedIdxes = getNSPredBasedToBeRemovedArrIdxes();
-		
+
 		List<Integer> argIdxes = new ArrayList<>();// we store in sparse
-														// format
+													// format
 		List<Double> vals = new ArrayList<>();
-		HashMap<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
+		// HashMap<Integer, Integer> argIdxToArrayIdx = new HashMap<>();
+		Int2IntMap argIdxToArrayIdx = new Int2IntOpenHashMap();
 
 		for (int i = 0; i < this.argIdxes.size(); i++) {
 			if (!toberemovedIdxes.contains(i)) {
-				argIdxToArrayIdx.put(this.argIdxes.get(i), vals.size());
+				argIdxToArrayIdx.put((int) this.argIdxes.get(i), (int) vals.size());
 				vals.add(this.vals.get(i));
 				argIdxes.add(this.argIdxes.get(i));
 			}
@@ -527,8 +530,6 @@ public class PredicateVector extends SimplePredicateVector {
 	}
 
 }
-
-
 
 class ArgPair implements Comparable<ArgPair> {
 	String argPairStr;

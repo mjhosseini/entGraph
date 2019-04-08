@@ -396,13 +396,10 @@ public class PredicateArgumentExtractor implements Runnable {
 				}
 
 				LexicalGraph ungroundedGraph = graphs.get(syntaxIdx);
-				
-				
+
 				if (ConstantsParsing.writeDebugString) {
 					System.out.println(ungroundedGraph);
 				}
-				
-				
 
 				// System.out.println(ungroundedGraph.getSyntacticParse());
 
@@ -526,9 +523,9 @@ public class PredicateArgumentExtractor implements Runnable {
 					if (eventTypeStrNeg.equals("NEG")) {
 						negated = !negated;
 					}
-					
+
 					if (ConstantsParsing.writeDebugString) {
-						System.out.println("negated: "+negated);
+						System.out.println("negated: " + negated);
 					}
 
 					if (!eventTypeStrParticle.equals("")) {
@@ -599,17 +596,22 @@ public class PredicateArgumentExtractor implements Runnable {
 
 					boolean swapped = !(leftPred.compareTo(rightPred) < 0);
 
-					String predArgStr = getPredArgString("", leftPred, rightPred, arg1, arg2, negated, eventIndex);
-					// Now, we have accepted, arg1(Idx), arg2(Idx), predArgStr,
-					// swapped
+					BinaryRelInfo relInfo0;
+					String predArgStr;
+					if (modifierStr.equals("") || !ConstantsParsing.removebasicEvnetifEEModifer) {
+						predArgStr = getPredArgString("", leftPred, rightPred, arg1, arg2, negated, eventIndex);
+						// Now, we have accepted, arg1(Idx), arg2(Idx), predArgStr,
+						// swapped
 
-					// adding!
-					BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index,
-							eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
-					// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
-					// true);
-					relInfos.add(relInfo0);// TODO: maybe don't do this if __
-					// System.out.println("adding rel info0: "+relInfo0.mainStr);
+						// adding!
+						relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index, eventIndex,
+								accepted, dsStr.length() > 0, idx2Node, sentIdx);
+						// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
+						// true);
+						relInfos.add(relInfo0);// TODO: maybe don't do this if __
+						// System.out.println("adding rel info0: "+relInfo0.mainStr);
+					}
+
 					if (!modifierStr.equals("")) {
 						predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated,
 								eventIndex);
@@ -1037,18 +1039,20 @@ public class PredicateArgumentExtractor implements Runnable {
 			}
 			addedPredArgStrs.add(predArgStr);
 			// System.out.println("added new relation (VP): " + predArgStr);
-			BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
-					eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
-			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
-			// false);
-			// System.out.println("adding relinfo4: "+relInfo0.mainStr);
-			relInfos.add(relInfo0);
-			// System.out.println("added relInfo twohop vp: " + relInfo0.mainStr);
+			if (modifierStr.equals("") || !ConstantsParsing.removebasicEvnetifEEModifer) {
+				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+				// false);
+				// System.out.println("adding relinfo4: "+relInfo0.mainStr);
+				relInfos.add(relInfo0);
+				// System.out.println("added relInfo twohop vp: " + relInfo0.mainStr);
+			}
 
 			if (!modifierStr.equals("")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIdx2);
 				// System.out.println("added new relation (VP): " + predArgStr);
-				relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
+				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
 						accepted, dsStr.length() > 0, idx2Node, sentIdx);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
@@ -1132,44 +1136,47 @@ public class PredicateArgumentExtractor implements Runnable {
 			boolean swapped = !(leftPred.compareTo(thisRightPred) < 0);
 
 			String predArgStr = getPredArgString("", leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
-
+			
 			if (addedPredArgStrs.contains(predArgStr)) {
 				continue;
 			}
 			addedPredArgStrs.add(predArgStr);
-			// System.out.println("added new relation: " + predArgStr);
-			BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
-					eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
-			// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
-			// false);
-			if (shouldAdd) {
-				// System.out.println("adding relinfo2: "+relInfo0.mainStr);
-				if (pos.startsWith("NNP")) {
-					// System.out
-					// .println("bad pos NP: " + pos + " " + predArgStr + " " +
-					// idx2Node.get(arg2Index).getWord());
-					continue;
-				}
+			
+			if (modifierStr.equals("") || !ConstantsParsing.removebasicEvnetifEEModifer) {
+				// System.out.println("added new relation: " + predArgStr);
+				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+				// false);
 
-				relInfos.add(relInfo0);
-				// System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
-				// System.out.println(edge2.getMediator().getLemma() + " " +
-				// edge2.getMediator().getPos() + " "
-				// + lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+				if (shouldAdd) {
+					// System.out.println("adding relinfo2: "+relInfo0.mainStr);
+					if (pos.startsWith("NNP")) {
+						// System.out
+						// .println("bad pos NP: " + pos + " " + predArgStr + " " +
+						// idx2Node.get(arg2Index).getWord());
+						continue;
+					}
 
-				if (!modifierStr.equals("")) {
-					predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
-					// System.out.println("added new relation: " + predArgStr);
-					relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
-							accepted, dsStr.length() > 0, idx2Node, sentIdx);
-					// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
-					// false);
-					// System.out.println("adding relinfo3: "+relInfo0.mainStr);
 					relInfos.add(relInfo0);
 				}
 
-			} else {
-				// System.out.println("not adding: "+relInfo0.mainStr);
+			}
+
+			// System.out.println("added relInfo twohop np: " + relInfo0.mainStr);
+			// System.out.println(edge2.getMediator().getLemma() + " " +
+			// edge2.getMediator().getPos() + " "
+			// + lr[0].equals(lr[1]) + " " + lr[0] + " " + lr[1]);
+
+			if (!modifierStr.equals("") && shouldAdd && !pos.startsWith("NNP")) {
+				predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
+				// System.out.println("added new relation: " + predArgStr);
+				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
+						accepted, dsStr.length() > 0, idx2Node, sentIdx);
+				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
+				// false);
+				// System.out.println("adding relinfo3: "+relInfo0.mainStr);
+				relInfos.add(relInfo0);
 			}
 
 		}
@@ -1556,7 +1563,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "Egypt: One week before the referendum on the Sharia-heavy constitution, some 50,000 Muslims marched through the provincial capital of Asyut, chanting that Egypt will be “Islamic, Islamic, despite the Christians.” At their head rode several bearded men on horseback with swords in scabbards on their hips, evoking images of early Muslims conquering Christian Egypt in the 7th Century. They traveled through mainly Christian districts, where residents, fearing attacks, shuttered down their stores and stayed in their homes. On voting day, Christian voting was minimal. Some of those few Christians who did try to go to polling stations were pelted by stones.";
+		String s = "John gave me $5";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
@@ -1628,7 +1635,8 @@ public class PredicateArgumentExtractor implements Runnable {
 				// gift"),
 				// new TensePair("Future Perfect Progressive", "Barack Obama will have been
 				// receiving a gift on Monday")
-//				new TensePair("Future Perfect Progressive", "John did not manage to arrive in London on Monday.") };
+				// new TensePair("Future Perfect Progressive", "John did not manage to arrive in
+				// London on Monday.") };
 				new TensePair("Future Perfect Progressive", "Barcelona did not manage to win the game.") };
 
 		for (TensePair s : tenseSentences) {

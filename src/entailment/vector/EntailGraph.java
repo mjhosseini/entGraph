@@ -92,7 +92,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedPredCutoff() {
 
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 60;// TODO: be careful
+			return 150;// TODO: be careful
 		}
 
 		List<Integer> a = new ArrayList<>();
@@ -114,7 +114,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedAPCutoff() {
 
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 60;// TODO: be careful
+			return 150;// TODO: be careful
 		}
 
 		List<Integer> a = new ArrayList<>();
@@ -739,11 +739,12 @@ public class EntailGraph extends SimpleEntailGraph {
 					
 					PredicateVector pvec2 = pvecs.get(pvecIdx2);
 
-					if (unary && !EntailGraphFactory.acceptablePredPairs
-							.contains(pvec1.predicate + "#" + pvec2.predicate)) {
-						// System.out.println("continued!");
-						continue;
-					}
+					//This is important if we have unary
+//					if (unary && !EntailGraphFactory.acceptablePredPairs
+//							.contains(pvec1.predicate + "#" + pvec2.predicate)) {
+//						// System.out.println("continued!");
+//						continue;
+//					}
 
 					if (!pvec1.similarityInfos.containsKey(pvecIdx2)) {
 						SimilaritiesInfo simInfo = new SimilaritiesInfo(pvec2.predicate);

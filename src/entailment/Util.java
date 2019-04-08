@@ -16,7 +16,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -72,9 +74,9 @@ public class Util {
 	public static StanfordCoreNLP stanPipelineSimple;// up to lemma
 	public static StanfordCoreNLP stanPipelineSimple2;// up to ssplit
 	static BiuNormalizer biuNormalizer;
-//	static String defaultEntTypesFName = "entTypes.txt";
-//	static String defaultGenTypesFName = "genTypes.txt";
-//	static String defaultEntToWikiFName = "entToWiki.txt";
+	// static String defaultEntTypesFName = "entTypes.txt";
+	// static String defaultGenTypesFName = "genTypes.txt";
+	// static String defaultEntToWikiFName = "entToWiki.txt";
 	static String defaultEntToFigerType = "data/freebase_types/entity2Types.txt";
 	static Map<String, String> stan2Figer;
 	// public static Map<String, String> entToType = null;
@@ -104,10 +106,18 @@ public class Util {
 		RedwoodConfiguration.current().clear().apply();
 
 		stan2Figer = new HashMap<>();
-		String[] stans = new String[] { "location", "organization", "date", "number", "person", "misc", "time",
-				"ordinal", "o" };
-		String[] figers = new String[] { "location", "organization", "time", "thing", "person", "thing", "time",
-				"thing", "thing" };
+		String[] stans, figers;
+		if (!ConstantsAgg.updatedTyping) {
+			stans = new String[] { "location", "organization", "date", "number", "person", "misc", "time", "ordinal",
+					"o" };
+			figers = new String[] { "location", "organization", "time", "thing", "person", "thing", "time", "thing",
+					"thing" };
+		} else {
+			stans = new String[] { "location", "organization", "date", "number", "person", "misc", "time", "ordinal",
+					"o", "duration", "money", "percent" };
+			figers = new String[] { "location", "organization", "time", "thing", "person", "thing", "time", "thing",
+					"thing", "time", " money", "percent" };
+		}
 
 		for (int i = 0; i < stans.length; i++) {
 			stan2Figer.put(stans[i], figers[i]);
@@ -796,6 +806,7 @@ public class Util {
 				// Retrieve and add the lemma for each word into the list of
 				// lemmas
 				String currentNEType = token.get(NamedEntityTagAnnotation.class).toLowerCase();
+				// System.out.println(currentNEType);
 				if (stan2Figer.containsKey(currentNEType)) {
 					currentNEType = stan2Figer.get(currentNEType);
 				} else {
@@ -995,11 +1006,14 @@ public class Util {
 			}
 
 			String type = entToFigerType.get(arg);
+			// System.out.println("t: " + type);
 			if (type == null) {
+				// System.out.println("type is null: " + arg);
 				type = "thing";
 			}
 
 			if (!isEntity && entToFigerONLYNE.containsKey(arg) && entToFigerONLYNE.get(arg) == true) {
+				// System.out.println("onlyNE: " + arg);
 				type = "thing";
 			}
 
@@ -1052,11 +1066,20 @@ public class Util {
 		if (s.length() < 2) {
 			return false;
 		}
+
+		if (ConstantsAgg.updatedTyping) {
+			if (!s.substring(1).toLowerCase().equals(s.substring(1))) {
+				// System.out.println("onlyNE: "+s);
+				return true;
+			}
+		}
+
 		for (int i = 0; i < s.length() - 1; i++) {
 			if (!(s.charAt(i) + "").toUpperCase().equals(s.charAt(i) + "")) {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -1076,9 +1099,19 @@ public class Util {
 			if (type.startsWith("/")) {
 				type = type.substring(1);
 			}
-			int slashIdx = type.indexOf("/");
-			if (slashIdx != -1) {
-				type = type.substring(0, slashIdx);
+
+			if (!ConstantsAgg.figerHierarchy) {
+				int slashIdx = type.indexOf("/");
+				if (slashIdx != -1) {
+					type = type.substring(0, slashIdx);
+				}
+			} else {
+				type = type.split(" ")[0];
+				type = type.replace("/", "-");
+				if (type.equals("disease-symptom")) {// there was no disease-symptom, I just added it for the
+														// non-hierarchical to distinguish with medicine
+					type = "medicine-symptom";
+				}
 			}
 
 			if (type.equals("")) {
@@ -1086,7 +1119,12 @@ public class Util {
 			}
 			type = type.trim();
 			// type = type.replace("/", "_");
+
 			if (ret.containsKey(ent) && type.equals("thing")) {
+				continue;
+			}
+
+			if (ConstantsAgg.updatedTyping && ret.containsKey(ent) && onlyNE) {
 				continue;
 			}
 
@@ -2144,6 +2182,20 @@ public class Util {
 		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
 
+	public static String getWeek(String date) throws java.text.ParseException {
+		com.ibm.icu.text.SimpleDateFormat sdf = new com.ibm.icu.text.SimpleDateFormat();
+		Calendar cal = Calendar.getInstance();
+		Date d = sdf.parse(date);
+		cal.setTime(d);
+		int week = cal.get(Calendar.WEEK_OF_YEAR);
+
+		int year = cal.get(Calendar.YEAR);
+		String ret = "" + year + "_" + week;
+		System.out.println("date: " + ret);
+		return ret;
+
+	}
+
 	// Obama: [Barack_Obama,Person]
 	// morning: [morning,time_...]
 	// stanType is already converted to Figer type
@@ -2396,6 +2448,25 @@ public class Util {
 		// System.out.println();
 	}
 
+	static void getRawText() throws JsonSyntaxException, IOException {
+
+		BufferedReader br = new BufferedReader(new FileReader("news_rawC.json"));
+		String line;
+		JsonParser jsonParser = new JsonParser();
+		while ((line = br.readLine()) != null) {
+			try {
+				JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
+
+				String text = jObj.get("s").toString();
+				System.out.println(text);
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		}
+		br.close();
+
+	}
+
 	public static void main(String[] args) throws ParseException, IOException {
 		// System.out.println(getPredicateLemma("(roam.1,roam.middle.of.2)",true)[0]);
 
@@ -2418,7 +2489,25 @@ public class Util {
 		//
 		// convertToPArgFormat(args);
 
-		convertPredArgsToJsonUnsorted(args);
+		// convertPredArgsToJsonUnsorted(args);
+		convertPredArgsToJson(args);
+
+		// getRawText();
+
+		// Map<String, String> stanTypes = getSimpleNERTypeSent("John likes to climb
+		// mountains.");
+		//
+		// String[] ents = { "BROTHER", "THREE HOURS", "Three Hours", "three hours", "$
+		// 5", "mountains", "buddha", "northern rhodesia" };
+		// for (String s : ents) {
+		// System.out.println(s + ": " + getType(s, true, stanTypes));
+		// }
+
+		// try {
+		// getWeek("2010-01-04 01:32:27 UTC");
+		// } catch (java.text.ParseException e) {
+		// e.printStackTrace();
+		// }
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);

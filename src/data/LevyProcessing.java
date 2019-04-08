@@ -17,8 +17,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.google.api.client.util.Types;
-
 import constants.ConstantsAgg;
 import constants.ConstantsParsing;
 import entailment.PredicateArgumentExtractor;
@@ -30,16 +28,14 @@ import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 
 public class LevyProcessing {
 
-	static String root = "data/ent/";
+	static String root = "data0/ent/";
 	static Set<String> allPrevInstances;// instances in the levy set. Useful to
 										// see if sth has been swapped!
-	public static boolean processLevy = false;
+	public static boolean processLevy;
 
 	static {
-		if (processLevy) {
-			String fname = root + "all.txt";
-			allPrevInstances = getInstances(fname);
-		}
+		String fname = root + "all_origLevy.txt";
+		allPrevInstances = getInstances(fname);
 	}
 
 	static Set<String> getInstances(String fname) {
@@ -55,6 +51,7 @@ public class LevyProcessing {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+//		System.out.println("all prev instances:"+ ret);
 		return ret;
 	}
 
@@ -536,14 +533,14 @@ public class LevyProcessing {
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
 		// PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_10.txt"));
 		// PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA" +
 		// DistrTyping.numTopics + "rels_l.txt"));
 
 		while ((line = br.readLine()) != null) {
 			line2 = brDelim.readLine();
-//			System.err.println(line);
-//			System.err.println(line2);
+			// System.err.println(line);
+			// System.err.println(line2);
 			String[] ss = line.split("\t");
 
 			String lineOrig = brOrig.readLine();
@@ -575,8 +572,8 @@ public class LevyProcessing {
 			System.out.println("rel2: " + rel2);
 			System.out.println("rel1: " + rel1);
 
-//			String LDArel1 = "", LDArel2 = "";
-//			String LDAtypes1 = "";// , LDAtypes2 = "";
+			// String LDArel1 = "", LDArel2 = "";
+			// String LDAtypes1 = "";// , LDAtypes2 = "";
 
 			if (!rel1.equals("")) {
 				String[] rel1ss = rel1.split(" ");
@@ -599,7 +596,7 @@ public class LevyProcessing {
 					rel1 = rel1ss[0] + " " + lt1 + " " + lt2;
 				} else {
 					// LDArel1 = rel1ss[0] + " " + rel1ss[2] + " " + rel1ss[1];
-//					LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[2], rel1ss[1]);
+					// LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[2], rel1ss[1]);
 					rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
 				}
 			}
@@ -863,8 +860,8 @@ public class LevyProcessing {
 		} else if (allPrevInstances.contains(cand2)) {
 			return true;
 		}
-		// throw new RuntimeException("horrible bug");
 		return false;
+//		return false;
 	}
 
 	static void convertDSToRelsCCG() throws IOException {
@@ -874,18 +871,21 @@ public class LevyProcessing {
 		ConstantsAgg.isTyped = true;
 		EntailGraphFactoryAggregator.typeScheme = TypeScheme.FIGER;
 		ConstantsAgg.isCCG = true;
+		ConstantsAgg.updatedTyping = true;
 
 		// String[] fileNames = new String[] { "all_new", "all_new_dir" };//
 		// String[] fileNames = new String[] { "all", "train1", "dev1", "test1",
 		// "all_new", "train_new", "dev_new",
 		// "test_new", "all_new_dir", "train_new_dir", "dev_new_dir", "test_new_dir"
 		// };//
-		String[] fileNames = new String[] { "zeichner" };//
-		
+		// String[] fileNames = new String[] { "zeichner" };//
+
+//		String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
+		String[] fileNames = new String[] { "ber_all" };
 
 		for (String fname : fileNames) {
 			boolean longestRel = fname.contains("zeichner");
-			System.out.println("longest rel: "+longestRel);
+			System.out.println("longest rel: " + longestRel);
 			fixNEs(fname);
 			extractRelationsCCG(fname, longestRel);
 		}
@@ -958,6 +958,8 @@ public class LevyProcessing {
 
 	public static void main(String[] args) throws IOException {
 		ConstantsParsing.nbestParses = 10;
+		processLevy = true;
+		
 		// countUniques(root + "re-annotated-full.tsv");
 		// makeCandEnts();
 		// split_chunks();

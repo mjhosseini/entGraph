@@ -1,11 +1,12 @@
 package entailment.vector;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class SimplePredicateVector {
 	String predicate;
 	int uniqueId;
-	HashMap<Integer, SimilaritiesInfo> similarityInfos;// NeighborPredIdx to
+	Map<Integer, SimilaritiesInfo> similarityInfos;// NeighborPredIdx to
 	// similarity
 	
 	//only because of the extension
@@ -13,13 +14,13 @@ public class SimplePredicateVector {
 		
 	}
 	
-	public SimplePredicateVector(String predicate, int uniqueId, HashMap<Integer, SimilaritiesInfo> similarityInfos) {
+	public SimplePredicateVector(String predicate, int uniqueId, Map<Integer, SimilaritiesInfo> similarityInfos) {
 		this.predicate = predicate;
 		this.uniqueId = uniqueId;
 		this.similarityInfos = similarityInfos;
 	}
 
-	public HashMap<Integer, SimilaritiesInfo> getSimilarityInfos() {
+	public Map<Integer, SimilaritiesInfo> getSimilarityInfos() {
 		return similarityInfos;
 	}
 

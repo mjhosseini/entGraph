@@ -29,7 +29,7 @@ import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 public class EntailGraphFactory implements Runnable {
 	String fName, entTypesFName;
-	HashMap<String, EntailGraph> typesToGraph = new HashMap<>();
+	Map<String, EntailGraph> typesToGraph = new HashMap<>();
 	// HashMap<String, EntailGraph> typesToGraphX = new HashMap<>();
 	// HashMap<String, EntailGraph> typesToGraphY = new HashMap<>();
 	// HashMap<String, EntailGraph> typesToGraphUnaryX = new HashMap<>();
@@ -38,16 +38,26 @@ public class EntailGraphFactory implements Runnable {
 	// HashMap<>();
 	// static HashMap<String, SimpleEntailGraph> typesToSimpleGraphUnaryY = new
 	// HashMap<>();
-	HashSet<String> similarityFileTypes = new HashSet<>();
+	// Set<String> similarityFileTypes = new HashSet<>();
 
-	// TODO: remove
-	// static PrintStream typedOp;
 	static Map<String, Integer> allPredCounts = new ConcurrentHashMap<>();
-	static Map<String, String> predToDocument = new ConcurrentHashMap<>();
+	// static Map<String, String> predToDocument = new ConcurrentHashMap<>();
 	static Map<Integer, Map<String, String>> lineIdToStanTypes = new ConcurrentHashMap<>();
-	static List<Integer> lineIdSeen = Collections.synchronizedList(new ArrayList<>());// assuming we don't have more
-																						// than 20m lines. NS has 11m
-																						// lines
+	static List<Integer> lineIdSeen = Collections.synchronizedList(new ArrayList<>());
+
+	// For knowing the ordering: type1, type2 => type1+type2. type2, type1 =>
+	// type1 + type2
+	HashMap<String, String> typeToOrderedType = new HashMap<>();
+	String typedEntGrDir;
+	HashSet<String> acceptableTypes = new HashSet<>();
+	// static HashSet<String> acceptablePredPairs = new HashSet<>();
+	// static boolean entGenTypesLoaded = false;
+
+	int threadNum;
+
+	int runPart = -1;
+
+	long startTime = System.currentTimeMillis();
 
 	static {
 		if (ConstantsAgg.backupToStanNER) {
@@ -71,20 +81,6 @@ public class EntailGraphFactory implements Runnable {
 		// e.printStackTrace();
 		// }
 	}
-
-	// For knowing the ordering: type1, type2 => type1+type2. type2, type1 =>
-	// type1 + type2
-	HashMap<String, String> typeToOrderedType = new HashMap<>();
-	String typedEntGrDir;
-	HashSet<String> acceptableTypes = new HashSet<>();
-	static HashSet<String> acceptablePredPairs = new HashSet<>();
-	// static boolean entGenTypesLoaded = false;
-
-	int threadNum;
-
-	int runPart = -1;
-
-	long startTime = System.currentTimeMillis();
 
 	public EntailGraphFactory(String typedEntGrDir) {
 		this.typedEntGrDir = typedEntGrDir;
@@ -144,9 +140,9 @@ public class EntailGraphFactory implements Runnable {
 		while ((line = br.readLine()) != null) {
 			// System.out.println(line);
 
-//			if (lineNumbers == 100000) {
-//				break;// TODO: remove this
-//			}
+			// if (lineNumbers == 100000) {
+			// break;// TODO: remove this
+			// }
 			//
 			if (lineNumbers > 0 && lineNumbers % 1000000 == 0 && ConstantsAgg.backupToStanNER) {
 				Util.renewStanfordParser();
@@ -157,9 +153,10 @@ public class EntailGraphFactory implements Runnable {
 			}
 			try {
 				int lineId = -1;
-				ArrayList<String> relStrs = new ArrayList<>();
-				ArrayList<Integer> counts = new ArrayList<>();
+				List<String> relStrs = new ArrayList<>();
+				List<Integer> counts = new ArrayList<>();
 				String newsLine = null;
+				String datestamp = "";
 
 				if (ConstantsAgg.GBooksCCG) {
 					lineId++;
@@ -183,6 +180,12 @@ public class EntailGraphFactory implements Runnable {
 				} else if (!ConstantsAgg.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 					lineId = jObj.get("lineId").getAsInt();
+					if (ConstantsAgg.addTimeStampToFeats) {
+						datestamp = jObj.get("date").getAsString();
+						String[] ds_ss = datestamp.split(" ");
+						datestamp = ds_ss[0] + "_" + ds_ss[1] + "_" + ds_ss[2];
+						// System.out.println("datestamp: " + datestamp);
+					}
 
 					if (ConstantsAgg.backupToStanNER) {
 						lineIdSeen.set(lineId, lineIdSeen.get(lineId) + 1);
@@ -226,6 +229,15 @@ public class EntailGraphFactory implements Runnable {
 					}
 					relStr = relStr.substring(1, relStr.length() - 1);
 					String[] parts = relStr.split("::");
+
+					// TODO: remove this, it's just for sanity check!
+					// if (ConstantsAgg.removeGGFromTopPairs && parts[3].charAt(0) == 'G' &&
+					// parts[3].charAt(1) == 'G') {
+					// // System.out.println("continue, both GG: " + pred + " " + arg1 + " " + arg2
+					// // +" "+type1+" "+type2);
+					// continue;
+					// }
+
 					String pred = parts[0];
 					// System.out.println("now pred: "+pred);
 
@@ -306,7 +318,6 @@ public class EntailGraphFactory implements Runnable {
 
 					} else if (!ConstantsAgg.useTimeEx) {
 						try {
-
 							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
 							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
 						} catch (Exception e) {
@@ -373,56 +384,61 @@ public class EntailGraphFactory implements Runnable {
 							&& EntailGraphFactoryAggregator.type2RankNS
 									.get(type1 + "#" + type2) < ConstantsAgg.numTopTypePairs
 							&& parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G') {
-//						System.out.println("continue, both GG: " + pred + " " + arg1 + " " + arg2);
+						// System.out.println("continue, both GG: " + pred + " " + arg1 + " " + arg2 +"
+						// "+type1+" "+type2);
 						continue;
 					}
 
-//					if (ConstantsAgg.maxPredsTotalTypeBased > 0
-//							&& EntailGraphFactoryAggregator.typesToAcceptablePreds.containsKey(type1 + "#" + type2)) {
-//
-//						Set<String> thisAcceptablePreds = EntailGraphFactoryAggregator.typesToAcceptablePreds
-//								.get(type1 + "#" + type2);
-//						Set<String> thisAcceptableArgPairs = EntailGraphFactoryAggregator.typesToAcceptableArgPairs
-//								.get(type1 + "#" + type2);
-//
-//						if (type1.equals(type2)) {
-//
-//							String typeD = type1 + "_1" + "#" + type1 + "_2";
-//							String typeR = type1 + "_2" + "#" + type1 + "_1";
-//
-//							String predD = pred + "#" + typeD;
-//							String predR = pred + "#" + typeR;
-//
-//							String argPairD = arg1 + "#" + arg2;
-//							String argPairR = arg2 + "#" + arg1;
-//
-//							if (!thisAcceptablePreds.contains(predD) && !thisAcceptablePreds.contains(predR)) {
-//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
-//								continue;
-//							}
-//
-//							if (!thisAcceptableArgPairs.contains(argPairD)
-//									&& !thisAcceptableArgPairs.contains(argPairR)) {
-//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
-//								continue;
-//							}
-//
-//						} else {
-//							String predD = pred + "#" + type1 + "#" + type2;
-//
-//							if (!thisAcceptablePreds.contains(predD)) {
-//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
-//								continue;
-//							}
-//
-//							String argPairD = arg1 + "#" + arg2;
-//							if (!thisAcceptableArgPairs.contains(argPairD)) {
-//								// System.out.println(pred + " not accepable for " + type1 + "#" + type2);
-//								continue;
-//							}
-//
-//						}
-//					}
+					// if (ConstantsAgg.maxPredsTotalTypeBased > 0
+					// && EntailGraphFactoryAggregator.typesToAcceptablePreds.containsKey(type1 +
+					// "#" + type2)) {
+					//
+					// Set<String> thisAcceptablePreds =
+					// EntailGraphFactoryAggregator.typesToAcceptablePreds
+					// .get(type1 + "#" + type2);
+					// Set<String> thisAcceptableArgPairs =
+					// EntailGraphFactoryAggregator.typesToAcceptableArgPairs
+					// .get(type1 + "#" + type2);
+					//
+					// if (type1.equals(type2)) {
+					//
+					// String typeD = type1 + "_1" + "#" + type1 + "_2";
+					// String typeR = type1 + "_2" + "#" + type1 + "_1";
+					//
+					// String predD = pred + "#" + typeD;
+					// String predR = pred + "#" + typeR;
+					//
+					// String argPairD = arg1 + "#" + arg2;
+					// String argPairR = arg2 + "#" + arg1;
+					//
+					// if (!thisAcceptablePreds.contains(predD) &&
+					// !thisAcceptablePreds.contains(predR)) {
+					// // System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+					// continue;
+					// }
+					//
+					// if (!thisAcceptableArgPairs.contains(argPairD)
+					// && !thisAcceptableArgPairs.contains(argPairR)) {
+					// // System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+					// continue;
+					// }
+					//
+					// } else {
+					// String predD = pred + "#" + type1 + "#" + type2;
+					//
+					// if (!thisAcceptablePreds.contains(predD)) {
+					// // System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+					// continue;
+					// }
+					//
+					// String argPairD = arg1 + "#" + arg2;
+					// if (!thisAcceptableArgPairs.contains(argPairD)) {
+					// // System.out.println(pred + " not accepable for " + type1 + "#" + type2);
+					// continue;
+					// }
+					//
+					// }
+					// }
 
 					// System.out.println("pred args: "+pred+" "+arg1+" "+arg2);//TODO: remove
 
@@ -430,7 +446,7 @@ public class EntailGraphFactory implements Runnable {
 
 					// typedOp.println(pred + "#" + type1 + "#" + type2 + "::" + arg1 + "::" +
 					// arg2);
-					
+
 					if (allPredCounts.containsKey(pred)) {
 						allPredCounts.put(pred, allPredCounts.get(pred) + 1);
 					} else {
@@ -475,14 +491,14 @@ public class EntailGraphFactory implements Runnable {
 									continue;
 								}
 
-								addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, prob,
-										false, false);
+								addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
+										datestamp, prob, false, false);
 								if (type1.equals(type2)) {
 									// the main one! (arg1-arg2)
 									// String featName = arg1 + "#" + arg2;
 									// String thisType = type1 + "#" + type2;
 									addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
-											prob, true, false);
+											datestamp, prob, true, false);
 								}
 							}
 						}
@@ -495,8 +511,8 @@ public class EntailGraphFactory implements Runnable {
 
 						EntailGraphFactoryAggregator.numAllTuples++;
 
-						addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, count, false,
-								false);
+						addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, datestamp,
+								count, false, false);
 
 						// F_X mixed
 						// featName = arg1;
@@ -535,12 +551,14 @@ public class EntailGraphFactory implements Runnable {
 						// arg2, "", type2, timeInterval, count, false,
 						// true);
 
-						if (type1.equals(type2)) {
+						if (type1.equals(type2) && !arg1.equals(arg2)) {// TODO: be careful: the second condition added
+																		// on 31 March 2019, but ablation shows it's
+																		// useful!
 							// the main one! (arg1-arg2)
 							// String featName = arg1 + "#" + arg2;
 							// String thisType = type1 + "#" + type2;
-							addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval, count,
-									true, false);
+							addRelationToEntGraphs(typesToGraph, pred, arg1, arg2, type1, type2, timeInterval,
+									datestamp, count, true, false);
 
 							// F_X mixed
 							// featName = arg1;
@@ -639,8 +657,9 @@ public class EntailGraphFactory implements Runnable {
 	// First, finds the related graph based on the type(s), then inserts the
 	// pred. forceRev is because for unaryX you might have previously reversed
 	// a pred, so you must do it again!
-	boolean addRelationToEntGraphs(HashMap<String, EntailGraph> thisTypesToGraph, String pred, String arg1, String arg2,
-			String type1, String type2, String timeInterval, float count, boolean forceRev, boolean unary) {
+	boolean addRelationToEntGraphs(Map<String, EntailGraph> thisTypesToGraph, String pred, String arg1, String arg2,
+			String type1, String type2, String timeInterval, String datestamp, float count, boolean forceRev,
+			boolean unary) {
 
 		String thisType = getThisType(type1, type2);
 
@@ -690,6 +709,9 @@ public class EntailGraphFactory implements Runnable {
 
 		// System.out.println("adding: " + pred + " " + thisArg + " t: " +
 		// thisType + " " + rev);
+		if (ConstantsAgg.addTimeStampToFeats) {
+			thisArg += "#" + datestamp;
+		}
 		thisEntailGraph.addBinaryRelation(typedPred, thisArg, timeInterval, count, -1, -1);
 
 		return rev;
@@ -778,9 +800,9 @@ public class EntailGraphFactory implements Runnable {
 			}
 
 			Set<String> pps = getAllPossiblePredPairsForEntGraph(simpleEntGraph);
-			for (String s : pps) {
-				acceptablePredPairs.add(s);
-			}
+			// for (String s : pps) {
+			// acceptablePredPairs.add(s);
+			// }
 			typesToGraph.put(types, null);
 
 			// EntailGraph entGraphX = typesToGraphX.get(types);
@@ -940,7 +962,7 @@ public class EntailGraphFactory implements Runnable {
 		}
 
 		String types = entGraph.types;
-		similarityFileTypes.add(types);
+		// similarityFileTypes.add(types);
 
 		int numPreds = 0;
 		for (SimplePredicateVector pvec : entGraph.getPvecs()) {

@@ -2,6 +2,8 @@ package entailment.vector;
 
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.maltparser.core.helper.HashMap;
 
@@ -9,12 +11,12 @@ import constants.ConstantsAgg;
 
 public class InvertedIdx {
 	int uniqueIdx;
-	ArrayList<Integer> samplesIdxes;
-	ArrayList<Double> vals;
-	ArrayList<String> minRightTimes;
-	ArrayList<String> maxLeftTimes;
-	ArrayList<Double> PMIs;
-	HashMap<Integer, Integer> sampleIdxToArrIdx;
+	List<Integer> samplesIdxes;
+	List<Double> vals;
+	List<String> minRightTimes;
+	List<String> maxLeftTimes;
+	List<Double> PMIs;
+	Map<Integer, Integer> sampleIdxToArrIdx;
 	double norm1;
 	double sumPMIs;
 	
