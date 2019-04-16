@@ -158,7 +158,7 @@ public class EntailGraphFactoryAggregator {
 	}
 
 	public static Map<String, int[]> getAllCutoffs() throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader("data/NS_sizes.txt"));
+		BufferedReader br = new BufferedReader(new FileReader(ConstantsAgg.NSSizesAddress));
 		String line;
 		Map<String, int[]> ret = new HashMap<>();
 		List<SimpleSpot> typeSizes = new ArrayList<>();
@@ -190,7 +190,7 @@ public class EntailGraphFactoryAggregator {
 	}
 
 	public static Map<String, Integer> getAllPredArgPairSizes() throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader("data/NS_pred_sizes.txt"));
+		BufferedReader br = new BufferedReader(new FileReader(ConstantsAgg.NSPredSizesAddress));
 		String line;
 		Map<String, Integer> ret = new HashMap<>();
 		while ((line = br.readLine()) != null) {

@@ -107,7 +107,14 @@ public class EntGraphBuilder {
 
 			pGraphs.add(pgraph);
 			gc++;
+			System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 		}
+		
+		System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
+		
+//		if (1==1) {
+//			System.exit(0);//TODO: remove this
+//		}
 		
 		PGraph.setRawPred2PGraphs(pGraphs);
 		for (PGraph pgraph: pGraphs) {
@@ -145,7 +152,7 @@ public class EntGraphBuilder {
 			e1.printStackTrace();
 		}
 
-		System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
+		
 
 		// Collections.sort(scores, Collections.reverseOrder());
 		// System.out.println("higest scoring relations:");

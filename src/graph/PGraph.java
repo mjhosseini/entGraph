@@ -278,6 +278,11 @@ public class PGraph implements Comparable<PGraph> {
 						// System.out.println("lt: " + sim);
 						continue;
 					}
+					
+//					if (rank>1000) {
+//						continue;//TODO: remove this!
+//					}
+					
 					if (ConstantsGraphs.rankDiscount) {
 						sim *= (1/Math.sqrt(rank));
 					}

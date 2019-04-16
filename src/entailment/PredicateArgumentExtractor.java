@@ -1052,8 +1052,8 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (!modifierStr.equals("")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIdx2);
 				// System.out.println("added new relation (VP): " + predArgStr);
-				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
-						accepted, dsStr.length() > 0, idx2Node, sentIdx);
+				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
 				// System.out.println("adding relinfo5: "+relInfo0.mainStr);
@@ -1136,12 +1136,12 @@ public class PredicateArgumentExtractor implements Runnable {
 			boolean swapped = !(leftPred.compareTo(thisRightPred) < 0);
 
 			String predArgStr = getPredArgString("", leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
-			
+
 			if (addedPredArgStrs.contains(predArgStr)) {
 				continue;
 			}
 			addedPredArgStrs.add(predArgStr);
-			
+
 			if (modifierStr.equals("") || !ConstantsParsing.removebasicEvnetifEEModifer) {
 				// System.out.println("added new relation: " + predArgStr);
 				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
@@ -1171,8 +1171,8 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (!modifierStr.equals("") && shouldAdd && !pos.startsWith("NNP")) {
 				predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
 				// System.out.println("added new relation: " + predArgStr);
-				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index, eventIndex,
-						accepted, dsStr.length() > 0, idx2Node, sentIdx);
+				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
 				// System.out.println("adding relinfo3: "+relInfo0.mainStr);
@@ -1563,7 +1563,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "John gave me $5";
+		String s = "The Professional is a 1996 English-language French thriller film directed by Luc Besson.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in

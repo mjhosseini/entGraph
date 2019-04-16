@@ -140,9 +140,9 @@ public class EntailGraphFactory implements Runnable {
 		while ((line = br.readLine()) != null) {
 			// System.out.println(line);
 
-			// if (lineNumbers == 100000) {
-			// break;// TODO: remove this
-			// }
+//			if (lineNumbers == 10000) {
+//				break;// TODO: remove this
+//			}
 			//
 			if (lineNumbers > 0 && lineNumbers % 1000000 == 0 && ConstantsAgg.backupToStanNER) {
 				Util.renewStanfordParser();
@@ -183,7 +183,8 @@ public class EntailGraphFactory implements Runnable {
 					if (ConstantsAgg.addTimeStampToFeats) {
 						datestamp = jObj.get("date").getAsString();
 						String[] ds_ss = datestamp.split(" ");
-						datestamp = ds_ss[0] + "_" + ds_ss[1] + "_" + ds_ss[2];
+						// datestamp = ds_ss[0] + "_" + ds_ss[1] + "_" + ds_ss[2];
+						datestamp = Util.getWeek(ds_ss[0] + " " + ds_ss[1] + " " + ds_ss[2]);
 						// System.out.println("datestamp: " + datestamp);
 					}
 
@@ -318,6 +319,12 @@ public class EntailGraphFactory implements Runnable {
 
 					} else if (!ConstantsAgg.useTimeEx) {
 						try {
+//							if (lineIdToStanTypes.get(lineId)==null) {
+//								System.out.println("couldn't prepare types in time!");
+//							}
+//							else {
+//								System.out.println("couldn prepare types on time!");
+//							}
 							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
 							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
 						} catch (Exception e) {
@@ -386,6 +393,12 @@ public class EntailGraphFactory implements Runnable {
 							&& parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G') {
 						// System.out.println("continue, both GG: " + pred + " " + arg1 + " " + arg2 +"
 						// "+type1+" "+type2);
+						continue;
+					}
+
+					// TODO: be careful, added on 14/04/19
+					if (ConstantsAgg.removeGGFromTopPairs && parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G'
+							&& (type1.equals("thing") || type2.equals("thing"))) {
 						continue;
 					}
 
@@ -1002,17 +1015,23 @@ public class EntailGraphFactory implements Runnable {
 
 			for (SimilaritiesInfo simInfo : pvec.similarityInfos.values()) {
 				String neighPred = simInfo.predicate;
-				cosSimList.add(new Similarity(neighPred, simInfo.cosSim));
-				WeedsProbList.add(new Similarity(neighPred, simInfo.WeedsProbSim));
-				WeedsPMIList.add(new Similarity(neighPred, simInfo.WeedsPMISim));
-				WeedsPMIPrList.add(new Similarity(neighPred, simInfo.weedPMIPr));
-				// SRList.add(new Similarity(neighPred, simInfo.SRSim));
-				// SRBinaryList.add(new Similarity(neighPred,
-				// simInfo.SRBinarySim));
-				LinList.add(new Similarity(neighPred, simInfo.LinSim));
-				BIncList.add(new Similarity(neighPred, simInfo.BIncSim));
-				timeSimList.add(new Similarity(neighPred, simInfo.timeSim));
-				probELList.add(new Similarity(neighPred, simInfo.probELSim));
+				if (!ConstantsAgg.onlyBinc) {
+					cosSimList.add(new Similarity(neighPred, simInfo.cosSim));
+					WeedsProbList.add(new Similarity(neighPred, simInfo.WeedsProbSim));
+					WeedsPMIList.add(new Similarity(neighPred, simInfo.WeedsPMISim));
+					WeedsPMIPrList.add(new Similarity(neighPred, simInfo.weedPMIPr));
+					// SRList.add(new Similarity(neighPred, simInfo.SRSim));
+					// SRBinaryList.add(new Similarity(neighPred,
+					// simInfo.SRBinarySim));
+					LinList.add(new Similarity(neighPred, simInfo.LinSim));
+					BIncList.add(new Similarity(neighPred, simInfo.BIncSim));
+					timeSimList.add(new Similarity(neighPred, simInfo.timeSim));
+					probELList.add(new Similarity(neighPred, simInfo.probELSim));
+				}
+				else {
+					BIncList.add(new Similarity(neighPred, simInfo.BIncSim));
+				}
+				
 
 				// Now, let's compute LinSeparate, BIncSeparate, LinUnary,
 				// BIncUnary for pred, neighPred
@@ -1049,23 +1068,30 @@ public class EntailGraphFactory implements Runnable {
 				// BIncListSep.add(new Similarity(neighPred, BIncSep));
 
 			}
+			
+			if (!ConstantsAgg.onlyBinc) {
+				if (ConstantsAgg.useTimeEx) {
+					PredicateVector.writeSims(entGraph.graphOp2, timeSimList, "time preceding sims");
+				}
+				PredicateVector.writeSims(entGraph.graphOp2, cosSimList, "cos sims");
+				PredicateVector.writeSims(entGraph.graphOp2, WeedsProbList, "Weed's probabilistic sim");
+				PredicateVector.writeSims(entGraph.graphOp2, WeedsPMIList, "Weed's PMI sim");
+				// PredicateVector.writeSims(entGraph.graphOp2, SRList, "SR sims");
+				// PredicateVector.writeSims(entGraph.graphOp2, SRBinaryList, "SR
+				// Binary sims");
+				PredicateVector.writeSims(entGraph.graphOp2, LinList, "Lin sims");
+				PredicateVector.writeSims(entGraph.graphOp2, BIncList, "BInc sims");
+				PredicateVector.writeSims(entGraph.graphOp2, WeedsPMIPrList, "Weed's PMI Precision sim");
 
-			if (ConstantsAgg.useTimeEx) {
-				PredicateVector.writeSims(entGraph.graphOp2, timeSimList, "time preceding sims");
+				if (ConstantsAgg.computeProbELSims) {
+					PredicateVector.writeSims(entGraph.graphOp2, probELList, "probEL sim");
+				}
 			}
-			PredicateVector.writeSims(entGraph.graphOp2, cosSimList, "cos sims");
-			PredicateVector.writeSims(entGraph.graphOp2, WeedsProbList, "Weed's probabilistic sim");
-			PredicateVector.writeSims(entGraph.graphOp2, WeedsPMIList, "Weed's PMI sim");
-			// PredicateVector.writeSims(entGraph.graphOp2, SRList, "SR sims");
-			// PredicateVector.writeSims(entGraph.graphOp2, SRBinaryList, "SR
-			// Binary sims");
-			PredicateVector.writeSims(entGraph.graphOp2, LinList, "Lin sims");
-			PredicateVector.writeSims(entGraph.graphOp2, BIncList, "BInc sims");
-			PredicateVector.writeSims(entGraph.graphOp2, WeedsPMIPrList, "Weed's PMI Precision sim");
+			else {
+				PredicateVector.writeSims(entGraph.graphOp2, BIncList, "BInc sims");
+			}
 
-			if (ConstantsAgg.computeProbELSims) {
-				PredicateVector.writeSims(entGraph.graphOp2, probELList, "probEL sim");
-			}
+			
 			// PredicateVector.writeSims(entGraph.graphOp2, LinListSep, "DIRT
 			// SEP sims");
 			// PredicateVector.writeSims(entGraph.graphOp2, BIncListSep, "BINC

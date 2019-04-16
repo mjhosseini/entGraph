@@ -92,7 +92,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedPredCutoff() {
 
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 150;// TODO: be careful
+			return 100;// TODO: be careful
 		}
 
 		List<Integer> a = new ArrayList<>();
@@ -114,7 +114,7 @@ public class EntailGraph extends SimpleEntailGraph {
 	int getNSBasedAPCutoff() {
 
 		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 150;// TODO: be careful
+			return 100;// TODO: be careful
 		}
 
 		List<Integer> a = new ArrayList<>();
@@ -128,6 +128,11 @@ public class EntailGraph extends SimpleEntailGraph {
 			return -1;
 		} else {
 			int ret = a.get(numAllowed - 1);
+			
+			if (ConstantsAgg.relAddress.contains("_GG") && (types.equals("location#thing") || types.equals("thing#location"))) {
+				ret *= 2;// TODO: be careful
+			}
+			
 			System.out.println("NS argpair cutoff for " + types + " " + ret);
 			return ret;
 		}
@@ -1064,5 +1069,4 @@ public class EntailGraph extends SimpleEntailGraph {
 		EntailGraph p = new EntailGraph("none", "op", ConstantsAgg.minArgPairForPred, false);
 		System.err.println("time: " + (System.currentTimeMillis() - t0));
 	}
-
 }

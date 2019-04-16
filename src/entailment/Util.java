@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -2183,7 +2184,7 @@ public class Util {
 	}
 
 	public static String getWeek(String date) throws java.text.ParseException {
-		com.ibm.icu.text.SimpleDateFormat sdf = new com.ibm.icu.text.SimpleDateFormat();
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy"); 
 		Calendar cal = Calendar.getInstance();
 		Date d = sdf.parse(date);
 		cal.setTime(d);
@@ -2191,7 +2192,7 @@ public class Util {
 
 		int year = cal.get(Calendar.YEAR);
 		String ret = "" + year + "_" + week;
-		System.out.println("date: " + ret);
+//		System.out.println("date: " + ret);
 		return ret;
 
 	}
@@ -2490,7 +2491,7 @@ public class Util {
 		// convertToPArgFormat(args);
 
 		// convertPredArgsToJsonUnsorted(args);
-		convertPredArgsToJson(args);
+//		convertPredArgsToJson(args);
 
 		// getRawText();
 
@@ -2503,11 +2504,11 @@ public class Util {
 		// System.out.println(s + ": " + getType(s, true, stanTypes));
 		// }
 
-		// try {
-		// getWeek("2010-01-04 01:32:27 UTC");
-		// } catch (java.text.ParseException e) {
-		// e.printStackTrace();
-		// }
+//		try {
+//			getWeek("Jan 05, 2014");
+//		} catch (java.text.ParseException e) {
+//			e.printStackTrace();
+//		}
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);
