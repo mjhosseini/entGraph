@@ -91,10 +91,6 @@ public class EntailGraph extends SimpleEntailGraph {
 
 	int getNSBasedPredCutoff() {
 
-		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 100;// TODO: be careful
-		}
-
 		List<Integer> a = new ArrayList<>();
 		for (PredicateVector pvec : pvecs) {
 			a.add(pvec.argIdxes.size());
@@ -113,10 +109,6 @@ public class EntailGraph extends SimpleEntailGraph {
 
 	int getNSBasedAPCutoff() {
 
-		if (ConstantsAgg.relAddress.contains("_GG") && types.equals("thing#thing")) {
-			return 100;// TODO: be careful
-		}
-
 		List<Integer> a = new ArrayList<>();
 		for (double i : argPairIdxToCount.values()) {
 			a.add((int) i);
@@ -128,11 +120,20 @@ public class EntailGraph extends SimpleEntailGraph {
 			return -1;
 		} else {
 			int ret = a.get(numAllowed - 1);
-			
-			if (ConstantsAgg.relAddress.contains("_GG") && (types.equals("location#thing") || types.equals("thing#location"))) {
-				ret *= 2;// TODO: be careful
+
+			if (!ConstantsAgg.addTimeStampToFeats && ConstantsAgg.relAddress.contains("_GG") && (types.equals("thing#location")
+					|| types.equals("location#thing") || types.equals("thing#location-country")
+					|| types.equals("location-country#thing") || types.equals("thing#thing"))) {
+				int mult;
+				if (ConstantsAgg.figerHierarchy) {
+					mult = 2;
+				} else {
+					mult = 6;
+				}
+				System.out.println("multiplying arg pair cutoff by " + mult);
+				ret *= mult;// TODO: be careful
 			}
-			
+
 			System.out.println("NS argpair cutoff for " + types + " " + ret);
 			return ret;
 		}
@@ -321,9 +322,6 @@ public class EntailGraph extends SimpleEntailGraph {
 		});
 
 		for (String predPair : EntailGraphFactoryAggregator.dsRawPredPairs) {
-			// if (idx == 400) {
-			// break;// TODO: remove this
-			// }
 
 			ProbScoreRunner pelRunner = new ProbScoreRunner(this, predPair, idx, typess, currentArgPairs, NTuples);
 
@@ -671,7 +669,7 @@ public class EntailGraph extends SimpleEntailGraph {
 		int ii = 0;
 		for (PredicateVector pvec : pvecs) {
 			if (ii % 1000 == 0) {
-				System.err.println(ii);
+				System.err.println(this.types+" "+ii);
 			}
 			pvec.computeSimilarities();
 			ii++;
@@ -712,15 +710,15 @@ public class EntailGraph extends SimpleEntailGraph {
 				double val1 = invIdx.vals.get(i);
 
 				double PMI1 = invIdx.PMIs.get(i);
-				
+
 				String leftInterval1 = null;
 				String rightInterval1 = null;
-				
+
 				if (ConstantsAgg.useTimeEx) {
 					leftInterval1 = invIdx.maxLeftTimes.get(i);
 					rightInterval1 = invIdx.minRightTimes.get(i);
 				}
-				
+
 				PredicateVector pvec1 = pvecs.get(pvecIdx1);
 
 				if (val1 == 0) {
@@ -733,23 +731,23 @@ public class EntailGraph extends SimpleEntailGraph {
 					int pvecIdx2 = invIdx.samplesIdxes.get(j);
 					double val2 = invIdx.vals.get(j);
 					double PMI2 = invIdx.PMIs.get(j);
-					
+
 					String leftInterval2 = null;
 					String rightInterval2 = null;
-					
+
 					if (ConstantsAgg.useTimeEx) {
 						leftInterval2 = invIdx.maxLeftTimes.get(j);
 						rightInterval2 = invIdx.minRightTimes.get(j);
 					}
-					
+
 					PredicateVector pvec2 = pvecs.get(pvecIdx2);
 
-					//This is important if we have unary
-//					if (unary && !EntailGraphFactory.acceptablePredPairs
-//							.contains(pvec1.predicate + "#" + pvec2.predicate)) {
-//						// System.out.println("continued!");
-//						continue;
-//					}
+					// This is important if we have unary
+					// if (unary && !EntailGraphFactory.acceptablePredPairs
+					// .contains(pvec1.predicate + "#" + pvec2.predicate)) {
+					// // System.out.println("continued!");
+					// continue;
+					// }
 
 					if (!pvec1.similarityInfos.containsKey(pvecIdx2)) {
 						SimilaritiesInfo simInfo = new SimilaritiesInfo(pvec2.predicate);

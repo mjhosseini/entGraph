@@ -24,12 +24,14 @@ import com.google.gson.JsonSyntaxException;
 
 import constants.ConstantsAgg;
 import entailment.Util;
-import entailment.entityLinking.DistrTyping;
+import entailment.linkingTyping.DistrTyping;
+import entailment.linkingTyping.StanfordNERHandler;
 import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 
 public class EntailGraphFactory implements Runnable {
 	String fName, entTypesFName;
 	Map<String, EntailGraph> typesToGraph = new HashMap<>();
+	
 	// HashMap<String, EntailGraph> typesToGraphX = new HashMap<>();
 	// HashMap<String, EntailGraph> typesToGraphY = new HashMap<>();
 	// HashMap<String, EntailGraph> typesToGraphUnaryX = new HashMap<>();
@@ -42,8 +44,6 @@ public class EntailGraphFactory implements Runnable {
 
 	static Map<String, Integer> allPredCounts = new ConcurrentHashMap<>();
 	// static Map<String, String> predToDocument = new ConcurrentHashMap<>();
-	static Map<Integer, Map<String, String>> lineIdToStanTypes = new ConcurrentHashMap<>();
-	static List<Integer> lineIdSeen = Collections.synchronizedList(new ArrayList<>());
 
 	// For knowing the ordering: type1, type2 => type1+type2. type2, type1 =>
 	// type1 + type2
@@ -58,29 +58,6 @@ public class EntailGraphFactory implements Runnable {
 	int runPart = -1;
 
 	long startTime = System.currentTimeMillis();
-
-	static {
-		if (ConstantsAgg.backupToStanNER) {
-			if (ConstantsAgg.relAddress.contains("news_genC")) {
-				for (int i = 0; i < 200000000; i++) {
-					lineIdSeen.add(0);
-				}
-			} else {
-				for (int i = 0; i < 20000000; i++) {
-					lineIdSeen.add(0);
-				}
-			}
-		}
-
-		// try {
-		//
-		// typedOp = new PrintStream(new File("typedOP.txt"), "UTF-8");
-		// } catch (FileNotFoundException e) {
-		// e.printStackTrace();
-		// } catch (UnsupportedEncodingException e) {
-		// e.printStackTrace();
-		// }
-	}
 
 	public EntailGraphFactory(String typedEntGrDir) {
 		this.typedEntGrDir = typedEntGrDir;
@@ -144,9 +121,9 @@ public class EntailGraphFactory implements Runnable {
 //				break;// TODO: remove this
 //			}
 			//
-			if (lineNumbers > 0 && lineNumbers % 1000000 == 0 && ConstantsAgg.backupToStanNER) {
-				Util.renewStanfordParser();
-			}
+//			if (lineNumbers > 0 && lineNumbers % 1000000 == 0 && ConstantsAgg.backupToStanNER) {
+//				Util.renewStanfordParser();
+//			}
 
 			if (line.startsWith("exception for") || line.contains("nlp.pipeline")) {
 				continue;
@@ -170,13 +147,6 @@ public class EntailGraphFactory implements Runnable {
 					relStrs.add(relStr);
 					counts.add(count);
 
-					if (ConstantsAgg.backupToStanNER) {
-						lineIdSeen.set(lineId, lineIdSeen.get(lineId) + 1);
-						if (lineIdSeen.get(lineId) == ConstantsAgg.numThreads) {
-							lineIdToStanTypes.remove(lineId);
-						}
-					}
-
 				} else if (!ConstantsAgg.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
 					lineId = jObj.get("lineId").getAsInt();
@@ -186,13 +156,6 @@ public class EntailGraphFactory implements Runnable {
 						// datestamp = ds_ss[0] + "_" + ds_ss[1] + "_" + ds_ss[2];
 						datestamp = Util.getWeek(ds_ss[0] + " " + ds_ss[1] + " " + ds_ss[2]);
 						// System.out.println("datestamp: " + datestamp);
-					}
-
-					if (ConstantsAgg.backupToStanNER) {
-						lineIdSeen.set(lineId, lineIdSeen.get(lineId) + 1);
-						if (lineIdSeen.get(lineId) == ConstantsAgg.numThreads) {
-							lineIdToStanTypes.remove(lineId);
-						}
 					}
 
 					newsLine = jObj.get("s").getAsString();
@@ -284,12 +247,16 @@ public class EntailGraphFactory implements Runnable {
 					// Now, we might need to to backuptoStan. We do this down here to prevent
 					// unnecessary overhead!
 					// let's see if we have NER ed the line, otherwise, do it
-					if (ConstantsAgg.backupToStanNER && EntailGraphFactoryAggregator.typeScheme == TypeScheme.FIGER
-							&& lineIdSeen.get(lineId) == 1) {
-						// System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+" "+threadNum);
-						Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
-						lineIdToStanTypes.put(lineId, tokenToType);
-					}
+					// This was moved to a new class (StanfordNERHandler and finder) and will be
+					// done in advance
+					// if (ConstantsAgg.backupToStanNER && EntailGraphFactoryAggregator.typeScheme
+					// == TypeScheme.FIGER
+					// && lineIdSeen.get(lineId) == 1) {
+					// // System.err.println("lid: "+lineId+" "+lineIdSeen.get(lineId)+"
+					// "+threadNum);
+					// Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
+					// lineIdToStanTypes.put(lineId, tokenToType);
+					// }
 
 					// We also remove "-" here, because sometimes, we have the
 					// type
@@ -319,14 +286,15 @@ public class EntailGraphFactory implements Runnable {
 
 					} else if (!ConstantsAgg.useTimeEx) {
 						try {
-//							if (lineIdToStanTypes.get(lineId)==null) {
-//								System.out.println("couldn't prepare types in time!");
+//							if (StanfordNERHandler.lineIdToStanTypes.get(lineId) == null) {
+//								System.out.println("couldn't prepare types in time!" + lineId);
+//							} else {
+//								System.out.println("could prepare types on time!");
 //							}
-//							else {
-//								System.out.println("couldn prepare types on time!");
-//							}
-							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E', lineIdToStanTypes.get(lineId));
-							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E', lineIdToStanTypes.get(lineId));
+							type1 = Util.getType(parts[1], parts[3].charAt(0) == 'E',
+									StanfordNERHandler.lineIdToStanTypes.get(lineId));
+							type2 = Util.getType(parts[2], parts[3].charAt(1) == 'E',
+									StanfordNERHandler.lineIdToStanTypes.get(lineId));
 						} catch (Exception e) {
 							System.out.println("t exception for: " + line);
 						}
@@ -398,8 +366,15 @@ public class EntailGraphFactory implements Runnable {
 
 					// TODO: be careful, added on 14/04/19
 					if (ConstantsAgg.removeGGFromTopPairs && parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G'
-							&& (type1.equals("thing") || type2.equals("thing"))) {
+							&& (type1.equals("thing") || type2.equals("thing")) ) {
 						continue;
+					}
+					
+					// TODO: move this to parsing, added on 25/04/19
+					if (ConstantsAgg.removePronouns) {
+						if (Util.pronouns.contains(arg1) || Util.pronouns.contains(arg2)) {
+							continue;
+						}
 					}
 
 					// if (ConstantsAgg.maxPredsTotalTypeBased > 0
@@ -1027,11 +1002,9 @@ public class EntailGraphFactory implements Runnable {
 					BIncList.add(new Similarity(neighPred, simInfo.BIncSim));
 					timeSimList.add(new Similarity(neighPred, simInfo.timeSim));
 					probELList.add(new Similarity(neighPred, simInfo.probELSim));
-				}
-				else {
+				} else {
 					BIncList.add(new Similarity(neighPred, simInfo.BIncSim));
 				}
-				
 
 				// Now, let's compute LinSeparate, BIncSeparate, LinUnary,
 				// BIncUnary for pred, neighPred
@@ -1068,7 +1041,7 @@ public class EntailGraphFactory implements Runnable {
 				// BIncListSep.add(new Similarity(neighPred, BIncSep));
 
 			}
-			
+
 			if (!ConstantsAgg.onlyBinc) {
 				if (ConstantsAgg.useTimeEx) {
 					PredicateVector.writeSims(entGraph.graphOp2, timeSimList, "time preceding sims");
@@ -1086,12 +1059,10 @@ public class EntailGraphFactory implements Runnable {
 				if (ConstantsAgg.computeProbELSims) {
 					PredicateVector.writeSims(entGraph.graphOp2, probELList, "probEL sim");
 				}
-			}
-			else {
+			} else {
 				PredicateVector.writeSims(entGraph.graphOp2, BIncList, "BInc sims");
 			}
 
-			
 			// PredicateVector.writeSims(entGraph.graphOp2, LinListSep, "DIRT
 			// SEP sims");
 			// PredicateVector.writeSims(entGraph.graphOp2, BIncListSep, "BINC

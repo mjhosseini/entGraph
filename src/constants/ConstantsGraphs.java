@@ -5,7 +5,7 @@ import graph.PGraph.FeatName;
 
 public class ConstantsGraphs {
 
-	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_10_3thing_100_location_thing_twice_f20_GG_UT_back/";
+	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_10_3thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_hier/";
 	public static String suffix = "_sim.txt";
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	// public static String suffix = "_binc_lm1_.001_reg_1.5_1_.2_.01_i20.txt";

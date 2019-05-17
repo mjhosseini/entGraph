@@ -30,8 +30,9 @@ import com.google.gson.JsonParser;
 
 import constants.ConstantsAgg;
 import entailment.Util;
-import entailment.entityLinking.DistrTyping;
-import entailment.entityLinking.SimpleSpot;
+import entailment.linkingTyping.DistrTyping;
+import entailment.linkingTyping.SimpleSpot;
+import entailment.linkingTyping.StanfordNERHandler;
 import entailment.randWalk.RandWalkMatrix;
 
 //This is to do multithreading over EntGrFactory
@@ -59,9 +60,6 @@ public class EntailGraphFactoryAggregator {
 
 	static final boolean writePMIorCount = false;// false:count, true: PMI
 
-	static final String relAddress;
-	static final String simsFolder;
-
 	public static List<Double> allPosLinkPredProbs = Collections.synchronizedList(new ArrayList<>());// just used to
 																										// tune scale
 																										// and shape
@@ -76,36 +74,6 @@ public class EntailGraphFactoryAggregator {
 	static int numAllTuplesPlusReverse = 0;
 
 	static {
-		// assert iterateAllArgPairs != anchorBasedScores;
-		// if (ConstantsAgg.GBooksCCG) {
-		// relAddress = "gbooks_dir/gbooks_ccg.txt";
-		// simsFolder = "typedEntGrDir_gbooks_figer_30_30";
-		// } else if (ConstantsAgg.isForeign) {
-		// // relAddress = "binary_relations.json";
-		// // simsFolder = "typedEntGrDir_German";
-		// relAddress = "binary_rels_chinese.txt";
-		// simsFolder = "typedEntGrDir_Chinese";
-		// } else {
-		// relAddress = "news_gen8_aida.json";
-		relAddress = ConstantsAgg.relAddress;
-		// relAddress = "news_genC_aida.json";
-		// relAddress = "gbooks_norm.txt";
-		// simsFolder = "typedEntGrDir_aida_figer_5_5_a";
-		// simsFolder = "typedEntGrDir_aida_figer_10_10";
-		// simsFolder = "typedEntGrDirC_aida_figer_100_20_35K";
-		// simsFolder = "typedEntGrDir_gbooks_onlyLevy";
-		// simsFolder = "typedEntGrDir_NS_onlyLevy_san";
-		// simsFolder = "typedEntGrDir_aida_untyped_40_40";
-		// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel";
-		// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_pel_10_.25_T1";
-		// simsFolder = "typedEntGrDir_aida_untyped_transE_ol_NS_cos";
-		simsFolder = ConstantsAgg.simsFolder;
-		// simsFolder = "typedEntGrDir_aida_untyped_40_40_transE_Anchor2";
-		// simsFolder = "typedEntGrDir_aida_untyped_40_40_anchor";
-		// simsFolder = "typedEntGrDir_gbooks_all_20_20";
-		// simsFolder = "untypedEntGrDirC_aida_50_50_20K";
-		// }
-
 		if (ConstantsAgg.maxPredsTotal != -1) {// we should just look at maxPT predicates, no other cutoff
 			// minArgPairForPred = 0;
 			// minPredForArgPair = 0;
@@ -117,7 +85,7 @@ public class EntailGraphFactoryAggregator {
 			}
 		}
 
-		if (ConstantsAgg.cutoffBasedonNSGraphs) {
+		if (ConstantsAgg.cutoffBasedonNSGraphs || ConstantsAgg.removeGGFromTopPairs) {
 			try {
 				cutOffsNS = getAllCutoffs();
 				predNumArgPairsNS = getAllPredArgPairSizes();
@@ -273,7 +241,7 @@ public class EntailGraphFactoryAggregator {
 	static void formAcceptablePreds() throws IOException {
 		acceptablePreds = new HashSet<>();
 		Map<String, Integer> relCounts = new HashMap<String, Integer>();
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relAddress), "UTF-8"));
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ConstantsAgg.relAddress), "UTF-8"));
 
 		int lineNumbers = 0;
 		JsonParser jsonParser = new JsonParser();
@@ -657,6 +625,14 @@ public class EntailGraphFactoryAggregator {
 		}
 
 		assignTypesToEntGrFacts();
+		
+		if (ConstantsAgg.backupToStanNER) {
+			try {
+				StanfordNERHandler.loadNER(ConstantsAgg.NERAddress);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		for (EntailGraphFactory entGrFact : entGrFacts) {
 			if (entGrFact.acceptableTypes.size() == 0) {
@@ -845,8 +821,8 @@ public class EntailGraphFactoryAggregator {
 		if (EntailGraphFactoryAggregator.typeScheme == TypeScheme.LDA) {
 			DistrTyping.loadLDATypes();
 		}
-		System.out.println("fileName: " + relAddress);
-		agg.runAllEntGrFacts(relAddress, "", "", simsFolder);
+		System.out.println("fileName: " + ConstantsAgg.relAddress);
+		agg.runAllEntGrFacts(ConstantsAgg.relAddress, "", "", ConstantsAgg.simsFolder);
 
 	}
 

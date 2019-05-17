@@ -1,4 +1,4 @@
-package entailment.entityLinking;
+package entailment.linkingTyping;
 
 public class SimpleSpot implements Comparable<SimpleSpot> {
 	public String spot;

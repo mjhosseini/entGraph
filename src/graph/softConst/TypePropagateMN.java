@@ -955,7 +955,7 @@ public class TypePropagateMN {
 	public static void main(String[] args) {
 		String root = ConstantsGraphs.root;
 		System.out.println(ConstantsSoftConst.tPropSuffix);
-
+		
 		TypePropagateMN tpmn = new TypePropagateMN(root);
 		tpmn.MNPropagateSims();
 	}

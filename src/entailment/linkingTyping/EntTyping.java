@@ -1,4 +1,4 @@
-package entailment.entityLinking;
+package entailment.linkingTyping;
 
 import java.io.BufferedReader;
 import java.io.File;

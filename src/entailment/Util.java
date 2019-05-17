@@ -1,6 +1,7 @@
 package entailment;
 
 import java.io.BufferedReader;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,12 +23,14 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import javax.management.RuntimeErrorException;
 
@@ -53,6 +56,10 @@ import com.ibm.icu.util.StringTokenizer;
 
 import ac.biu.nlp.normalization.BiuNormalizer;
 import constants.ConstantsAgg;
+import edu.stanford.nlp.coref.CorefCoreAnnotations;
+import edu.stanford.nlp.coref.data.CorefChain;
+import edu.stanford.nlp.coref.data.Mention;
+import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
@@ -61,10 +68,11 @@ import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.*;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.logging.RedwoodConfiguration;
-import entailment.entityLinking.SimpleSpot;
+import entailment.linkingTyping.SimpleSpot;
 import entailment.stringUtils.RelationString;
 import entailment.vector.EntailGraphFactoryAggregator;
 import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
@@ -86,6 +94,7 @@ public class Util {
 	private static Map<String, String> entToFigerType = null;
 	private static Map<String, Boolean> entToFigerONLYNE = null;
 	static String[] goodPart2s = new String[] { "1", "2", "3" };
+	public static Set<String> pronouns;// TODO: remove this. This should be done in parsing!
 
 	static HashSet<String> goodPart2sSet = new HashSet<String>();
 	static {
@@ -169,6 +178,13 @@ public class Util {
 
 		if (ConstantsAgg.keepWillTense) {
 			modals.remove("will");
+		}
+
+		String[] pronounsList = new String[] { "i", "you", "he", "she", "it", "we", "they", "me", "him", "her",
+				"them" };
+		pronouns = new HashSet<>();
+		for (String s : pronounsList) {
+			pronouns.add(s);
 		}
 
 		try {
@@ -784,7 +800,7 @@ public class Util {
 
 	public static Map<String, String> getSimpleNERTypeSent(String text) {
 
-		Map<String, String> tokenToType = new HashMap<>();
+		Map<String, String> tokenToType = new LinkedHashMap<>();
 
 		// special case:
 		String[] shortMonths = "jan feb mar apr may jun jul aug sep oct nov dec".split(" ");
@@ -807,6 +823,7 @@ public class Util {
 				// Retrieve and add the lemma for each word into the list of
 				// lemmas
 				String currentNEType = token.get(NamedEntityTagAnnotation.class).toLowerCase();
+
 				// System.out.println(currentNEType);
 				if (stan2Figer.containsKey(currentNEType)) {
 					currentNEType = stan2Figer.get(currentNEType);
@@ -821,7 +838,9 @@ public class Util {
 					}
 				}
 				// System.out.println(token + " " + currentNEType);
-				tokenToType.put(thisToken, currentNEType);
+				if (!currentNEType.equals("thing")) {
+					tokenToType.put(thisToken, currentNEType);
+				}
 				// ret += token.get(LemmaAnnotation.class);
 			}
 		}
@@ -866,7 +885,7 @@ public class Util {
 				// lemmas
 				String currentNEType = token.get(NamedEntityTagAnnotation.class);
 				// allTypes.add(currentNEType);
-				System.out.println(token + " " + currentNEType);
+				// System.out.println(token + " " + currentNEType);
 				if (prevNEType.equals("O") && !prevNEType.equals(currentNEType)) {
 					ret = currentNEType + " ";
 				}
@@ -1024,7 +1043,7 @@ public class Util {
 					String typeCand = tokenToType.get(s);
 					if (typeCand != null && !typeCand.equals("thing")) {
 						type = typeCand;
-						// System.out.println("backed up to stan: "+type+" "+arg);
+						// System.out.println("backed up to stan: " + type + " " + arg);
 						// break;
 					}
 				}
@@ -2184,7 +2203,7 @@ public class Util {
 	}
 
 	public static String getWeek(String date) throws java.text.ParseException {
-		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy"); 
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
 		Calendar cal = Calendar.getInstance();
 		Date d = sdf.parse(date);
 		cal.setTime(d);
@@ -2192,7 +2211,7 @@ public class Util {
 
 		int year = cal.get(Calendar.YEAR);
 		String ret = "" + year + "_" + week;
-//		System.out.println("date: " + ret);
+		// System.out.println("date: " + ret);
 		return ret;
 
 	}
@@ -2468,11 +2487,114 @@ public class Util {
 
 	}
 
+	public static void testCorefLines() throws IOException {
+
+		BufferedReader br = new BufferedReader(new FileReader("data0/release/crawlbatched_en"));
+		JsonParser jsonParser = new JsonParser();
+		String line = null;
+
+		Properties props = new Properties();
+		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,coref");
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		int lineNumber = 0;
+		while ((line = br.readLine()) != null) {
+			JsonObject jobj = jsonParser.parse(line).getAsJsonObject();
+			String text = jobj.get("text").getAsString();
+			Annotation document = new Annotation(text);
+
+			if (lineNumber % 1000 == 0) {
+				System.err.println(lineNumber);
+			}
+			lineNumber++;
+
+			pipeline.annotate(document);
+			System.out.println("---");
+			System.out.println(text);
+			System.out.println("coref chains");
+			for (CorefChain cc : document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
+				System.out.println("\t" + cc);
+			}
+			for (CoreMap sentence : document.get(CoreAnnotations.SentencesAnnotation.class)) {
+				System.out.println("---");
+				System.out.println("mentions");
+				for (Mention m : sentence.get(CorefCoreAnnotations.CorefMentionsAnnotation.class)) {
+					System.out.println("\t" + m);
+				}
+			}
+		}
+		br.close();
+	}
+
+	public static void testCoref() {
+		Annotation document = new Annotation(
+				"Barack Obama was born in Hawaii.  He is the president. Obama was elected in 2008.");
+		Properties props = new Properties();
+		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,coref");
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		pipeline.annotate(document);
+		System.out.println("---");
+		System.out.println("coref chains");
+		for (CorefChain cc : document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
+			System.out.println("\t" + cc);
+		}
+		for (CoreMap sentence : document.get(CoreAnnotations.SentencesAnnotation.class)) {
+			System.out.println("---");
+			System.out.println("mentions");
+			for (Mention m : sentence.get(CorefCoreAnnotations.CorefMentionsAnnotation.class)) {
+				System.out.println("\t" + m);
+			}
+		}
+	}
+
+	public static void testNER() {
+		// set up pipeline properties
+		Properties props = new Properties();
+		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
+		// example customizations (these are commented out but you can uncomment them to
+		// see the results
+
+		// disable fine grained ner
+		// props.setProperty("ner.applyFineGrained", "false");
+
+		// customize fine grained ner
+		// props.setProperty("ner.fine.regexner.mapping", "example.rules");
+		// props.setProperty("ner.fine.regexner.ignorecase", "true");
+
+		// add additional rules
+		// props.setProperty("ner.additional.regexner.mapping", "example.rules");
+		// props.setProperty("ner.additional.regexner.ignorecase", "true");
+
+		// add 2 additional rules files ; set the first one to be case-insensitive
+		// props.setProperty("ner.additional.regexner.mapping",
+		// "ignorecase=true,example_one.rules;example_two.rules");
+
+		// set up pipeline
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		// make an example document
+		CoreDocument doc = new CoreDocument("Joe Smith is from Seattle.");
+		// annotate the document
+		pipeline.annotate(doc);
+		// view results
+		System.out.println("---");
+		System.out.println("entities found");
+		for (CoreEntityMention em : doc.entityMentions())
+			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
+		System.out.println("---");
+		System.out.println("tokens and ner tags");
+		String tokensAndNERTags = doc.tokens().stream().map(token -> "(" + token.word() + "," + token.ner() + ")")
+				.collect(Collectors.joining(" "));
+		System.out.println(tokensAndNERTags);
+
+	}
+
 	public static void main(String[] args) throws ParseException, IOException {
+
+		// testCorefLines();
 		// System.out.println(getPredicateLemma("(roam.1,roam.middle.of.2)",true)[0]);
 
 		// Logger.getRootLogger().setLevel(Level.WARN);
-		// getSimpleNERType("kansas jayhawks won the game.");
+		// System.out.println(getSimpleNERTypeSent("Barack Obama visited Hawaii."));
+		// System.out.println(testNER());
 		// getSimpleNERType("prime minister stephen harper");
 
 		// testNERStan();
@@ -2490,8 +2612,8 @@ public class Util {
 		//
 		// convertToPArgFormat(args);
 
-		// convertPredArgsToJsonUnsorted(args);
-//		convertPredArgsToJson(args);
+		convertPredArgsToJsonUnsorted(args);
+		// convertPredArgsToJson(args);
 
 		// getRawText();
 
@@ -2504,11 +2626,11 @@ public class Util {
 		// System.out.println(s + ": " + getType(s, true, stanTypes));
 		// }
 
-//		try {
-//			getWeek("Jan 05, 2014");
-//		} catch (java.text.ParseException e) {
-//			e.printStackTrace();
-//		}
+		// try {
+		// getWeek("Jan 05, 2014");
+		// } catch (java.text.ParseException e) {
+		// e.printStackTrace();
+		// }
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);

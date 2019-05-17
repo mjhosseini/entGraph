@@ -21,7 +21,7 @@ import constants.ConstantsAgg;
 import constants.ConstantsParsing;
 import entailment.PredicateArgumentExtractor;
 import entailment.Util;
-import entailment.entityLinking.DistrTyping;
+import entailment.linkingTyping.DistrTyping;
 import entailment.vector.EntailGraphFactoryAggregator;
 import entailment.vector.EntailGraphFactoryAggregator.TypeScheme;
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;

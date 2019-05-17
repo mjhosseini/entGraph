@@ -19,7 +19,7 @@ import com.google.common.collect.HashBiMap;
 
 import constants.ConstantsAgg;
 import constants.ConstantsRWalk;
-import entailment.entityLinking.SimpleSpot;
+import entailment.linkingTyping.SimpleSpot;
 import entailment.vector.EntailGraph;
 import entailment.vector.EntailGraphFactoryAggregator;
 import graph.SimpleScore;

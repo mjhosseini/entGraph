@@ -608,7 +608,7 @@ public class PredicateArgumentExtractor implements Runnable {
 								accepted, dsStr.length() > 0, idx2Node, sentIdx);
 						// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 						// true);
-						relInfos.add(relInfo0);// TODO: maybe don't do this if __
+						relInfos.add(relInfo0);//
 						// System.out.println("adding rel info0: "+relInfo0.mainStr);
 					}
 
@@ -674,7 +674,7 @@ public class PredicateArgumentExtractor implements Runnable {
 							mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
 						} else {
 							notInterestingEventIdxes.add(relInfo.eventIdx);
-							if (ConstantsParsing.snli) {// TODO: maybe always have it
+							if (ConstantsParsing.snli) {
 
 								String rMainStr = postProcessSameIndexMainStr(relInfo.mainStr);
 								if (rMainStr.equals(relInfo.mainStr)) {
@@ -716,8 +716,6 @@ public class PredicateArgumentExtractor implements Runnable {
 					if (!rel.contains(":e ,")) {// TODO: be careful, bug fix by removing || !rel.contains(":x)")
 						continue;
 					}
-
-					// TODO: maybe always have it
 
 					// "arms.around.2 neck G", 2
 					// where 11 is the event idx number
@@ -869,7 +867,6 @@ public class PredicateArgumentExtractor implements Runnable {
 		}
 
 		firstIdx = rel.indexOf(", ") + 2;
-		// lastIdx = rel.indexOf(":x");//TODO: be careful, bug fix for unary rels
 		lastIdx = rel.lastIndexOf(":");
 
 		int argIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
@@ -1563,7 +1560,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "The Professional is a 1996 English-language French thriller film directed by Luc Besson.";
+		String s = "He spoke in Hawaii.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
@@ -1701,14 +1698,29 @@ public class PredicateArgumentExtractor implements Runnable {
 				return -1;
 			}
 		} else {
-			if (isEntity(node1.getPos()) && isEntity(node2.getPos())) {// E E
-				return 2;
-			} else if (isEntity(node1.getPos())) {
-				return 0;
-			} else if (isEntity(node2.getPos())) {
-				return 1;
+
+			if (!ConstantsParsing.onlyNounOrNE) {
+				if (isEntity(node1.getPos()) && isEntity(node2.getPos())) {// E E
+					return 2;
+				} else if (isEntity(node1.getPos())) {
+					return 0;
+				} else if (isEntity(node2.getPos())) {
+					return 1;
+				} else {
+					return 3;
+				}
 			} else {
-				return 3;
+				if (isEntity(node1.getPos()) && isEntity(node2.getPos())) {// E E
+					return 2;
+				} else if (isEntity(node1.getPos()) && isNoun(node2.getPos())) {
+					return 0;
+				} else if (isEntity(node2.getPos()) && isNoun(node1.getPos())) {
+					return 1;
+				} else if (isNoun(node1.getPos()) && isNoun(node2.getPos())) {
+					return 3;
+				} else {
+					return -1;
+				}
 			}
 		}
 	}

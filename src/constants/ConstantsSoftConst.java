@@ -14,7 +14,8 @@ public class ConstantsSoftConst {
 	public static double smoothParam = 5.0;// doesn't matter, deprecated
 	// static final String tPropSuffix = "_tProp_i4_predBased_areg_trans_1.0.txt";
 	// static final String tPropSuffix = "_tProp_trans_0_.3_obj2_n.txt";
-	public static String tPropSuffix = "_rw_lm1_0_reg_inf_1_thr_0_selfE.txt";
+//	public static String tPropSuffix = "_rw_lm1_0_reg_inf_1_thr_0_selfE.txt";
+	public static String tPropSuffix = "_onlybinc.txt";
 	public static boolean forceSelfEdgeOne = false;//Must be true for normal experiments
 	public static boolean predBasedPropagation = true;// must be true
 	public static boolean sizeBasedPropagation = false;// must be felse
