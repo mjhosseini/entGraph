@@ -14,6 +14,7 @@ public class ConstantsParsing {
 	public static final boolean removebasicEvnetifEEModifer = true; //was false for TACL experiments
 	public static boolean parseQuestions = false;// Always set if to false for processing the main corpus
 	public static boolean writeUnaryRels = true;
+	public static boolean splitBinary2Unary = false;// if false, the unaries will be the ones that are indeed one arg, e.g., John walked
 	public static boolean writeDebugString = true;
 	public static boolean writeSemParse = false;
 	public static boolean filterUntensed = false;// for deduplicating when a tense is added, eg [receiving; receiving.will]->[receiving.will]

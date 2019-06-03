@@ -459,8 +459,6 @@ public class PredicateArgumentExtractor implements Runnable {
 					allEventIdxes.put(edge.getMediator().getWordPosition(), edge);
 				}
 
-				// a function to decide test and aspect for each index
-
 				for (Edge<LexicalItem> edge : ungroundedGraph.getEdges()) {
 					ArrayList<BinaryRelInfo> relInfos = new ArrayList<>();
 					int eventIndex = edge.getMediator().getWordPosition();
@@ -750,9 +748,18 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		Set<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
 		for (String unaryRel : unaryRelsFromBinary) {
-			if (!unaryRels.contains(unaryRel)) {
-				unaryRels.add(unaryRel);
+			
+			if (ConstantsParsing.splitBinary2Unary) {
+				if (!unaryRels.contains(unaryRel)) {
+					unaryRels.add(unaryRel);
+				}
 			}
+			else {
+				if (unaryRels.contains(unaryRel)) {
+					unaryRels.remove(unaryRel);
+				}
+			}
+			
 		}
 		// unaryRels.addAll(unaryRelsFromBinary);
 
@@ -1561,7 +1568,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "She won the race.";
+		String s = "Alice walked.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
