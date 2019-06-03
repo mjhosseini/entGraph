@@ -746,20 +746,13 @@ public class PredicateArgumentExtractor implements Runnable {
 		// System.out.println("relCount: "+relCount+" "+text+" \n "+mainStr);
 		// }
 
-		Set<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
-		for (String unaryRel : unaryRelsFromBinary) {
-			
-			if (ConstantsParsing.splitBinary2Unary) {
+		if (ConstantsParsing.splitBinary2Unary) {
+			Set<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
+			for (String unaryRel : unaryRelsFromBinary) {
 				if (!unaryRels.contains(unaryRel)) {
 					unaryRels.add(unaryRel);
 				}
 			}
-			else {
-				if (unaryRels.contains(unaryRel)) {
-					unaryRels.remove(unaryRel);
-				}
-			}
-			
 		}
 		// unaryRels.addAll(unaryRelsFromBinary);
 
@@ -864,7 +857,9 @@ public class PredicateArgumentExtractor implements Runnable {
 		int lastIdx = rel.indexOf(":e ,");
 
 		int eIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
-		if (notInterestingEventIdxes.contains(eIdx)) {
+		// when we don't split binary to unary, we don't care at all about being
+		// interested, which is only based on binaries
+		if (ConstantsParsing.splitBinary2Unary && notInterestingEventIdxes.contains(eIdx)) {
 			return null;
 		}
 
@@ -1568,7 +1563,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "Alice walked.";
+		String s = "Alice won.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
