@@ -400,6 +400,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 				if (ConstantsParsing.writeDebugString) {
 					System.out.println(ungroundedGraph);
+
 				}
 
 				// System.out.println(ungroundedGraph.getSyntacticParse());
@@ -407,6 +408,15 @@ public class PredicateArgumentExtractor implements Runnable {
 				// System.err.println("# Ungrounded Graphs" + "\n");
 
 				Set<LexicalItem> nodes = ungroundedGraph.getNodes();
+
+				// int i=0;
+				// if (ConstantsParsing.writeDebugString) {
+				// for (LexicalItem node: nodes) {
+				// System.out.println(i+": "+node);
+				// i++;
+				// }
+				// }
+
 				HashMap<Integer, LexicalItem> idx2Node = new HashMap<>();
 
 				for (LexicalItem node : nodes) {
@@ -732,8 +742,10 @@ public class PredicateArgumentExtractor implements Runnable {
 															// e.g., particle verbs)
 						continue;
 					}
-					// System.out.println("adding unary rel: " + unaryRel[0] + " " +
-					// eIdx2Count.get(unaryRel[1]));
+					if (ConstantsParsing.writeDebugString) {
+						System.out.println("adding unary rel: " + unaryRel[0] + " " + unaryRel[1] + ": "
+								+ eIdx2Count.get(unaryRel[1]));
+					}
 					// System.out.println(semanticParse);
 					unaryRels.add(unaryRel[0]);
 				}
@@ -746,13 +758,22 @@ public class PredicateArgumentExtractor implements Runnable {
 		// System.out.println("relCount: "+relCount+" "+text+" \n "+mainStr);
 		// }
 
-		if (ConstantsParsing.splitBinary2Unary) {
-			Set<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
-			for (String unaryRel : unaryRelsFromBinary) {
+		
+		Set<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
+		for (String unaryRel : unaryRelsFromBinary) {
+			
+			if (ConstantsParsing.splitBinary2Unary) {
 				if (!unaryRels.contains(unaryRel)) {
 					unaryRels.add(unaryRel);
 				}
 			}
+			else {
+				//make sure splits are removed even if the index of the event is the same as arg.
+				//example: The Avalanche were zero of four against the Coyotes. "against"
+				if (unaryRels.contains(unaryRel)) {
+					unaryRels.remove(unaryRel);
+				}
+			}			
 		}
 		// unaryRels.addAll(unaryRelsFromBinary);
 
@@ -1563,7 +1584,10 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-		String s = "Alice won.";
+//		String s = "The Avalanche were zero of four against the Coyotes.";
+//		String s = "Smith came up big and made one sprawling save after another.";
+		String s = "Pluto’s moon is beautiful.";
+		// String s = "Barack Obama visited Hawaii.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
