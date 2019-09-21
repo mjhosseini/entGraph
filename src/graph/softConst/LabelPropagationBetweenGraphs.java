@@ -109,12 +109,13 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 						pred_q = rawPred_rp + "#" + tp2 + "#" + tp1;
 					}
 
-					double compScore1, compScore2;
+					double compScore1 = 1, compScore2 = 1;
 
 					if (!ConstantsSoftConst.predBasedPropagation) {
+						//You can get rid of this totally! Not used anymore
 						// make sure you give to both cases: tp1#tp2 and tp2#tp1
-						compScore1 = TypePropagateMN.getCompatibleScore(tp1_plain, tp2_plain, aligned, t1_r_plain,
-								t2_r_plain);
+//						compScore1 = TypePropagateMN.getCompatibleScore(tp1_plain, tp2_plain, aligned, t1_r_plain,
+//								t2_r_plain);
 						// compScore1 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 						// TODO: added, be
 						// careful
@@ -149,8 +150,9 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 					}
 
 					if (!ConstantsSoftConst.predBasedPropagation) {
-						compScore2 = TypePropagateMN.getCompatibleScore(tp2_plain, tp1_plain, aligned, t1_r_plain,
-								t2_r_plain);
+						//You can get rid of this totally! Not used anymore
+//						compScore2 = TypePropagateMN.getCompatibleScore(tp2_plain, tp1_plain, aligned, t1_r_plain,
+//								t2_r_plain);
 						// compScore2 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 						// TODO: added, be
 						// careful
@@ -266,16 +268,17 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 				q2 = rawPred_q + "#" + t1 + "#" + t2;
 			}
 
-			double compScore1;
-			double compScore2;
+			double compScore1 = 1;
+			double compScore2 = 1;
 
 			// make sure you get from both cases: t1#t2 and t2#t1
 			if (!ConstantsSoftConst.predBasedPropagation) {
-				compScore1 = TypePropagateMN.getCompatibleScore(tp1, tp2, aligned, t1_plain, t2_plain);
-				// compScore1 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
-				// TODO: added, be careful
-
-				compScore2 = TypePropagateMN.getCompatibleScore(tp1, tp2, aligned, t2_plain, t1_plain);
+				//You can get rid of this totally! Not used anymore
+//				compScore1 = TypePropagateMN.getCompatibleScore(tp1, tp2, aligned, t1_plain, t2_plain);
+//				// compScore1 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
+//				// TODO: added, be careful
+//
+//				compScore2 = TypePropagateMN.getCompatibleScore(tp1, tp2, aligned, t2_plain, t1_plain);
 				// compScore2 *= Math.min(pgraph.nodes.size(), pgraph_neigh.nodes.size());//
 				// TODO: added, be careful
 			} else {

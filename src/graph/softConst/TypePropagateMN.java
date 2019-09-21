@@ -31,7 +31,7 @@ import graph.PGraph;
 public class TypePropagateMN {
 
 	Map<String, Integer> graphToNumEdges;
-	static Map<String, Double> compatibles;
+//	static Map<String, Double> compatibles;
 	ThreadPoolExecutor threadPool;
 	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric)
 	static Map<String, Double> beta1s;// p#t1#t3(it will be symmetric)
@@ -50,11 +50,11 @@ public class TypePropagateMN {
 			PGraph.setPredToOcc(root);
 		}
 		// PGraph.edgeThreshold = edgeThreshold;
-		try {
-			readCompatibles();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			readCompatibles();
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		}
 		readPGraphs(root);
 		System.gc();
 		System.err.println("after reading all pgraphs");
@@ -186,19 +186,19 @@ public class TypePropagateMN {
 
 	}
 	
-	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
-
-		String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
-		if (t1.equals(tp1) && t2.equals(tp2)) {
-			return 1;
-		} else if (compatibles.containsKey(comb)) {
-			double ret = compatibles.get(comb);
-			// System.out.println("compscore: " + comb + " " + ret);
-			return ret;
-		} else {
-			return 1.0 / ConstantsSoftConst.smoothParam;
-		}
-	}
+//	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
+//
+//		String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
+//		if (t1.equals(tp1) && t2.equals(tp2)) {
+//			return 1;
+//		} else if (compatibles.containsKey(comb)) {
+//			double ret = compatibles.get(comb);
+//			// System.out.println("compscore: " + comb + " " + ret);
+//			return ret;
+//		} else {
+//			return 1.0 / ConstantsSoftConst.smoothParam;
+//		}
+//	}
 
 	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
 	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
@@ -813,21 +813,21 @@ public class TypePropagateMN {
 
 	}
 
-	void readCompatibles() throws FileNotFoundException {
-		Scanner sc = new Scanner(new File(ConstantsSoftConst.compatiblesPath));
-		compatibles = new HashMap<>();
-		while (sc.hasNextLine()) {
-			String line = sc.nextLine();
-			line = line.replace("_1", "");
-			line = line.replace("_2", "");
-
-			String[] ss = line.split(" ");
-			double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) + ConstantsSoftConst.smoothParam);
-			// System.out.println("compatibles: " + ss[0] + " " + prob);
-			compatibles.put(ss[0], prob);
-		}
-		sc.close();
-	}
+//	void readCompatibles() throws FileNotFoundException {
+//		Scanner sc = new Scanner(new File(ConstantsSoftConst.compatiblesPath));
+//		compatibles = new HashMap<>();
+//		while (sc.hasNextLine()) {
+//			String line = sc.nextLine();
+//			line = line.replace("_1", "");
+//			line = line.replace("_2", "");
+//
+//			String[] ss = line.split(" ");
+//			double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) + ConstantsSoftConst.smoothParam);
+//			// System.out.println("compatibles: " + ss[0] + " " + prob);
+//			compatibles.put(ss[0], prob);
+//		}
+//		sc.close();
+//	}
 
 	// for now, just one iteration
 	void MNPropagateSims() {

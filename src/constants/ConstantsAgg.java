@@ -14,7 +14,7 @@ public class ConstantsAgg {
 	public static boolean useTimeEx = false;
 	public static boolean isCCG = true;
 	public static boolean isTyped = true;
-	public static boolean updatedTyping = true;// a few fixes here and there. flase for TACL experiments!
+	public static boolean updatedTyping = false;// a few fixes here and there. flase for TACL experiments!
 	public static boolean figerHierarchy = false;// for TACL experiments, we had it false
 	public static boolean isForeign = false;
 	public static boolean addTimeStampToFeats = false;

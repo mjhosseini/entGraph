@@ -11,7 +11,7 @@ public class ConstantsParsing {
 	public static String[] accepteds = new String[] { "GE", "EG", "EE" };//{ "GE", "EG", "EE" }: This is what I've been always using
 	public static boolean onlyNounOrNE = true;//in order to remove pronouns, etc in case of GG.
 	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1// Must be true for normal entailment graphs
-	public static final boolean removebasicEvnetifEEModifer = true; //was false for TACL experiments
+	public static final boolean removebasicEvnetifEEModifer = false; //was false for TACL experiments
 	public static boolean parseQuestions = false;// Always set if to false for processing the main corpus
 	public static boolean writeUnaryRels = true;
 	public static boolean splitBinary2Unary = false;// if false, the unaries will be the ones that are indeed one arg, e.g., John walked

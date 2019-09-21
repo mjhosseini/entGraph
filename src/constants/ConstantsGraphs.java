@@ -5,14 +5,14 @@ import graph.PGraph.FeatName;
 
 public class ConstantsGraphs {
 
-	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_10_3thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_hier/";
+	// public static String root =
+	// "../../python/gfiles/typedEntGrDirC_NSBased_10_3thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_hier/";
 	public static String suffix = "_sim.txt";
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	// public static String suffix = "_binc_lm1_.001_reg_1.5_1_.2_.01_i20.txt";
 	public static PGraph.FeatName featName = PGraph.FeatName.BINC;
 	// public static PGraph.FeatName featName = PGraph.FeatName.rw;
-	// public static String root =
-	// "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";// ALL TACL EXPERIMENTS
+	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";// ALL TACL EXPERIMENTS
 	// public static String root =
 	// "../../python/gfiles/typedEntGrDir_3_3_f_convE_ptyped_train_2Ts_70_rw_c_ap50_L1/";
 
@@ -25,8 +25,8 @@ public class ConstantsGraphs {
 	// public static String root =
 	// "../../python/gfiles/typedEntGrDir_aida_figer_10_10/";
 
-	public static double edgeThreshold = 0;// , pr = .82//
-	// public static float edgeThreshold = 0.01f;// ALL TACL EXPERIMENTS are done by
+	// public static double edgeThreshold = 0;// , pr = .82//
+	public static float edgeThreshold = 0.01f;// ALL TACL EXPERIMENTS are done by
 	// threshold = .01. Never change this!
 	// // However, it isn't
 	// // really worth it! .05 reduces edges by half, but not worth it
