@@ -23,7 +23,7 @@ public class ConstantsAgg {
 	public static final boolean backupToStanNER = true;
 	public static final boolean onlyBinc = true;//vs all similarity measures. use to save memory and storage!
 	
-	
+
 	public static boolean removeEventEventModifiers = true;
 	public static boolean removeStopPreds = true;
 	public static boolean removePronouns = false;//TODO: You must move this to parsing 
