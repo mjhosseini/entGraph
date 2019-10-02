@@ -1,8 +1,6 @@
 package entailment;
 
 import java.io.BufferedReader;
-
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,7 +29,6 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import javax.management.RuntimeErrorException;
 
@@ -57,10 +54,6 @@ import com.ibm.icu.util.StringTokenizer;
 
 import ac.biu.nlp.normalization.BiuNormalizer;
 import constants.ConstantsAgg;
-import edu.stanford.nlp.coref.CorefCoreAnnotations;
-import edu.stanford.nlp.coref.data.CorefChain;
-import edu.stanford.nlp.coref.data.Mention;
-import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
@@ -69,7 +62,6 @@ import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.*;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.logging.RedwoodConfiguration;
@@ -2488,105 +2480,116 @@ public class Util {
 
 	}
 
-	public static void testCorefLines() throws IOException {
+	// public static void testCorefLines() throws IOException {
+	//
+	// BufferedReader br = new BufferedReader(new
+	// FileReader("data0/release/crawlbatched_en"));
+	// JsonParser jsonParser = new JsonParser();
+	// String line = null;
+	//
+	// Properties props = new Properties();
+	// props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,coref");
+	// StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+	// int lineNumber = 0;
+	// while ((line = br.readLine()) != null) {
+	// JsonObject jobj = jsonParser.parse(line).getAsJsonObject();
+	// String text = jobj.get("text").getAsString();
+	// Annotation document = new Annotation(text);
+	//
+	// if (lineNumber % 1000 == 0) {
+	// System.err.println(lineNumber);
+	// }
+	// lineNumber++;
+	//
+	// pipeline.annotate(document);
+	// System.out.println("---");
+	// System.out.println(text);
+	// System.out.println("coref chains");
+	// for (CorefChain cc :
+	// document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
+	// System.out.println("\t" + cc);
+	// }
+	// for (CoreMap sentence :
+	// document.get(CoreAnnotations.SentencesAnnotation.class)) {
+	// System.out.println("---");
+	// System.out.println("mentions");
+	// for (Mention m :
+	// sentence.get(CorefCoreAnnotations.CorefMentionsAnnotation.class)) {
+	// System.out.println("\t" + m);
+	// }
+	// }
+	// }
+	// br.close();
+	// }
+	//
+	// public static void testCoref() {
+	// Annotation document = new Annotation(
+	// "Barack Obama was born in Hawaii. He is the president. Obama was elected in
+	// 2008.");
+	// Properties props = new Properties();
+	// props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,coref");
+	// StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+	// pipeline.annotate(document);
+	// System.out.println("---");
+	// System.out.println("coref chains");
+	// for (CorefChain cc :
+	// document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
+	// System.out.println("\t" + cc);
+	// }
+	// for (CoreMap sentence :
+	// document.get(CoreAnnotations.SentencesAnnotation.class)) {
+	// System.out.println("---");
+	// System.out.println("mentions");
+	// for (Mention m :
+	// sentence.get(CorefCoreAnnotations.CorefMentionsAnnotation.class)) {
+	// System.out.println("\t" + m);
+	// }
+	// }
+	// }
 
-		BufferedReader br = new BufferedReader(new FileReader("data0/release/crawlbatched_en"));
-		JsonParser jsonParser = new JsonParser();
-		String line = null;
-
-		Properties props = new Properties();
-		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,coref");
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		int lineNumber = 0;
-		while ((line = br.readLine()) != null) {
-			JsonObject jobj = jsonParser.parse(line).getAsJsonObject();
-			String text = jobj.get("text").getAsString();
-			Annotation document = new Annotation(text);
-
-			if (lineNumber % 1000 == 0) {
-				System.err.println(lineNumber);
-			}
-			lineNumber++;
-
-			pipeline.annotate(document);
-			System.out.println("---");
-			System.out.println(text);
-			System.out.println("coref chains");
-			for (CorefChain cc : document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
-				System.out.println("\t" + cc);
-			}
-			for (CoreMap sentence : document.get(CoreAnnotations.SentencesAnnotation.class)) {
-				System.out.println("---");
-				System.out.println("mentions");
-				for (Mention m : sentence.get(CorefCoreAnnotations.CorefMentionsAnnotation.class)) {
-					System.out.println("\t" + m);
-				}
-			}
-		}
-		br.close();
-	}
-
-	public static void testCoref() {
-		Annotation document = new Annotation(
-				"Barack Obama was born in Hawaii.  He is the president. Obama was elected in 2008.");
-		Properties props = new Properties();
-		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,coref");
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		pipeline.annotate(document);
-		System.out.println("---");
-		System.out.println("coref chains");
-		for (CorefChain cc : document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
-			System.out.println("\t" + cc);
-		}
-		for (CoreMap sentence : document.get(CoreAnnotations.SentencesAnnotation.class)) {
-			System.out.println("---");
-			System.out.println("mentions");
-			for (Mention m : sentence.get(CorefCoreAnnotations.CorefMentionsAnnotation.class)) {
-				System.out.println("\t" + m);
-			}
-		}
-	}
-
-	public static void testNER() {
-		// set up pipeline properties
-		Properties props = new Properties();
-		props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
-		// example customizations (these are commented out but you can uncomment them to
-		// see the results
-
-		// disable fine grained ner
-		// props.setProperty("ner.applyFineGrained", "false");
-
-		// customize fine grained ner
-		// props.setProperty("ner.fine.regexner.mapping", "example.rules");
-		// props.setProperty("ner.fine.regexner.ignorecase", "true");
-
-		// add additional rules
-		// props.setProperty("ner.additional.regexner.mapping", "example.rules");
-		// props.setProperty("ner.additional.regexner.ignorecase", "true");
-
-		// add 2 additional rules files ; set the first one to be case-insensitive
-		// props.setProperty("ner.additional.regexner.mapping",
-		// "ignorecase=true,example_one.rules;example_two.rules");
-
-		// set up pipeline
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		// make an example document
-		CoreDocument doc = new CoreDocument("Joe Smith is from Seattle.");
-		// annotate the document
-		pipeline.annotate(doc);
-		// view results
-		System.out.println("---");
-		System.out.println("entities found");
-		for (CoreEntityMention em : doc.entityMentions())
-			System.out.println("\tdetected entity: \t" + em.text() + "\t" + em.entityType());
-		System.out.println("---");
-		System.out.println("tokens and ner tags");
-		String tokensAndNERTags = doc.tokens().stream().map(token -> "(" + token.word() + "," + token.ner() + ")")
-				.collect(Collectors.joining(" "));
-		System.out.println(tokensAndNERTags);
-
-	}
+	// public static void testNER() {
+	// // set up pipeline properties
+	// Properties props = new Properties();
+	// props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner");
+	// // example customizations (these are commented out but you can uncomment them
+	// to
+	// // see the results
+	//
+	// // disable fine grained ner
+	// // props.setProperty("ner.applyFineGrained", "false");
+	//
+	// // customize fine grained ner
+	// // props.setProperty("ner.fine.regexner.mapping", "example.rules");
+	// // props.setProperty("ner.fine.regexner.ignorecase", "true");
+	//
+	// // add additional rules
+	// // props.setProperty("ner.additional.regexner.mapping", "example.rules");
+	// // props.setProperty("ner.additional.regexner.ignorecase", "true");
+	//
+	// // add 2 additional rules files ; set the first one to be case-insensitive
+	// // props.setProperty("ner.additional.regexner.mapping",
+	// // "ignorecase=true,example_one.rules;example_two.rules");
+	//
+	// // set up pipeline
+	// StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+	// // make an example document
+	// CoreDocument doc = new CoreDocument("Joe Smith is from Seattle.");
+	// // annotate the document
+	// pipeline.annotate(doc);
+	// // view results
+	// System.out.println("---");
+	// System.out.println("entities found");
+	// for (CoreEntityMention em : doc.entityMentions())
+	// System.out.println("\tdetected entity: \t" + em.text() + "\t" +
+	// em.entityType());
+	// System.out.println("---");
+	// System.out.println("tokens and ner tags");
+	// String tokensAndNERTags = doc.tokens().stream().map(token -> "(" +
+	// token.word() + "," + token.ner() + ")")
+	// .collect(Collectors.joining(" "));
+	// System.out.println(tokensAndNERTags);
+	//
+	// }
 
 	public static void main(String[] args) throws ParseException, IOException {
 
@@ -2613,8 +2616,8 @@ public class Util {
 		//
 		// convertToPArgFormat(args);
 
-		convertPredArgsToJsonUnsorted(args);
-		// convertPredArgsToJson(args);
+		// convertPredArgsToJsonUnsorted(args);
+		convertPredArgsToJson(args);
 
 		// getRawText();
 
