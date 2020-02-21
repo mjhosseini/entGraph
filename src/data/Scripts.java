@@ -1,12 +1,19 @@
 package data;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,6 +28,7 @@ import java.util.Set;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import constants.ConstantsAgg;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
@@ -926,6 +934,42 @@ public class Scripts {
 
 	}
 
+	// fix the issue with the artId
+	public static void fixIssueLinking() throws JsonSyntaxException, IOException {
+		BufferedReader br = new BufferedReader(
+				new InputStreamReader(new FileInputStream("aida/newsC_linked.json"), "UTF-8"));
+		BufferedWriter bw = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream("aida/newsC_linked_fixed.json"), "UTF-8"));
+		PrintWriter op = new PrintWriter(bw);
+		String line = null;
+		while ((line = br.readLine()) != null) {
+			try {
+				JsonParser jparser = new JsonParser();
+				JsonObject obj = jparser.parse(line).getAsJsonObject();
+				int artId = obj.get("artId").getAsInt();
+				if (artId == 1) {
+					continue;
+				}
+
+				artId--;
+				obj.addProperty("artId", "" + artId);
+
+				if (artId % 10000 == 0) {
+					System.out.println(artId);
+				}
+
+				op.println(obj);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("bad line: " + line);
+				continue;
+			}
+			
+		}
+		br.close();
+		op.close();
+	}
+
 	public static void main(String[] args) throws IOException, ArgumentValidationException, InterruptedException {
 
 		// re-annotated-full.tsv was first swapped (to be the same as Levy),
@@ -939,6 +983,8 @@ public class Scripts {
 		// trueCase();
 
 		// getCommaTriple(rel, triple)
+		
+		fixIssueLinking();
 
 		// convertZeichnerToLevyFormat("zeichner0.txt");
 		// getNAACLFormatCosSubset("naacl_levy_format0.txt", "naacl_levy_format.txt",
@@ -948,7 +994,7 @@ public class Scripts {
 		// swapDS("../../python/gfiles/ent/naacl_levy_format.txt");
 
 		// convertConsToEntGraph();
-		convertEntGraphToConstraints();
+		// convertEntGraphToConstraints();
 
 		// makeDirFromAll("test.txt","test_dir.txt","test_rels.txt");
 

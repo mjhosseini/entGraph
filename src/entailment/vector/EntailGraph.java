@@ -121,14 +121,21 @@ public class EntailGraph extends SimpleEntailGraph {
 		} else {
 			int ret = a.get(numAllowed - 1);
 
-			if (!ConstantsAgg.addTimeStampToFeats && ConstantsAgg.relAddress.contains("_GG") && (types.equals("thing#location")
-					|| types.equals("location#thing") || types.equals("thing#location-country")
-					|| types.equals("location-country#thing") || types.equals("thing#thing"))) {
+			if (!ConstantsAgg.addTimeStampToFeats && ConstantsAgg.relAddress.contains("_GG")
+					&& (types.equals("thing#location") || types.equals("location#thing")
+							|| types.equals("thing#location-country") || types.equals("location-country#thing")
+							|| types.equals("thing#thing"))) {
 				int mult;
 				if (ConstantsAgg.figerHierarchy) {
 					mult = 2;
 				} else {
-					mult = 6;
+					if (types.contains("location")) {//TODO: be careful! Added on 20 02 2020
+						mult = 10;
+					}
+					else {
+						mult = 4;
+					}
+					//mult = 6;
 				}
 				System.out.println("multiplying arg pair cutoff by " + mult);
 				ret *= mult;// TODO: be careful
@@ -669,7 +676,7 @@ public class EntailGraph extends SimpleEntailGraph {
 		int ii = 0;
 		for (PredicateVector pvec : pvecs) {
 			if (ii % 1000 == 0) {
-				System.err.println(this.types+" "+ii);
+				System.err.println(this.types + " " + ii);
 			}
 			pvec.computeSimilarities();
 			ii++;

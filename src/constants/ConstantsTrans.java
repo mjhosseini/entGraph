@@ -50,7 +50,7 @@ public class ConstantsTrans {
 //		ConstantsGraphs.removeEventEventModifers = true;
 //		ConstantsGraphs.removeNegs = true;
 		ConstantsGraphs.sortEdgesConfidenceBased = true;
-		ConstantsGraphs.rankDiscount = false;
+		ConstantsGraphs.rankFeats = true;
 		if (ConstantsGraphs.sortEdgesConfidenceBased) {
 			PGraph.setPredToOcc(ConstantsGraphs.root);
 		}

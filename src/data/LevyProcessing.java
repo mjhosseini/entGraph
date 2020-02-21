@@ -880,8 +880,8 @@ public class LevyProcessing {
 		// };//
 		// String[] fileNames = new String[] { "zeichner" };//
 
-//		String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
-		String[] fileNames = new String[] { "ber_all" };
+		String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
+//		String[] fileNames = new String[] { "ber_all" };
 
 		for (String fname : fileNames) {
 			boolean longestRel = fname.contains("zeichner");

@@ -38,7 +38,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 			// }
 
 			if (r % 100 == 0) {
-				System.out.println("r: " + r);
+				System.out.println("r: " + r + " " + this.pgraph.types);
 				TypePropagateMN.memStat();
 			}
 

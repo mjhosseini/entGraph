@@ -35,12 +35,14 @@ public class ConstantsAgg {
 	public static int minPredForArgPair = 3;// 20;// min num of unique predicates for argpair
 	// when NS based num aps, we allow x aps for each pred, even if not in NS
 	public static int numArgPairsNSBasedAlwaysAllowed = 0;// default: 10
-	public static int numTopTypePairs = 20;// the big types, used in NSbased sizes
+	public static int numTopTypePairs = 20;// the big types, used in NSbased sizes (usually 20)
 	public static int maxPredsTotal = -1;// 35000;
 
 	public static final int minPredForArg = -1;// min num of unique predicates for
-	public static boolean removeGGFromTopPairs = true;// whether we should remove triples with two general entities
+	public static boolean removeGGFromTopPairs = true;// Good for NC. whether we should remove triples with two general entities
 														// from top pairs
+	public static boolean removeGGFromThings = true;// Good for NC. whether we should remove triples with two general entities
+	// from any thing graph
 
 	public static final int numThreads = 20;
 
@@ -68,9 +70,15 @@ public class ConstantsAgg {
 //	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
 //			+ "f20_GG_noGGThing_week";
 	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
-			+ "_thth_thloc_time6_f20_GG_noGGThing";
-//	public static String simsFolder = "typedEntGrDirC" + minArgPairForPred + "_" + minPredForArgPair
-//			+ "f20_GG_noGGThing_week";
+			+ "_thth_t4_thloc_t10_f20_GG_noGGThing";
+//	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
+//			+ "_f20_GG_noGGThing_week";
+	
+//	public static String simsFolder = "typedEntGrDirC_CN_NBEE_" + minArgPairForPred + "_" + minPredForArgPair
+//			+ "_f20_GG_noGGThing_week";
+	
+//	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
+//			+ "_f20_GG_week";
 
 	public static String foreinTypesAddress = "data/german_types.txt";// only important if isForeign=True
 
@@ -98,5 +106,4 @@ public class ConstantsAgg {
 			NSPredSizesAddress = "data/NS_pred_sizes.txt";
 		}
 	}
-
 }

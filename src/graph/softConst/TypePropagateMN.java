@@ -119,7 +119,7 @@ public class TypePropagateMN {
 		for (File f : files) {
 
 			String fname = f.getName();
-//			if (gc == 10) {
+//			if (gc == 100) {
 //				break;
 //			}
 
@@ -890,9 +890,18 @@ public class TypePropagateMN {
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-
-			// now let's put g0 = gMN
+			
+			//now let's put g0 = gMN
 			if (iter != ConstantsSoftConst.numIters - 1) {
+				try {
+					if (ConstantsSoftConst.applyMaxRankInIters && ConstantsGraphs.maxRank != -1) {
+						//prune edges
+						propagateAll(4);
+					}
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				
 				for (PGraph pgraph : PGraph.pGraphs) {
 					pgraph.g0 = pgraph.gMN;
 				}
@@ -904,7 +913,7 @@ public class TypePropagateMN {
 
 		// now, let's write the results
 		try {
-			propagateAll(4);
+			propagateAll(5);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}

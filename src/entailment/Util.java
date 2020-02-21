@@ -2616,8 +2616,8 @@ public class Util {
 		//
 		// convertToPArgFormat(args);
 
-		// convertPredArgsToJsonUnsorted(args);
-		convertPredArgsToJson(args);
+		convertPredArgsToJsonUnsorted(args);
+		// convertPredArgsToJson(args);
 
 		// getRawText();
 
@@ -2667,5 +2667,4 @@ public class Util {
 		// countArgs("news_gen3.txt");
 		// System.out.println(getPredicateLemma("(is.with.2,is.with.2)"));
 	}
-
 }

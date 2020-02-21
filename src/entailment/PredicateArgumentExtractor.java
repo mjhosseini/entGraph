@@ -758,22 +758,21 @@ public class PredicateArgumentExtractor implements Runnable {
 		// System.out.println("relCount: "+relCount+" "+text+" \n "+mainStr);
 		// }
 
-		
 		Set<String> unaryRelsFromBinary = getUnaryRelsFromBinary(mainStr);
 		for (String unaryRel : unaryRelsFromBinary) {
-			
+
 			if (ConstantsParsing.splitBinary2Unary) {
 				if (!unaryRels.contains(unaryRel)) {
 					unaryRels.add(unaryRel);
 				}
-			}
-			else {
-				//make sure splits are removed even if the index of the event is the same as arg.
-				//example: The Avalanche were zero of four against the Coyotes. "against"
+			} else {
+				// make sure splits are removed even if the index of the event is the same as
+				// arg.
+				// example: The Avalanche were zero of four against the Coyotes. "against"
 				if (unaryRels.contains(unaryRel)) {
 					unaryRels.remove(unaryRel);
 				}
-			}			
+			}
 		}
 		// unaryRels.addAll(unaryRelsFromBinary);
 
@@ -1584,10 +1583,10 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "Every European can travel freely within Europe.";
 		// String s = "Cleveland works at The White House.";
 		// String s = "Cleveland works at The White House.";
-//		String s = "The Avalanche were zero of four against the Coyotes.";
-//		String s = "Smith came up big and made one sprawling save after another.";
-		String s = "Pluto’s moon is beautiful.";
-		// String s = "Barack Obama visited Hawaii.";
+		// String s = "The Avalanche were zero of four against the Coyotes.";
+		// String s = "Smith came up big and made one sprawling save after another.";
+		// String s = "Pluto’s moon is beautiful.";
+		String s = "Barack Obama visited Hawaii. Barack Obama visited London.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
@@ -1636,6 +1635,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);
+		System.out.println("dsStr: " + exPrss[2]);
 		// System.out.println(exPrss[4]);
 	}
 

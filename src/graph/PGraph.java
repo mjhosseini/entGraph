@@ -279,12 +279,12 @@ public class PGraph implements Comparable<PGraph> {
 						continue;
 					}
 					
-//					if (rank>1000) {
-//						continue;//TODO: remove this!
-//					}
+					if (ConstantsGraphs.maxRank!=-1 && rank > ConstantsGraphs.maxRank) {
+						continue;
+					}
 					
-					if (ConstantsGraphs.rankDiscount) {
-						sim *= (1/Math.sqrt(rank));
+					if (ConstantsGraphs.rankFeats) {
+						sim = 1.0f /rank;
 					}
 					// else{
 					// System.out.println("gt: "+sim);

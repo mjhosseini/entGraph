@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import constants.ConstantsGraphs;
 import constants.ConstantsSoftConst;
 import graph.PGraph;
 import graph.SimpleScore;
@@ -129,7 +131,7 @@ public class LabelPropagateMN implements Runnable {
 			// Parallelize inside a graph (we only parallelize for large graphs!)
 			int sortIdx = pgraph.sortIdx;
 			int numThreadsWithinGraph = (sortIdx < 10) ? 10 : (sortIdx < 15 ? 5 : 1);
-//			int numThreadsWithinGraph = 1;
+			// int numThreadsWithinGraph = 1;
 			System.out.println("numThreadsWithingGraph trans: " + pgraph.name + " " + numThreadsWithinGraph);
 
 			final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreadsWithinGraph);
@@ -171,7 +173,7 @@ public class LabelPropagateMN implements Runnable {
 				e1.printStackTrace();
 			}
 
-			// Now, add 1 to denom for the edges that are newly affected by transitivity 
+			// Now, add 1 to denom for the edges that are newly affected by transitivity
 			// because we didn't know which numerators are zero
 			// until now
 			for (int i = 0; i < pgraph.gMN.vertexSet().size(); i++) {
@@ -180,10 +182,11 @@ public class LabelPropagateMN implements Runnable {
 				}
 				for (DefaultWeightedEdge e : pgraph.gMN.outgoingEdgesOf(i)) {
 					int j = gPrev.getEdgeTarget(e);
-					
-//					double denom = pgraph.edgeToMNWeight.get(p + "#" + q);
 
-					LabelPropagationMNWithinGraph.addDenomNewEdge(pgraph, i, j);//TODO: maybe we can do more efficient here
+					// double denom = pgraph.edgeToMNWeight.get(p + "#" + q);
+
+					LabelPropagationMNWithinGraph.addDenomNewEdge(pgraph, i, j);// TODO: maybe we can do more efficient
+																				// here
 				}
 			}
 
@@ -247,6 +250,7 @@ public class LabelPropagateMN implements Runnable {
 			}
 
 			// pgraph.g0 = null;//TODO: make this null? need it for distance
+			System.out.println("done between graphs: " + pgraph.fname + " " + threadIdx);
 			System.out.println("all prop edges: " + TypePropagateMN.allPropEdges);
 		}
 	}
@@ -347,6 +351,7 @@ public class LabelPropagateMN implements Runnable {
 							} else {
 								w = Math.min(1, Math.max(w, 0));
 							}
+
 							gMN.setEdgeWeight(e, w);
 
 							double w0 = 0;
@@ -370,6 +375,40 @@ public class LabelPropagateMN implements Runnable {
 
 		}
 
+	}
+
+	void pruneEdges() {
+		
+		for (PGraph pgraph : thispGraphs) {
+			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN = pgraph.gMN;
+			int curN = gMN.vertexSet().size();
+			List<DefaultWeightedEdge> removableEdges = new ArrayList<>();
+
+			for (int p = 0; p < curN; p++) {
+
+				Set<DefaultWeightedEdge> outgoingEdgesSet = gMN.outgoingEdgesOf(p);
+				List<DefaultWeightedEdge> outgoingEdgesList = new ArrayList<>(outgoingEdgesSet);
+				outgoingEdgesList.sort((DefaultWeightedEdge e1,
+						DefaultWeightedEdge e2) -> (gMN.getEdgeWeight(e1) - gMN.getEdgeWeight(e2) > 0 ? -1
+								: ((gMN.getEdgeWeight(e1) - gMN.getEdgeWeight(e2) == 0) ? 0 : 1)));
+
+				// if (outgoingEdgesList.size()>0) {
+				// System.out.println("types: "+pgraph.types);
+				// System.out.println("max weight: " +
+				// gMN.getEdgeWeight(outgoingEdgesList.get(0)));
+				// }
+
+				for (int k = ConstantsGraphs.maxRank; k < outgoingEdgesList.size(); k++) {
+					// System.out.println("removing edge with weight "+
+					// gMN.getEdgeWeight(outgoingEdgesList.get(k)));
+					removableEdges.add(outgoingEdgesList.get(k));
+				}
+
+			}
+
+			gMN.removeAllEdges(removableEdges);// TODO: you can do better here, by changing the order of the stuff
+		}
+		
 	}
 
 	// write the output of all of thispGraphs
@@ -398,7 +437,7 @@ public class LabelPropagateMN implements Runnable {
 		} else if (runIdx == 1) {
 			LabelPropagationMNWithinGraphTrans.numVio = 0;
 			propagateLabelWithinGraphsTrans();
-//			ConstantsSoftConst.lmbda3 *= .9;
+			// ConstantsSoftConst.lmbda3 *= .9;
 			System.out.println("within prop trans done!");
 		} else if (runIdx == 2) {
 			propagateLabelWithinGraphs();
@@ -407,6 +446,9 @@ public class LabelPropagateMN implements Runnable {
 		} else if (runIdx == 3) {
 			getAvg();
 		} else if (runIdx == 4) {
+			pruneEdges();
+		}
+		else if (runIdx == 5) {
 			writeResults();
 		}
 	}

@@ -365,7 +365,7 @@ public class EntailGraphFactory implements Runnable {
 					}
 
 					// TODO: be careful, added on 14/04/19
-					if (ConstantsAgg.removeGGFromTopPairs && parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G'
+					if (ConstantsAgg.removeGGFromThings && parts[3].charAt(0) == 'G' && parts[3].charAt(1) == 'G'
 							&& (type1.equals("thing") || type2.equals("thing")) ) {
 						continue;
 					}

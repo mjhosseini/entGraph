@@ -1,11 +1,11 @@
 package constants;
 
 import graph.PGraph;
-import graph.PGraph.FeatName;
 
 public class ConstantsGraphs {
 
-	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_10_3thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_hier/";
+//	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_10_3thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_hier/";
+	public static String root = "../../python/gfiles/typedEntGrDirC_CN_NBEE_NSBased_3_3_thth_thloc_time6_f20_GG_noGGThing/";
 	public static String suffix = "_sim.txt";
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	// public static String suffix = "_binc_lm1_.001_reg_1.5_1_.2_.01_i20.txt";
@@ -41,6 +41,6 @@ public class ConstantsGraphs {
 	public static boolean removeEventEventModifers = false;// might change in transitive
 	public static boolean removeStopPreds = false;
 	public static boolean removeNegs = false;// might change in transitive
-	public static boolean rankDiscount = false;
-
+	public static boolean rankFeats = false; // was false for TACL experiments
+	public static int maxRank = 200; // -1 means no constraints // was -1 for TACL experiments
 }
