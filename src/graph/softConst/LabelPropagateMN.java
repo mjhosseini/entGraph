@@ -19,7 +19,7 @@ import constants.ConstantsGraphs;
 import constants.ConstantsSoftConst;
 import graph.PGraph;
 import graph.SimpleScore;
-
+//label propation Markov Network
 public class LabelPropagateMN implements Runnable {
 
 	List<PGraph> allpGraphs;
@@ -282,7 +282,13 @@ public class LabelPropagateMN implements Runnable {
 			op.println();
 			for (int iter = 0; iter < gs.size(); iter++) {
 				DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> thisG = gs.get(iter);
-				op.println("iter " + iter + " sims");
+				if (iter==0) {
+					op.println("local sims");
+				}
+				else {
+					op.println("global sims");
+				}
+//				op.println("iter " + iter + " sims");
 				List<SimpleScore> scores = new ArrayList<>();
 				if (thisG.containsVertex(i)) {
 					for (DefaultWeightedEdge e : thisG.outgoingEdgesOf(i)) {
@@ -309,8 +315,8 @@ public class LabelPropagateMN implements Runnable {
 			// Get the average
 			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN = pgraph.gMN;
 			int curN = gMN.vertexSet().size();
-			List<DefaultWeightedEdge> removableEdges = new ArrayList<>();
 			for (int p = 0; p < curN; p++) {
+				List<DefaultWeightedEdge> removableEdges = new ArrayList<>();
 				for (DefaultWeightedEdge e : gMN.outgoingEdgesOf(p)) {
 					int q = gMN.getEdgeTarget(e);
 					if (ConstantsSoftConst.forceSelfEdgeOne && p == q) {
@@ -367,9 +373,9 @@ public class LabelPropagateMN implements Runnable {
 						//
 					}
 				}
+				gMN.removeAllEdges(removableEdges);// TODO: you can do better here, by changing the order of the stuff
 			}
 
-			gMN.removeAllEdges(removableEdges);// TODO: you can do better here, by changing the order of the stuff
 
 			// now, g0 is null, gMN is the next one
 
@@ -382,9 +388,9 @@ public class LabelPropagateMN implements Runnable {
 		for (PGraph pgraph : thispGraphs) {
 			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN = pgraph.gMN;
 			int curN = gMN.vertexSet().size();
-			List<DefaultWeightedEdge> removableEdges = new ArrayList<>();
 
 			for (int p = 0; p < curN; p++) {
+				List<DefaultWeightedEdge> removableEdges = new ArrayList<>();
 
 				Set<DefaultWeightedEdge> outgoingEdgesSet = gMN.outgoingEdgesOf(p);
 				List<DefaultWeightedEdge> outgoingEdgesList = new ArrayList<>(outgoingEdgesSet);
@@ -404,9 +410,9 @@ public class LabelPropagateMN implements Runnable {
 					removableEdges.add(outgoingEdgesList.get(k));
 				}
 
+				gMN.removeAllEdges(removableEdges);
 			}
 
-			gMN.removeAllEdges(removableEdges);// TODO: you can do better here, by changing the order of the stuff
 		}
 		
 	}
@@ -442,11 +448,13 @@ public class LabelPropagateMN implements Runnable {
 		} else if (runIdx == 2) {
 			propagateLabelWithinGraphs();
 			System.out.println("within prop done!");
-			System.out.println("thread Idx +" + threadIdx + " done");
 		} else if (runIdx == 3) {
 			getAvg();
+			System.out.println("getAvg done");
 		} else if (runIdx == 4) {
 			pruneEdges();
+			System.out.println("prune edges done");
+			System.out.println("thread Idx +" + threadIdx + " done");
 		}
 		else if (runIdx == 5) {
 			writeResults();

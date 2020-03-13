@@ -154,7 +154,7 @@ public class EntailGraphFactory implements Runnable {
 						datestamp = jObj.get("date").getAsString();
 						String[] ds_ss = datestamp.split(" ");
 						// datestamp = ds_ss[0] + "_" + ds_ss[1] + "_" + ds_ss[2];
-						datestamp = Util.getWeek(ds_ss[0] + " " + ds_ss[1] + " " + ds_ss[2]);
+						datestamp = Util.getYear(ds_ss[0] + " " + ds_ss[1] + " " + ds_ss[2]);
 						// System.out.println("datestamp: " + datestamp);
 					}
 
@@ -317,6 +317,8 @@ public class EntailGraphFactory implements Runnable {
 					 * 
 					 * 
 					 */
+					
+					
 					if (EntailGraphFactoryAggregator.typeScheme != TypeScheme.LDA
 							&& !acceptableTypes.contains(type1 + "#" + type2)
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {

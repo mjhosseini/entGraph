@@ -389,7 +389,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		for (List<LexicalGraph> graphs : allGraphs) {// each graph is for one sentence
 			if (graphs.size() > 0) {
-
+				
 				// System.out.println("syn ind: "+syntaxIdx + " "+
 				// graphs.size());
 				if (syntaxIdx >= graphs.size()) {
@@ -1586,17 +1586,15 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "The Avalanche were zero of four against the Coyotes.";
 		// String s = "Smith came up big and made one sprawling save after another.";
 		// String s = "Pluto’s moon is beautiful.";
-		String s = "Barack Obama visited Hawaii. Barack Obama visited London.";
+		// String s = "John gave Alice a book.";
 		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
 		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
 		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
 		// the \\\"global race\\\" and namechecked India, China, Indonesia, Malaysia,
 		// Brazil, Mexico and Turkey as examples of countries that Britain would fall
 		// behind without reforms.";
-		// String s = "Cameron said the coalition's main aim was to stay ahead in the
-		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
-		// Mexico and Turkey as examples of countries that Britain would fall behind
-		// without reforms.";
+//		String s = "Cameron said the coalition's main aim was to stay ahead in the \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
+		String s = "Barack Obama is visiting Hawaii. Barack Obama visited Hawaii.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";
 		// String s = "Stay in contact with friends – in person. Put down the
 		// electronics and call a friend. Host a game night. Set “dates” for the winter

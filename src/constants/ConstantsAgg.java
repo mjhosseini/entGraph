@@ -17,7 +17,7 @@ public class ConstantsAgg {
 	public static boolean updatedTyping = true;// a few fixes here and there. flase for TACL experiments!
 	public static boolean figerHierarchy = false;// for TACL experiments, we had it false
 	public static boolean isForeign = false;
-	public static boolean addTimeStampToFeats = false;
+	public static boolean addTimeStampToFeats = true;
 	public static final boolean normalizePredicate = true;// if rawExtraction, wouldn't matter.
 	public static final boolean keepWillTense = false;// Must be false for normal entailment graphs
 	public static final boolean backupToStanNER = true;
@@ -67,10 +67,10 @@ public class ConstantsAgg {
 	// + minPredForArgPair + "_test";
 //	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
 //			+ "thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_week";
-//	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
-//			+ "f20_GG_noGGThing_week";
-	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
-			+ "_thth_t4_thloc_t10_f20_GG_noGGThing";
+	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
+			+ "f20_GG_noGGThing_year";
+//	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
+//			+ "_thth_t1_thloc_t10_f20_GG_noGGThing";
 //	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
 //			+ "_f20_GG_noGGThing_week";
 	

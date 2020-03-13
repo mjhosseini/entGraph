@@ -129,11 +129,11 @@ public class EntailGraph extends SimpleEntailGraph {
 				if (ConstantsAgg.figerHierarchy) {
 					mult = 2;
 				} else {
-					if (types.contains("location")) {//TODO: be careful! Added on 20 02 2020
+					if (types.contains("location")) {//TODO: be careful! Added on 20/02/2020
 						mult = 10;
 					}
 					else {
-						mult = 4;
+						mult = 1;
 					}
 					//mult = 6;
 				}

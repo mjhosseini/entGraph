@@ -174,6 +174,7 @@ public class LabelPropagationMNWithinGraph implements Runnable {
 			}
 			if ((k % numThreads) % 100 == 0) {
 				System.out.println("1,2 k: " + k + " " + pgraph.name);
+				TypePropagateMN.memStat();
 			}
 			// Find k's out \\intersection k's in
 			Set<DefaultWeightedEdge> e_outgoing_k = gPrev.outgoingEdgesOf(k);

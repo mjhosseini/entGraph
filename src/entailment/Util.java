@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -29,6 +30,7 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import javax.management.RuntimeErrorException;
 
@@ -803,6 +805,7 @@ public class Util {
 		}
 
 		// create an empty Annotation just with the given text
+		System.out.println("text before annot: " + text);
 		Annotation document = new Annotation(text);
 
 		// run all Annotators on this text
@@ -2209,6 +2212,30 @@ public class Util {
 
 	}
 
+	public static String getMonth(String date) throws java.text.ParseException {
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
+		Calendar cal = Calendar.getInstance();
+		Date d = sdf.parse(date);
+		cal.setTime(d);
+		int month = cal.get(Calendar.MONTH);
+
+		int year = cal.get(Calendar.YEAR);
+		String ret = "" + year + "_" + month;
+		// System.out.println("date: " + ret);
+		return ret;
+	}
+	
+	public static String getYear(String date) throws java.text.ParseException {
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
+		Calendar cal = Calendar.getInstance();
+		Date d = sdf.parse(date);
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+		String ret = "" + year;
+		// System.out.println("date: " + ret);
+		return ret;
+	}
+
 	// Obama: [Barack_Obama,Person]
 	// morning: [morning,time_...]
 	// stanType is already converted to Figer type
@@ -2305,6 +2332,16 @@ public class Util {
 		s = s.toLowerCase().trim();
 
 		return s;
+	}
+	
+	public static String deAccent(String str) {
+	    String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD); 
+	    Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+	    String ret = pattern.matcher(nfdNormalizedString).replaceAll("");
+	    ret = ret.replace("’", "'");
+	    ret = ret.replace("ø", "o");
+	    ret = ret.replace("ł", "l");
+	    	return ret;
 	}
 
 	public static void fillDSPredsandPairs(String path, Set<String> preds, Set<String> predPairs) throws IOException {
@@ -2616,7 +2653,7 @@ public class Util {
 		//
 		// convertToPArgFormat(args);
 
-		convertPredArgsToJsonUnsorted(args);
+//		convertPredArgsToJsonUnsorted(args);
 		// convertPredArgsToJson(args);
 
 		// getRawText();
@@ -2630,11 +2667,11 @@ public class Util {
 		// System.out.println(s + ": " + getType(s, true, stanTypes));
 		// }
 
-		// try {
-		// getWeek("Jan 05, 2014");
-		// } catch (java.text.ParseException e) {
-		// e.printStackTrace();
-		// }
+		try {
+			System.out.println(getYear("Feb 05, 2014"));
+		} catch (java.text.ParseException e) {
+			e.printStackTrace();
+		}
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);

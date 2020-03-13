@@ -51,7 +51,7 @@ public class LevyProcessing {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-//		System.out.println("all prev instances:"+ ret);
+		// System.out.println("all prev instances:"+ ret);
 		return ret;
 	}
 
@@ -861,7 +861,7 @@ public class LevyProcessing {
 			return true;
 		}
 		return false;
-//		return false;
+		// return false;
 	}
 
 	static void convertDSToRelsCCG() throws IOException {
@@ -880,8 +880,9 @@ public class LevyProcessing {
 		// };//
 		// String[] fileNames = new String[] { "zeichner" };//
 
-		String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
-//		String[] fileNames = new String[] { "ber_all" };
+		// String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
+		String[] fileNames = new String[] { "dev" };
+		// String[] fileNames = new String[] { "ber_all" };
 
 		for (String fname : fileNames) {
 			boolean longestRel = fname.contains("zeichner");
@@ -959,7 +960,7 @@ public class LevyProcessing {
 	public static void main(String[] args) throws IOException {
 		ConstantsParsing.nbestParses = 10;
 		processLevy = true;
-		
+
 		// countUniques(root + "re-annotated-full.tsv");
 		// makeCandEnts();
 		// split_chunks();

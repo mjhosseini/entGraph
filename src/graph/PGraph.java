@@ -1,5 +1,6 @@
 package graph;
 
+//Permanent Graph
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -65,8 +66,8 @@ public class PGraph implements Comparable<PGraph> {
 
 	// These three fields should be actually in softGraphs, but for simplicity, I'm
 	// not changing the code
-	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;
-	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;
+	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> g0;//initial graph (g^t)
+	public DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN;//MN graph for next iterations (g^{(t+1)})
 	public Map<String, Double> edgeToMNWeight;
 	public static List<PGraph> pGraphs;
 	public static Map<String, Set<Integer>> rawPred2PGraphs;

@@ -52,25 +52,25 @@ public class CcgParseToUngroundedGraphs {
 		gson = new Gson();
 		logger = Logger.getLogger(CcgParseToUngroundedGraphs.class);
 		nbestParses = ConstantsParsing.nbestParses;
-		
+
 		String ccgModelDir = Paths.get(dataFolder, "easyccg_model").toString();
 
 		// ccgParser = new EasyCcgCli(ccgModelDir, nbestParses);
-		
-		
+
 		ccgParser = new EasyCcgCli(ccgModelDir + " -r S[dcl] S[pss] S[pt] S[b] S[ng] S NP", nbestParses);
-//		ccgModelDir =
-//		          Paths.get("lib_data", "model_ccgbank_questions").toString();
-		
-//		ccgParser =
-//		          new EasySRLCli(ccgModelDir + " --rootCategories S[q] S[qem] S[wq]",nbestParses);
-		
+		// ccgModelDir =
+		// Paths.get("lib_data", "model_ccgbank_questions").toString();
+
+		// ccgParser =
+		// new EasySRLCli(ccgModelDir + " --rootCategories S[q] S[qem]
+		// S[wq]",nbestParses);
+
 		// Too much: NP S[to] S[em] S[frg] S[for] S[intj] S[inv] N N[b] S[dcl]
 		// S[pss] S[pt] S[b] S[ng] S
 		// S[em] S[frg] S[for] S[intj] S[inv]
 		// S[dcl] S[pss] S[pt] S[b] S[ng] S
 		// lib_data/easyccg_model -r S[dcl] S[pss] S[pt] S[b] S[ng] S
-		
+
 		if (useQuestionsModel) {
 			String ccgModelDirQuestions = Paths.get(dataFolder, "easyccg_model_questions").toString();
 			ccgParserQuestions = new EasyCcgCli(ccgModelDirQuestions + " -s -r S[q] S[qem] S[wq]", nbestParses);
@@ -83,8 +83,7 @@ public class CcgParseToUngroundedGraphs {
 		String specialCasesFile;
 		if (ConstantsParsing.tenseParseTest) {
 			specialCasesFile = Paths.get(dataFolder, "lexicon_specialCases_tensed.txt").toString();
-		}
-		else {
+		} else {
 			specialCasesFile = Paths.get(dataFolder, "lexicon_specialCases.txt").toString();
 		}
 		String specialCasesQuestionsFile = Paths.get(dataFolder, "lexicon_specialCases_questions_vanilla.txt")
@@ -118,6 +117,7 @@ public class CcgParseToUngroundedGraphs {
 		String sentence = jsonSentence.get("sentence").getAsString();
 
 		List<String> processedText = nlpPipeline.processText(sentence);
+		System.out.println("processedText: " + processedText);
 		// System.out.println("stan process text time: "
 		// + (System.currentTimeMillis() - t0));
 
@@ -127,22 +127,20 @@ public class CcgParseToUngroundedGraphs {
 			if (!ConstantsParsing.parseQuestions && processedSentence.endsWith("?|.|O")) {
 				continue;
 			}
-			
+
 			List<String> ccgParseStrings;
-			
-//			System.out.println("processed sentence: "+processedSentence);
+
+			// System.out.println("processed sentence: "+processedSentence);
 			if (ConstantsParsing.parseQuestions) {
 				ccgParseStrings = ccgParserQuestions != null && processedSentence.endsWith("?|.|O")
 						? ccgParserQuestions.parse(processedSentence)
 						: ccgParser.parse(processedSentence);
-			}
-			else {
+			} else {
 				ccgParseStrings = ccgParser.parse(processedSentence);
 			}
-			
-			
-//			System.out.println("pr sen: " + processedSentence);
-			
+
+			// System.out.println("pr sen: " + processedSentence);
+
 			// System.out.println("ccgparser time:
 			// "+(System.currentTimeMillis()-t0));
 			List<Map<String, String>> ccgParses = new ArrayList<>();

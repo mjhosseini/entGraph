@@ -33,9 +33,9 @@ public class TypePropagateMN {
 	Map<String, Integer> graphToNumEdges;
 //	static Map<String, Double> compatibles;
 	ThreadPoolExecutor threadPool;
-	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric)
-	static Map<String, Double> beta1s;// p#t1#t3(it will be symmetric)
-	static Map<String, Double> beta2s;// p#t2#t4(it will be symmetric)
+	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric) //beta values
+	static Map<String, Double> beta1s;// p#t1#t3(it will be symmetric) // it won't be used if not factorized
+	static Map<String, Double> beta2s;// p#t2#t4(it will be symmetric) // it won't be used if not factorized
 	static int allPropEdges = 0;
 	static double objChange = 0;
 	public static long numBetaOne = 0;
