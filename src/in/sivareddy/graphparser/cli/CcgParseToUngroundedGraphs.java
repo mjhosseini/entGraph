@@ -10,6 +10,7 @@ import in.sivareddy.others.CcgSyntacticParserCli;
 import in.sivareddy.others.EasyCcgCli;
 import in.sivareddy.others.EasySRLCli;
 import in.sivareddy.others.StanfordCoreNlpDemo;
+import riotcmd.json;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import com.google.gson.JsonParser;
 
 import constants.ConstantsParsing;
 import entailment.PredicateArgumentExtractor;
+import entailment.UngroundedSemParseInfo;
 
 public class CcgParseToUngroundedGraphs {
 	JsonParser jsonParser;
@@ -117,12 +119,11 @@ public class CcgParseToUngroundedGraphs {
 		String sentence = jsonSentence.get("sentence").getAsString();
 
 		List<String> processedText = nlpPipeline.processText(sentence);
-		System.out.println("processedText: " + processedText);
+		// System.out.println("processedText: " + processedText);
 		// System.out.println("stan process text time: "
 		// + (System.currentTimeMillis() - t0));
 
 		for (String processedSentence : processedText) {
-			// System.out.println(processedSentence);
 			// We don't need questions for our application
 			if (!ConstantsParsing.parseQuestions && processedSentence.endsWith("?|.|O")) {
 				continue;
@@ -171,6 +172,77 @@ public class CcgParseToUngroundedGraphs {
 			allGraphs.add(graphs);
 		}
 		return allGraphs;
+	}
+
+	// modified by Javad to get indices of preds with multiple tokens and by
+	// considering multiword NEs which are separated by "_".
+	public List<UngroundedSemParseInfo> processTextTokenized(String line, boolean tokenize)
+			throws ArgumentValidationException, IOException, InterruptedException {
+		JsonObject jsonSentence = jsonParser.parse(line).getAsJsonObject();
+		if (jsonSentence.has("sentence"))
+			logger.debug("Input Sentence: " + jsonSentence.get("sentence").getAsString());
+		String sentence = jsonSentence.get("sentence").getAsString();
+
+		List<String> processedText = nlpPipeline.processText(sentence);
+		// System.out.println("processedText: " + processedText);
+		// System.out.println("stan process text time: "
+		// + (System.currentTimeMillis() - t0));
+
+		List<UngroundedSemParseInfo> ungroundedSemParseInfos = new ArrayList<>();
+		int startTokenIdx = 0;
+
+		for (String processedSentence : processedText) {
+			// We don't need questions for our application
+			if (!ConstantsParsing.parseQuestions && processedSentence.endsWith("?|.|O")) {
+				continue;
+			}
+
+			List<String> ccgParseStrings;
+
+			// System.out.println("processed sentence: "+processedSentence);
+			if (ConstantsParsing.parseQuestions) {
+				ccgParseStrings = ccgParserQuestions != null && processedSentence.endsWith("?|.|O")
+						? ccgParserQuestions.parse(processedSentence)
+						: ccgParser.parse(processedSentence);
+			} else {
+				ccgParseStrings = ccgParser.parse(processedSentence);
+			}
+
+			// System.out.println("pr sen: " + processedSentence);
+
+			// System.out.println("ccgparser time:
+			// "+(System.currentTimeMillis()-t0));
+			List<Map<String, String>> ccgParses = new ArrayList<>();
+			for (String ccgParseString : ccgParseStrings) {
+				Map<String, String> ccgParseMap = new HashMap<>();
+				ccgParseMap.put("synPar", ccgParseString);
+				ccgParseMap.put("score", "1.0");
+				ccgParses.add(ccgParseMap);
+			}
+			jsonSentence.add("synPars", jsonParser.parse(gson.toJson(ccgParses)));
+
+			String[] wordsString = processedSentence.split("\\s");
+			List<Map<String, String>> words = Lists.newArrayList();
+			for (String word : wordsString) {
+				String[] parts = word.split("\\|");
+				Map<String, String> wordMap = new HashMap<>();
+				wordMap.put("word", parts[0]);
+				wordMap.put("pos", parts[1]);
+				wordMap.put("ner", parts[2]);
+				words.add(wordMap);
+			}
+
+			jsonSentence.add("words", jsonParser.parse(gson.toJson(words)));
+
+			List<LexicalGraph> graphs = graphCreator.buildUngroundedGraph(jsonSentence, "synPars", nbestParses, logger);
+
+			UngroundedSemParseInfo ungroundedSemParseInfo = new UngroundedSemParseInfo(graphs, processedSentence,
+					startTokenIdx, tokenize);
+			ungroundedSemParseInfos.add(ungroundedSemParseInfo);
+			startTokenIdx += ungroundedSemParseInfo.tokens.size();
+
+		}
+		return ungroundedSemParseInfos;
 	}
 
 	public void setCCGParser(EasyCcgCli ccgParser) {

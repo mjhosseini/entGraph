@@ -56,6 +56,7 @@ import com.ibm.icu.util.StringTokenizer;
 
 import ac.biu.nlp.normalization.BiuNormalizer;
 import constants.ConstantsAgg;
+import constants.ConstantsParsing;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
@@ -1321,6 +1322,11 @@ public class Util {
 			artIdToEntToWiki = loadAidaLinked(AIDAPath);
 		}
 		System.err.println("useNamedEntities: " + shouldLink);
+		
+		boolean tokenizationInfo = false;
+		if (args.length >= 5) {
+			tokenizationInfo = Boolean.parseBoolean(args[5]);
+		}
 
 		// Map<String, String> entToWiki = loadEntToWiki(0);
 		// System.err.println("testing " + entToWiki.get("mike smith"));
@@ -1353,16 +1359,25 @@ public class Util {
 						String articleId = line.substring(12);
 						line = br.readLine();
 						String date = line.substring(7);
+						line = br.readLine();
+						String tokens = "";
+						if (tokenizationInfo) {
+							tokens = line.substring(9);
+						}
 
 						JsonObject jObj = new JsonObject();
 						jObj.addProperty("s", curLine);
 						jObj.addProperty("date", date);
 						jObj.addProperty("articleId", articleId);
 						jObj.addProperty("lineId", lineId);
+						if (tokenizationInfo) {
+							jObj.addProperty("tokens", tokens);
+						}
 						if (lineIds.contains(lineId)) {
 							continue;
 						}
 						lineIds.add(lineId);
+						
 						// Now, let's read all the pred_arg lines
 						String prArgLine = null;
 						curPrArgs = new ArrayList<String>();
@@ -1377,6 +1392,7 @@ public class Util {
 							String arg2 = null;
 							int eventIdx, sentIdx;
 							String GorNE = null;
+							String predIdxes = null;
 
 							try {
 								StringTokenizer st = new StringTokenizer(prArgLine);
@@ -1386,6 +1402,9 @@ public class Util {
 								eventIdx = Integer.parseInt(st.nextToken());
 								GorNE = st.nextToken();
 								sentIdx = Integer.parseInt(st.nextToken());
+								if (tokenizationInfo) {
+									predIdxes = st.nextToken().replace(":", "_");
+								}
 								arg1 = simpleNormalize(arg1);
 								arg2 = simpleNormalize(arg2);
 
@@ -1422,7 +1441,7 @@ public class Util {
 							}
 
 							String prArg = "(" + pred + "::" + arg1 + "::" + arg2 + "::" + GorNE + "::" + sentIdx + "::"
-									+ eventIdx + ")";
+									+ eventIdx + (tokenizationInfo ? ("::" + predIdxes) : "") + ")";
 							curPrArgs.add(prArg);
 						}
 
@@ -1535,7 +1554,7 @@ public class Util {
 
 	static void convertPredArgsToJson(String[] args) throws IOException {
 		if (args == null || args.length == 0) {
-			args = new String[] { "predArgs9_gen.txt", "true", "true", "12000000", "aida/news_linked.json" };
+			args = new String[] { "predArgs_gen.txt", "true", "true", "12000000", "aida/news_linked.json", "true" };
 		}
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF-8"));
 		boolean shouldLink = Boolean.parseBoolean(args[1]);
@@ -1549,6 +1568,11 @@ public class Util {
 		}
 		System.err.println("useNamedEntities: " + shouldLink);
 		int maxLines = Integer.parseInt(args[3]);
+
+		boolean tokenizationInfo = false;
+		if (args.length >= 5) {
+			tokenizationInfo = Boolean.parseBoolean(args[5]);
+		}
 
 		// Map<String, String> entToWiki = loadEntToWiki(0);
 		// System.err.println("testing " + entToWiki.get("mike smith"));
@@ -1587,12 +1611,20 @@ public class Util {
 						String articleId = line.substring(12);
 						line = br.readLine();
 						String date = line.substring(7);
+						line = br.readLine();
+						String tokens = "";
+						if (tokenizationInfo) {
+							tokens = line.substring(9);
+						}
 
 						JsonObject jObj = new JsonObject();
 						jObj.addProperty("s", curLine);
 						jObj.addProperty("date", date);
 						jObj.addProperty("articleId", articleId);
 						jObj.addProperty("lineId", lineId);
+						if (tokenizationInfo) {
+							jObj.addProperty("tokens", tokens);
+						}
 
 						// Now, let's read all the pred_arg lines
 						String prArgLine = null;
@@ -1608,6 +1640,7 @@ public class Util {
 							String arg2 = null;
 							int eventIdx, sentIdx;
 							String GorNE = null;
+							String predIdxes = null;
 
 							try {
 								StringTokenizer st = new StringTokenizer(prArgLine);
@@ -1617,6 +1650,9 @@ public class Util {
 								eventIdx = Integer.parseInt(st.nextToken());
 								GorNE = st.nextToken();
 								sentIdx = Integer.parseInt(st.nextToken());
+								if (tokenizationInfo) {
+									predIdxes = st.nextToken().replace(":", "_");
+								}
 								arg1 = simpleNormalize(arg1);
 								arg2 = simpleNormalize(arg2);
 
@@ -1666,7 +1702,7 @@ public class Util {
 							}
 
 							String prArg = "(" + pred + "::" + arg1 + "::" + arg2 + "::" + GorNE + "::" + sentIdx + "::"
-									+ eventIdx + ")";
+									+ eventIdx + (tokenizationInfo ? ("::" + predIdxes) : "") + ")";
 							curPrArgs.add(prArg);
 						}
 
@@ -1814,6 +1850,7 @@ public class Util {
 						//
 						// }
 					} catch (Exception e) {
+						System.err.println("exception for " + curLine);
 						e.printStackTrace();
 						continue;
 					}
@@ -2198,6 +2235,41 @@ public class Util {
 		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
 
+	// Get the longest phrase from the CCG relation.
+	// relstr: string of format "(smile.1,smile.like.2)"
+	// returns: {"smile", "like"}
+	public static String[] getPhraseFromCCGRel(String relstr) {
+		try {
+			if (ConstantsParsing.lemmatizePred) {
+				relstr = getPredicateNormalized(relstr, true)[0];
+			}
+			int modifierIdx = relstr.indexOf("__");
+			if (modifierIdx != -1) {
+				relstr = relstr.substring(modifierIdx + 2);
+			}
+			// Remove parentheses. Split on comma.
+			String[] pair = relstr.substring(1, relstr.length() - 1).split(",");
+			if (pair.length != 2) {
+				// # print "ERROR Bad relation string: ", relstr
+				return new String[0];
+			}
+
+			// Removing trailing .1 or .2
+			String lpred = pair[0].substring(0, pair[0].lastIndexOf("."));
+			String rpred = pair[1].substring(0, pair[1].lastIndexOf("."));
+
+			// Replace periods with spaces. Return the longest!
+			lpred = lpred.replace(".", " ");
+			rpred = rpred.replace(".", " ");
+			if (rpred.length() >= lpred.length()) {// keep the longest
+				lpred = rpred;
+			}
+			return lpred.split(" ");
+		} catch (Exception e) {
+			return new String[] { "" };
+		}
+	}
+
 	public static String getWeek(String date) throws java.text.ParseException {
 		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
 		Calendar cal = Calendar.getInstance();
@@ -2224,7 +2296,7 @@ public class Util {
 		// System.out.println("date: " + ret);
 		return ret;
 	}
-	
+
 	public static String getYear(String date) throws java.text.ParseException {
 		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
 		Calendar cal = Calendar.getInstance();
@@ -2333,15 +2405,25 @@ public class Util {
 
 		return s;
 	}
-	
+
+	public static String replaceStanfordParserSpecialTokens(String str) {
+		String[] stanTokens = new String[] { "-LRB-", "-RRB-", "-LCB-", "-RCB-", "-LSB-", "-RSB-" };
+		String[] normalTokens = new String[] { "(", ")", "{", "}", "[", "]" };
+		for (int i = 0; i < stanTokens.length; i++) {
+			str = str.replace(stanTokens[i], normalTokens[i]);
+			str = str.replace(stanTokens[i].toLowerCase(), normalTokens[i]);
+		}
+		return str;
+	}
+
 	public static String deAccent(String str) {
-	    String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD); 
-	    Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-	    String ret = pattern.matcher(nfdNormalizedString).replaceAll("");
-	    ret = ret.replace("’", "'");
-	    ret = ret.replace("ø", "o");
-	    ret = ret.replace("ł", "l");
-	    	return ret;
+		String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
+		Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+		String ret = pattern.matcher(nfdNormalizedString).replaceAll("");
+		ret = ret.replace("’", "'");
+		ret = ret.replace("ø", "o");
+		ret = ret.replace("ł", "l");
+		return ret;
 	}
 
 	public static void fillDSPredsandPairs(String path, Set<String> preds, Set<String> predPairs) throws IOException {
@@ -2653,8 +2735,8 @@ public class Util {
 		//
 		// convertToPArgFormat(args);
 
-//		convertPredArgsToJsonUnsorted(args);
-		// convertPredArgsToJson(args);
+		// convertPredArgsToJsonUnsorted(args);
+		convertPredArgsToJson(args);
 
 		// getRawText();
 
@@ -2667,11 +2749,11 @@ public class Util {
 		// System.out.println(s + ": " + getType(s, true, stanTypes));
 		// }
 
-		try {
-			System.out.println(getYear("Feb 05, 2014"));
-		} catch (java.text.ParseException e) {
-			e.printStackTrace();
-		}
+		// try {
+		// System.out.println(getYear("Feb 05, 2014"));
+		// } catch (java.text.ParseException e) {
+		// e.printStackTrace();
+		// }
 
 		// System.out.println(normalizeArg("The two books"));
 		// findFrequentSentences(args);

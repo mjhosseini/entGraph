@@ -13,13 +13,14 @@ public class ConstantsParsing {
 	public static final boolean lemmatizePred = true;// eaten.might.1 => eat.might.1// Must be true for normal entailment graphs
 	public static final boolean removebasicEvnetifEEModifer = true; //was false for TACL experiments
 	public static boolean parseQuestions = false;// Always set if to false for processing the main corpus
-	public static boolean writeUnaryRels = true;
+	public static boolean writeUnaryRels = false;
 	public static boolean splitBinary2Unary = false;// if false, the unaries will be the ones that are indeed one arg, e.g., John walked
-	public static boolean writeDebugString = true;//should be false when running the experiments
+	public static boolean writeDebugString = false;//should be false when running the experiments
 	public static boolean writeSemParse = false;
 	public static boolean filterUntensed = false;// for deduplicating when a tense is added, eg [receiving; receiving.will]->[receiving.will]
 	public static boolean tenseParseTest = false;// for testing parses on tense pair lists.
 	
 	public static boolean snli = true;// a few good hacks for the snli ds
+	public static boolean writeTokenizationInfo = true;
 	public static int nbestParses = 1;
 }

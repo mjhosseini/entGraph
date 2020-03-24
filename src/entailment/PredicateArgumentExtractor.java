@@ -109,6 +109,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			mainStrOnlyNEs = mainStr;
 
 			String[] predArgStrs = extractPredArgsStrs(text);
+			//
 			mainStr += predArgStrs[0];
 			if (ConstantsParsing.writeUnaryRels && !predArgStrs[4].equals("")) {
 				mainStr += "#unary rels:\n";
@@ -174,16 +175,19 @@ public class PredicateArgumentExtractor implements Runnable {
 		System.out.println("preprocessed text: " + text);
 		String sentence = text;
 		String mySent = "{\"sentence\" : \"" + sentence + "\"}";
-		List<List<LexicalGraph>> allGraphs = parser.processText(mySent);
 
-		if (allGraphs.size() == 0) {
+		// List<List<LexicalGraph>> allGraphs = parser.processText(mySent);
+		List<UngroundedSemParseInfo> ungroundedSemParseInfos = parser.processTextTokenized(mySent,
+				ConstantsParsing.writeTokenizationInfo);
+
+		if (ungroundedSemParseInfos.size() == 0) {
 			return new String[] { ret, "false" };
 		}
 
 		// System.out.println("num syn parses: "+allGraphs.get(0).size());
 
-		while (syntaxIdx < allGraphs.get(0).size()) {
-			String[] predArgsStrs = extractPredArgsStrs(text, syntaxIdx, acceptNP, true, allGraphs);
+		while (syntaxIdx < ungroundedSemParseInfos.get(0).graphs.size()) {
+			String[] predArgsStrs = extractPredArgsStrs(text, syntaxIdx, acceptNP, true, ungroundedSemParseInfos);
 			String[] dsStrs = predArgsStrs[2].split("\n");// This might have
 															// multiple
 															// candidates
@@ -350,7 +354,8 @@ public class PredicateArgumentExtractor implements Runnable {
 	// syntaxIdx means what syntactic parse we're interested in. Default is 0
 	// (the best one), but sometimes we wanna look at others too!
 	public String[] extractPredArgsStrs(String text, int syntaxIdx, boolean acceptNP, boolean acceptGG,
-			List<List<LexicalGraph>> allGraphs) throws ArgumentValidationException, IOException, InterruptedException {
+			List<UngroundedSemParseInfo> ungroundedSemParseInfos)
+			throws ArgumentValidationException, IOException, InterruptedException {
 		String mainStr = "";
 		String mainStrOnlyNEs = "";
 		List<String> semanticParses = new ArrayList<>();
@@ -363,17 +368,31 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		// // long t0 = System.currentTimeMillis();
 
-		if (allGraphs == null) {
+		if (ungroundedSemParseInfos == null) {
 			text = Util.preprocess(text);
 			String sentence = text;
 			String mySent = "{\"sentence\" : \"" + sentence + "\"}";
-			allGraphs = parser.processText(mySent);
+			ungroundedSemParseInfos = parser.processTextTokenized(mySent, ConstantsParsing.writeTokenizationInfo);
 		}
 		// System.out.println("gparse time: "
 		// + (System.currentTimeMillis() - t0));
 
-		if (allGraphs.size() == 0) {
-			return new String[] { "", "", "", "false" };
+		if (ConstantsParsing.writeTokenizationInfo) {
+			List<String> tokens = new ArrayList<>();
+			
+			for (UngroundedSemParseInfo ungroundedSemParseInfo : ungroundedSemParseInfos) {
+				for (String token: ungroundedSemParseInfo.tokens) {
+					tokens.add(token);
+				}
+			}
+			
+			String tokensStr = String.join(" ", tokens);
+			mainStr += "#tokens: " + tokensStr + "\n";
+			mainStrOnlyNEs += "#tokens: " + tokensStr + "\n";
+		}
+
+		if (ungroundedSemParseInfos.size() == 0) {
+			return new String[] { mainStr, mainStrOnlyNEs, "", "false", "" };
 		}
 
 		int relCount = 0;
@@ -387,13 +406,15 @@ public class PredicateArgumentExtractor implements Runnable {
 		LinkedHashSet<String> unaryRels = new LinkedHashSet<>();
 		Set<Integer> notInterestingEventIdxes = new HashSet<>();// e.g., cigarettes at the bar: cigarettes as an event
 
-		for (List<LexicalGraph> graphs : allGraphs) {// each graph is for one sentence
+		for (UngroundedSemParseInfo ungroundedSemParseInfo : ungroundedSemParseInfos) {// each ungroundedSemParseInfo is
+																						// for one sentence
+			List<LexicalGraph> graphs = ungroundedSemParseInfo.graphs;
 			if (graphs.size() > 0) {
-				
+
 				// System.out.println("syn ind: "+syntaxIdx + " "+
 				// graphs.size());
 				if (syntaxIdx >= graphs.size()) {
-					return new String[] { "", "", "", "none" };
+					return new String[] { "", "", "", "none", "" };
 				}
 
 				LexicalGraph ungroundedGraph = graphs.get(syntaxIdx);
@@ -614,7 +635,7 @@ public class PredicateArgumentExtractor implements Runnable {
 
 						// adding!
 						relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index, eventIndex,
-								accepted, dsStr.length() > 0, idx2Node, sentIdx);
+								accepted, dsStr.length() > 0, idx2Node, sentIdx, ungroundedSemParseInfo);
 						// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 						// true);
 						relInfos.add(relInfo0);//
@@ -625,7 +646,7 @@ public class PredicateArgumentExtractor implements Runnable {
 						predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated,
 								eventIndex);
 						relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, arg2Index, eventIndex,
-								accepted, dsStr.length() > 0, idx2Node, sentIdx);
+								accepted, dsStr.length() > 0, idx2Node, sentIdx, ungroundedSemParseInfo);
 						// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, arg2Index,
 						// true);
 						// System.out.println("adding rel info1: "+relInfo0.mainStr);
@@ -656,9 +677,11 @@ public class PredicateArgumentExtractor implements Runnable {
 					}
 
 					twoHopNP(relInfos, idx2Node, ungroundedGraph.getEdges(), modifierStr, arg1, negated, arg1Index,
-							arg2Index, leftPred, rightPred, eventIndex, dsStr, acceptGG, sentIdx);
+							arg2Index, leftPred, rightPred, eventIndex, dsStr, acceptGG, sentIdx,
+							ungroundedSemParseInfo);
 					twoHopVP(relInfos, idx2Node, ungroundedGraph.getEdges(), modifierStr, arg1, negated, arg1Index,
-							arg2Index, leftPred, rightPred, eventIndex, dsStr, acceptGG, sentIdx);
+							arg2Index, leftPred, rightPred, eventIndex, dsStr, acceptGG, sentIdx,
+							ungroundedSemParseInfo);
 
 					for (BinaryRelInfo relInfo : relInfos) {
 						if (!acceptGG && !acceptableGEStrs.contains(relInfo.GEStr)) {
@@ -685,7 +708,7 @@ public class PredicateArgumentExtractor implements Runnable {
 							notInterestingEventIdxes.add(relInfo.eventIdx);
 							if (ConstantsParsing.snli) {
 
-								String rMainStr = postProcessSameIndexMainStr(relInfo.mainStr);
+								String rMainStr = postProcessSameIndexMainStr(relInfo.mainStr, ungroundedSemParseInfo);
 								if (rMainStr.equals(relInfo.mainStr)) {
 									continue;
 								} else {
@@ -886,11 +909,14 @@ public class PredicateArgumentExtractor implements Runnable {
 		String pred = rel.substring(0, rel.indexOf("("));
 		if (ConstantsParsing.lemmatizePred) {
 			LexicalItem predNode = idx2Node.get(eIdx);
-			pred = pred.replace(predNode.getWord(), predNode.getLemma()).toLowerCase();
+			if (predNode != null) {
+				pred = pred.replace(predNode.getWord(), predNode.getLemma());
+			}
+			pred = pred.toLowerCase();
 		}
 
 		firstIdx = rel.indexOf(", ") + 2;
-		lastIdx = rel.lastIndexOf(":");
+		lastIdx = rel.substring(firstIdx).indexOf(":") + firstIdx;
 
 		int argIdx = Integer.parseInt(rel.substring(firstIdx, lastIdx));
 
@@ -934,7 +960,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	}
 
 	// (man.with.1,man.with.2) man shirt => (with.1,with.2) man,shirt
-	String postProcessSameIndexMainStr(String mainStr) {
+	String postProcessSameIndexMainStr(String mainStr, UngroundedSemParseInfo ungroundedSemParseInfo) {
 		String[] ss = mainStr.split(" ");
 		String pred = ss[0].substring(1, ss[0].length() - 1);
 		String cand = pred.split(",")[0].split("\\.")[0];
@@ -943,6 +969,16 @@ public class PredicateArgumentExtractor implements Runnable {
 		} else if (cand.startsWith(ss[2])) {
 			mainStr = mainStr.replace(ss[2] + ".", "");
 		}
+
+		if (ConstantsParsing.writeTokenizationInfo) {
+			String[] parts = mainStr.split(" ");
+			String basePredicate = parts[0];
+			int eventIndex = Integer.parseInt(parts[3]);
+			String predicateTokenIdxes = ungroundedSemParseInfo.getPredicateTokenIdxes(eventIndex, basePredicate);
+			int tokenInfoIdx = mainStr.lastIndexOf(" ");
+			mainStr = mainStr.substring(0, tokenInfoIdx) + " " + predicateTokenIdxes + "\n";
+		}
+
 		return mainStr;
 	}
 
@@ -974,7 +1010,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	void twoHopVP(ArrayList<BinaryRelInfo> relInfos, HashMap<Integer, LexicalItem> idx2Node,
 			Set<Edge<LexicalItem>> allEdges, String modifierStr, String arg1, boolean negated, int arg1Index,
 			int arg2Index, String leftPred, String rightPred, int eventIndex, String dsStr, boolean acceptGG,
-			int sentIdx) {
+			int sentIdx, UngroundedSemParseInfo ungroundedSemParseInfo) {
 		HashSet<String> addedPredArgStrs = new HashSet<>();
 
 		if (eventIndex == arg1Index || eventIndex == arg2Index || arg1Index == arg2Index) {
@@ -1061,7 +1097,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			// System.out.println("added new relation (VP): " + predArgStr);
 			if (modifierStr.equals("") || !ConstantsParsing.removebasicEvnetifEEModifer) {
 				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
-						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx, ungroundedSemParseInfo);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
 				// System.out.println("adding relinfo4: "+relInfo0.mainStr);
@@ -1073,7 +1109,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				predArgStr = getPredArgString(modifierStr, leftPred, rightPred, arg1, arg2, negated, eventIdx2);
 				// System.out.println("added new relation (VP): " + predArgStr);
 				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
-						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx, ungroundedSemParseInfo);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
 				// System.out.println("adding relinfo5: "+relInfo0.mainStr);
@@ -1090,7 +1126,7 @@ public class PredicateArgumentExtractor implements Runnable {
 	void twoHopNP(ArrayList<BinaryRelInfo> relInfos, HashMap<Integer, LexicalItem> idx2Node,
 			Set<Edge<LexicalItem>> allEdges, String modifierStr, String arg1, boolean negated, int arg1Index,
 			int arg2Index, String leftPred, String rightPred, int eventIndex, String dsStr, boolean acceptGG,
-			int sentIdx) {
+			int sentIdx, UngroundedSemParseInfo ungroundedSemParseInfo) {
 		HashSet<String> addedPredArgStrs = new HashSet<>();
 		if (eventIndex == arg1Index || eventIndex == arg2Index || arg1Index == arg2Index) {
 			return;
@@ -1165,7 +1201,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (modifierStr.equals("") || !ConstantsParsing.removebasicEvnetifEEModifer) {
 				// System.out.println("added new relation: " + predArgStr);
 				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
-						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx, ungroundedSemParseInfo);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
 
@@ -1192,7 +1228,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				predArgStr = getPredArgString(modifierStr, leftPred, thisRightPred, arg1, arg2, negated, eventIdx2);
 				// System.out.println("added new relation: " + predArgStr);
 				BinaryRelInfo relInfo0 = getBinaryRelInfo(arg1, arg2, predArgStr, swapped, arg1Index, thisArg2Index,
-						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx);
+						eventIndex, accepted, dsStr.length() > 0, idx2Node, sentIdx, ungroundedSemParseInfo);
 				// addRelInfo(relInfos, relInfo0, currentArgIdxPairs, arg1Index, thisArg2Index,
 				// false);
 				// System.out.println("adding relinfo3: "+relInfo0.mainStr);
@@ -1227,7 +1263,13 @@ public class PredicateArgumentExtractor implements Runnable {
 
 	BinaryRelInfo getBinaryRelInfo(String arg1, String arg2, String predArgStr, boolean swapped, int arg1Index,
 			int arg2Index, int eventIndex, int accepted, boolean foundNonTrivalDSStr,
-			HashMap<Integer, LexicalItem> idx2Node, int sentIdx) {
+			HashMap<Integer, LexicalItem> idx2Node, int sentIdx, UngroundedSemParseInfo ungroundedSemParseInfo) {
+
+		String predicateTokenIdxes = "";
+		if (ConstantsParsing.writeTokenizationInfo) {
+			String basePredicate = predArgStr.split(" ")[0];
+			predicateTokenIdxes = ungroundedSemParseInfo.getPredicateTokenIdxes(eventIndex, basePredicate);
+		}
 
 		String GEStr = "";
 
@@ -1248,22 +1290,26 @@ public class PredicateArgumentExtractor implements Runnable {
 		BinaryRelInfo relInfo = new BinaryRelInfo();
 		relInfo.eventIdx = eventIndex;
 		relInfo.GEStr = GEStr;
-		relInfo.mainStr += predArgStr + " " + GEStr + " " + sentIdx + "\n";
+		relInfo.mainStr += predArgStr + " " + GEStr + " " + sentIdx
+				+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "") + "\n";
 
 		if (accepted == 2) {
-			relInfo.mainStrOnlyNEs += predArgStr + " " + sentIdx + "\n";
+			relInfo.mainStrOnlyNEs += predArgStr + " " + GEStr + " " + sentIdx
+					+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "") + "\n";
 		}
 		relInfo.dsStr = "";
 		if (eventIndex == arg1Index || eventIndex == arg2Index || arg1Index == arg2Index) {
 			if (!foundNonTrivalDSStr) {
-				relInfo.dsStr = predArgStr + " " + GEStr;
+				relInfo.dsStr = predArgStr + " " + GEStr + " " + sentIdx
+						+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "");
 			}
 			// System.out.println("not interesting: " + eventIndex + " " + arg1Index + "" +
 			// arg2Index + " " + arg1 + " "
 			// + arg2 + " " + predArgStr);
 		} else {
 			relInfo.foundInteresting = true;
-			relInfo.dsStr = predArgStr + " " + GEStr;
+			relInfo.dsStr = predArgStr + " " + GEStr + " " + sentIdx
+					+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "");
 
 		}
 		// if (relInfo.dsStr.equals("")) {
@@ -1450,6 +1496,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			if (negated) {
 				predicate = "NEG" + "__" + predicate;
 			}
+
 			return predicate + " " + arg1 + " " + arg2 + " " + eventIdx;
 		} else {
 			String predicate = "(" + rightPred + "," + leftPred + ")";
@@ -1593,8 +1640,12 @@ public class PredicateArgumentExtractor implements Runnable {
 		// the \\\"global race\\\" and namechecked India, China, Indonesia, Malaysia,
 		// Brazil, Mexico and Turkey as examples of countries that Britain would fall
 		// behind without reforms.";
-//		String s = "Cameron said the coalition's main aim was to stay ahead in the \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
-		String s = "Barack Obama is visiting Hawaii. Barack Obama visited Hawaii.";
+		// String s = "Cameron said the coalition's main aim was to stay ahead in the
+		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
+		// Mexico and Turkey as examples of countries that Britain would fall behind
+		// without reforms.";
+		String s = "Barack Obama (you know him) arrived at Hawaii. Barack Obama is visiting Hawaii.";
+		// String s = "John tries to leave on Monday.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";
 		// String s = "Stay in contact with friends – in person. Put down the
 		// electronics and call a friend. Host a game night. Set “dates” for the winter
