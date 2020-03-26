@@ -533,7 +533,7 @@ public class LevyProcessing {
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
 		// PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_10.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_v2.txt"));
 		// PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA" +
 		// DistrTyping.numTopics + "rels_l.txt"));
 
@@ -881,7 +881,7 @@ public class LevyProcessing {
 		// String[] fileNames = new String[] { "zeichner" };//
 
 		// String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
-		String[] fileNames = new String[] { "dev" };
+		String[] fileNames = new String[] { "dev_dir", "test_dir" };
 		// String[] fileNames = new String[] { "ber_all" };
 
 		for (String fname : fileNames) {
@@ -959,6 +959,9 @@ public class LevyProcessing {
 
 	public static void main(String[] args) throws IOException {
 		ConstantsParsing.nbestParses = 10;
+		ConstantsParsing.accepteds = new String[] { "GE", "EG", "EE", "GG" };
+		ConstantsParsing.onlyNounOrNE = false;
+		ConstantsParsing.removebasicEvnetifEEModifer = false;
 		processLevy = true;
 
 		// countUniques(root + "re-annotated-full.tsv");

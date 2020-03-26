@@ -19,6 +19,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import constants.ConstantsAgg;
 import constants.ConstantsParsing;
 import in.sivareddy.graphparser.ccg.LexicalItem;
 import in.sivareddy.graphparser.cli.CcgParseToUngroundedGraphs;
@@ -477,6 +478,7 @@ public class PredicateArgumentExtractor implements Runnable {
 				}
 
 				boolean first = true;
+				Set<String> relInfoMainStrs = new HashSet<>();
 
 				// System.out.println(syntacticParse);
 
@@ -682,7 +684,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					twoHopVP(relInfos, idx2Node, ungroundedGraph.getEdges(), modifierStr, arg1, negated, arg1Index,
 							arg2Index, leftPred, rightPred, eventIndex, dsStr, acceptGG, sentIdx,
 							ungroundedSemParseInfo);
-
+					
 					for (BinaryRelInfo relInfo : relInfos) {
 						if (!acceptGG && !acceptableGEStrs.contains(relInfo.GEStr)) {
 							continue;
@@ -701,7 +703,11 @@ public class PredicateArgumentExtractor implements Runnable {
 							}
 
 							first = false;
-
+							
+							if (relInfoMainStrs.contains(relInfo.mainStr)) {
+								continue;
+							}
+							relInfoMainStrs.add(relInfo.mainStr);
 							mainStr += relInfo.mainStr;
 							mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
 						} else {
@@ -725,6 +731,10 @@ public class PredicateArgumentExtractor implements Runnable {
 
 								first = false;
 
+								if (relInfoMainStrs.contains(relInfo.mainStr)) {
+									continue;
+								}
+								relInfoMainStrs.add(relInfo.mainStr);
 								mainStr += relInfo.mainStr;
 								mainStrOnlyNEs += relInfo.mainStrOnlyNEs;
 							}
@@ -1265,6 +1275,32 @@ public class PredicateArgumentExtractor implements Runnable {
 			int arg2Index, int eventIndex, int accepted, boolean foundNonTrivalDSStr,
 			HashMap<Integer, LexicalItem> idx2Node, int sentIdx, UngroundedSemParseInfo ungroundedSemParseInfo) {
 
+
+		if (ConstantsParsing.normalizePredicate) {
+			//predArgStr: predicate + " " + arg1 + " " + arg2 + " " + eventIdx
+			//we don't care about the order of input params arg1, arg2, arg1index, arg2index
+			String[] ss = predArgStr.split(" ");
+			String[] predicateLemma = Util.getPredicateNormalized(ss[0], true);
+			String thisPred = predicateLemma[0];
+			
+			String thisArg1;
+			String thisArg2;
+
+			// false means args are reversed.
+			if (predicateLemma[1].equals("false")) {
+				thisArg1 = ss[1];
+				thisArg2 = ss[2];// type1 and type2 are fine
+			} else {
+				swapped = !swapped;//swapping one more time
+				thisArg1 = ss[2];
+				thisArg2 = ss[1];
+			}
+			
+			predArgStr = thisPred + " " + thisArg1 + " " + thisArg2 + " " + ss[3];  
+			
+		}
+		
+		
 		String predicateTokenIdxes = "";
 		if (ConstantsParsing.writeTokenizationInfo) {
 			String basePredicate = predArgStr.split(" ")[0];
@@ -1644,7 +1680,9 @@ public class PredicateArgumentExtractor implements Runnable {
 		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
 		// Mexico and Turkey as examples of countries that Britain would fall behind
 		// without reforms.";
-		String s = "Barack Obama (you know him) arrived at Hawaii. Barack Obama is visiting Hawaii.";
+//		String s = "Barack Obama decided to visit Hawaii.";
+		String s = "In a later text, agent Andy Dawson said even if Beljan remained in the hospital overnight, he still planned to play the third round.";
+//		String s = "It's not clear when Crist might take the stand.";
 		// String s = "John tries to leave on Monday.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";
 		// String s = "Stay in contact with friends – in person. Put down the
