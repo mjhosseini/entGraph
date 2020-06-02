@@ -702,6 +702,7 @@ public class EntailGraphFactory implements Runnable {
 		if (ConstantsAgg.addTimeStampToFeats) {
 			thisArg += "#" + datestamp;
 		}
+		
 		thisEntailGraph.addBinaryRelation(typedPred, thisArg, timeInterval, count, -1, -1);
 
 		return rev;

@@ -375,10 +375,7 @@ public class LabelPropagateMN implements Runnable {
 				}
 				gMN.removeAllEdges(removableEdges);// TODO: you can do better here, by changing the order of the stuff
 			}
-
-
 			// now, g0 is null, gMN is the next one
-
 		}
 
 	}
@@ -453,7 +450,7 @@ public class LabelPropagateMN implements Runnable {
 			System.out.println("getAvg done");
 		} else if (runIdx == 4) {
 			pruneEdges();
-			System.out.println("prune edges done");
+			System.out.println("prune edges done"); 
 			System.out.println("thread Idx +" + threadIdx + " done");
 		}
 		else if (runIdx == 5) {

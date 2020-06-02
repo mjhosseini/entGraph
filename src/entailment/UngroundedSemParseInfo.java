@@ -29,6 +29,7 @@ public class UngroundedSemParseInfo {
 		this.graphs = graphs;
 		tokens = new ArrayList<String>();
 		tokenLemmas = new ArrayList<>();
+		
 		if (!tokenize || graphs.size() == 0) {
 			return;
 		}

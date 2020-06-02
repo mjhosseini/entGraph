@@ -31,7 +31,7 @@ import graph.PGraph;
 public class TypePropagateMN {
 
 	Map<String, Integer> graphToNumEdges;
-//	static Map<String, Double> compatibles;
+	// static Map<String, Double> compatibles;
 	ThreadPoolExecutor threadPool;
 	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric) //beta values
 	static Map<String, Double> beta1s;// p#t1#t3(it will be symmetric) // it won't be used if not factorized
@@ -42,19 +42,19 @@ public class TypePropagateMN {
 	public static long numBetaAll = 0;
 
 	public TypePropagateMN(String root) {
-//		ConstantsGraphs.suffix = "_sim.txt";
-//		ConstantsGraphs.edgeThreshold = .01f;// All TACL experiments
+		// ConstantsGraphs.suffix = "_sim.txt";
+		// ConstantsGraphs.edgeThreshold = .01f;// All TACL experiments
 		ConstantsTrans.formBinaryGraph = false;
 
 		if (ConstantsSoftConst.sizeBasedPropagation) {
 			PGraph.setPredToOcc(root);
 		}
 		// PGraph.edgeThreshold = edgeThreshold;
-//		try {
-//			readCompatibles();
-//		} catch (FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
+		// try {
+		// readCompatibles();
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// }
 		readPGraphs(root);
 		System.gc();
 		System.err.println("after reading all pgraphs");
@@ -65,9 +65,9 @@ public class TypePropagateMN {
 	static void memStat() {
 		int mb = 1024 * 1024;
 		long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / mb;
-		System.out.println("total memory: "+ (Runtime.getRuntime().totalMemory()/mb));
-		System.out.println("free memory: "+ (Runtime.getRuntime().freeMemory()/mb));
-		System.out.println("max memory: "+ (Runtime.getRuntime().maxMemory()/mb));
+		System.out.println("total memory: " + (Runtime.getRuntime().totalMemory() / mb));
+		System.out.println("free memory: " + (Runtime.getRuntime().freeMemory() / mb));
+		System.out.println("max memory: " + (Runtime.getRuntime().maxMemory() / mb));
 		System.out.println("usedMb: " + usedMb);
 	}
 
@@ -119,9 +119,9 @@ public class TypePropagateMN {
 		for (File f : files) {
 
 			String fname = f.getName();
-//			if (gc == 100) {
-//				break;
-//			}
+			// if (gc == 100) {
+			// break;
+			// }
 
 			// TODO: remove
 			// if (gc==0) {
@@ -133,10 +133,10 @@ public class TypePropagateMN {
 			// if (!seenLoc) {
 			// continue;
 			// }
-			
-//			if (!fname.contains("person#location")) {
-//				continue;
-//			}
+
+			// if (!fname.contains("person#location")) {
+			// continue;
+			// }
 
 			if (!fname.contains(ConstantsGraphs.suffix)) {
 				continue;
@@ -151,7 +151,7 @@ public class TypePropagateMN {
 			if (pgraph.nodes.size() == 0) {
 				continue;
 			}
-			
+
 			pgraph.setSortedEdges();
 
 			pgraph.g0 = pgraph.formWeightedGraph(pgraph.sortedEdges, pgraph.nodes.size());
@@ -175,30 +175,31 @@ public class TypePropagateMN {
 			System.out.println("allEdgesRem, allEdges: " + PGraph.allEdgesRemained + " " + PGraph.allEdges);
 			gc++;
 		}
-		
-//		for (PGraph pgraph: PGraph.pGraphs) {
-//			pgraph.setSortedEdges();
-//		}
+
+		// for (PGraph pgraph: PGraph.pGraphs) {
+		// pgraph.setSortedEdges();
+		// }
 
 		Collections.sort(PGraph.pGraphs, Collections.reverseOrder());
 
 		PGraph.setRawPred2PGraphs(PGraph.pGraphs);
 
 	}
-	
-//	static double getCompatibleScore(String t1, String t2, boolean aligned, String tp1, String tp2) {
-//
-//		String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
-//		if (t1.equals(tp1) && t2.equals(tp2)) {
-//			return 1;
-//		} else if (compatibles.containsKey(comb)) {
-//			double ret = compatibles.get(comb);
-//			// System.out.println("compscore: " + comb + " " + ret);
-//			return ret;
-//		} else {
-//			return 1.0 / ConstantsSoftConst.smoothParam;
-//		}
-//	}
+
+	// static double getCompatibleScore(String t1, String t2, boolean aligned,
+	// String tp1, String tp2) {
+	//
+	// String comb = t1 + "#" + t2 + "#" + aligned + "#" + tp1 + "#" + tp2;
+	// if (t1.equals(tp1) && t2.equals(tp2)) {
+	// return 1;
+	// } else if (compatibles.containsKey(comb)) {
+	// double ret = compatibles.get(comb);
+	// // System.out.println("compscore: " + comb + " " + ret);
+	// return ret;
+	// } else {
+	// return 1.0 / ConstantsSoftConst.smoothParam;
+	// }
+	// }
 
 	// In pgraph: Given pred_r => pred_rp (types: t1, t2 + aligned), how likely is:
 	// In pgraph_neigh: pred_p => pred_q (types: tp1, tp2 + aligned)
@@ -280,7 +281,7 @@ public class TypePropagateMN {
 
 			predTypeCompatibility.put(key1, score1);
 			predTypeCompatibility.put(key1p, score1);
-//			System.out.println("key1: " + key1 + " " + score1);
+			// System.out.println("key1: " + key1 + " " + score1);
 			// System.out.println("p key1: " + key1p + " " + score1);
 		}
 
@@ -463,7 +464,7 @@ public class TypePropagateMN {
 		}
 
 		Set<Integer> rawPred_r_PGraphs = PGraph.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
-																							// predicate
+																				// predicate
 		// System.out.println("getBeta1 for " + rawPred_r + " " + t1_plain + " " +
 		// tp1_plain);
 		for (int gIdx : rawPred_r_PGraphs) {
@@ -571,7 +572,7 @@ public class TypePropagateMN {
 		}
 
 		Set<Integer> rawPred_r_PGraphs = PGraph.rawPred2PGraphs.get(rawPred_r); // pgraphs with this raw
-																							// predicate
+																				// predicate
 		// System.out.println("getBeta2 for " + rawPred_r + " " + t2_plain + " " +
 		// tp2_plain);
 		for (int gIdx : rawPred_r_PGraphs) {
@@ -712,7 +713,8 @@ public class TypePropagateMN {
 		// // graph's edges! Not consistent with MN again.
 		// }
 		else if (/* !pgraph_neigh.pred2node.containsKey(pred_q) || */ !pgraph_neigh.pred2node.containsKey(pred_p)) {
-//			System.out.println("returning 0: "+ pgraph_neigh.types +" doesn't have "+pred_p);
+			// System.out.println("returning 0: "+ pgraph_neigh.types +" doesn't have
+			// "+pred_p);
 			return 0;
 		} else if (ConstantsSoftConst.lmbda2 == 0) {
 			return 0;
@@ -802,8 +804,9 @@ public class TypePropagateMN {
 			ret = beta1 + beta2;
 		}
 
-//		String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain + "#" + tp2_plain + "#";
-//		System.out.println("beta: "+ret+" "+key1);
+		// String key1 = rawPred_r + "#" + t1_plain + "#" + t2_plain + "#" + tp1_plain +
+		// "#" + tp2_plain + "#";
+		// System.out.println("beta: "+ret+" "+key1);
 		if (ret > .9) {
 			numBetaOne++;
 		}
@@ -813,27 +816,29 @@ public class TypePropagateMN {
 
 	}
 
-//	void readCompatibles() throws FileNotFoundException {
-//		Scanner sc = new Scanner(new File(ConstantsSoftConst.compatiblesPath));
-//		compatibles = new HashMap<>();
-//		while (sc.hasNextLine()) {
-//			String line = sc.nextLine();
-//			line = line.replace("_1", "");
-//			line = line.replace("_2", "");
-//
-//			String[] ss = line.split(" ");
-//			double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) + ConstantsSoftConst.smoothParam);
-//			// System.out.println("compatibles: " + ss[0] + " " + prob);
-//			compatibles.put(ss[0], prob);
-//		}
-//		sc.close();
-//	}
+	// void readCompatibles() throws FileNotFoundException {
+	// Scanner sc = new Scanner(new File(ConstantsSoftConst.compatiblesPath));
+	// compatibles = new HashMap<>();
+	// while (sc.hasNextLine()) {
+	// String line = sc.nextLine();
+	// line = line.replace("_1", "");
+	// line = line.replace("_2", "");
+	//
+	// String[] ss = line.split(" ");
+	// double prob = (Float.parseFloat(ss[1]) + 1) / (Float.parseFloat(ss[2]) +
+	// ConstantsSoftConst.smoothParam);
+	// // System.out.println("compatibles: " + ss[0] + " " + prob);
+	// compatibles.put(ss[0], prob);
+	// }
+	// sc.close();
+	// }
 
 	// for now, just one iteration
 	void MNPropagateSims() {
 
 		for (int iter = 0; iter < ConstantsSoftConst.numIters; iter++) {
 			objChange = 0;
+			allPropEdges = 0; // added on 18th Apr 2020
 			predTypeCompatibility = Collections.synchronizedMap(new HashMap<>());
 			beta1s = Collections.synchronizedMap(new HashMap<>());
 			beta2s = Collections.synchronizedMap(new HashMap<>());
@@ -890,23 +895,25 @@ public class TypePropagateMN {
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-			
-			//now let's put g0 = gMN
+
+			// now let's put g0 = gMN and prune edges
 			if (iter != ConstantsSoftConst.numIters - 1) {
 				try {
-					if (ConstantsSoftConst.applyMaxRankInIters && ConstantsGraphs.maxRank != -1) {
-						//prune edges
+					if (ConstantsSoftConst.applyMaxRankInIters && ConstantsGraphs.maxRank != -1
+							&& allPropEdges >= ConstantsSoftConst.minEdgesToApplyMaxRankInIters) {
+						System.out.println("pruning edges, allPropEdges: " + allPropEdges);
+						// prune edges
 						propagateAll(4);
 					}
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
-				
+
 				for (PGraph pgraph : PGraph.pGraphs) {
 					pgraph.g0 = pgraph.gMN;
 				}
 			}
-			System.out.println("num trans vio: "+LabelPropagationMNWithinGraphTrans.numVio);
+			System.out.println("num trans vio: " + LabelPropagationMNWithinGraphTrans.numVio);
 			System.out.println("obj change: " + objChange);
 			System.out.println("num beta1: " + numBetaOne + " " + numBetaAll);
 		}
@@ -964,7 +971,7 @@ public class TypePropagateMN {
 	public static void main(String[] args) {
 		String root = ConstantsGraphs.root;
 		System.out.println(ConstantsSoftConst.tPropSuffix);
-		
+
 		TypePropagateMN tpmn = new TypePropagateMN(root);
 		tpmn.MNPropagateSims();
 	}
@@ -990,7 +997,8 @@ public class TypePropagateMN {
 		});
 
 		for (int threadIdx = 0; threadIdx < ConstantsSoftConst.numThreads; threadIdx++) {
-			LabelPropagateMN lmn = new LabelPropagateMN(PGraph.pGraphs, threadIdx, ConstantsSoftConst.numThreads, runIdx);
+			LabelPropagateMN lmn = new LabelPropagateMN(PGraph.pGraphs, threadIdx, ConstantsSoftConst.numThreads,
+					runIdx);
 			threadPool.execute(lmn);
 		}
 

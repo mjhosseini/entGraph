@@ -47,7 +47,7 @@ public class StanfordNERHandler {
 		br.close();
 	}
 	
-	public static void performNER() {
+	public static void performNER(PrintStream op) {
 		
 		final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(numThreads);
 		ThreadPoolExecutor threadPool = new ThreadPoolExecutor(numThreads, numThreads, 600,
@@ -69,8 +69,7 @@ public class StanfordNERHandler {
 
 		for (int threadIdx = 0; threadIdx < numThreads; threadIdx++) {
 
-			StanfordNERRunner nerHandler = new StanfordNERRunner(threadIdx, fname);
-
+			StanfordNERRunner nerHandler = new StanfordNERRunner(threadIdx, fname, op);
 			threadPool.execute(nerHandler);
 		}
 
@@ -83,32 +82,74 @@ public class StanfordNERHandler {
 		}
 	}
 	
+	
+	//run this function to get data/stan_NER/news_genC_stanNER.json. Set the parameters above
+	//java -Xmx100G -cp lib/*:bin entailment.linkingTyping.StanfordNERHandler 1>out_stan_ner.txt 2>&1 &
+	
 	public static void main(String[] args) throws FileNotFoundException {
-		performNER();
 		PrintStream op = new PrintStream(new File(NERAddress));
+		performNER(op);
 		
-		for (int i=0; i<maxLineId; i++) {
-			JsonObject jObj = new JsonObject();
-			jObj.addProperty("lineId", i);
-			
-			JsonArray tokenToTypeArr = new JsonArray();
-			Map<String, String> token2Type = lineIdToStanTypes.get(i);
-			
-			if (token2Type==null) {
-				continue;
+		//flush!
+		synchronized (StanfordNERHandler.lineIdToStanTypes) {
+			if (StanfordNERHandler.lineIdToStanTypes.size() > 0) {
+//				System.err.println("writing stuff" + currentOuts.size());
+				while (StanfordNERHandler.lineIdToStanTypes.size() > 0) {
+					for (int this_lineId: StanfordNERHandler.lineIdToStanTypes.keySet()) {
+						JsonObject this_jObj = getJsonObject(this_lineId);
+						op.println(this_jObj);
+						StanfordNERHandler.lineIdToStanTypes.remove(this_lineId);
+					}
+					op.flush();
+				}
+				
 			}
-			
-			for (String tok: token2Type.keySet()) {
-				String type = token2Type.get(tok);
-				JsonObject tt = new JsonObject();
-				tt.addProperty("e", tok);
-				tt.addProperty("t", type);
-				tokenToTypeArr.add(tt);
-			}
-			jObj.add("et", tokenToTypeArr);
-			op.println(jObj);
 		}
-		op.close();
+		
+//		for (int i=0; i<maxLineId; i++) {
+//			JsonObject jObj = new JsonObject();
+//			jObj.addProperty("lineId", i);
+//			
+//			JsonArray tokenToTypeArr = new JsonArray();
+//			Map<String, String> token2Type = lineIdToStanTypes.get(i);
+//			
+//			if (token2Type==null) {
+//				continue;
+//			}
+//			
+//			for (String tok: token2Type.keySet()) {
+//				String type = token2Type.get(tok);
+//				JsonObject tt = new JsonObject();
+//				tt.addProperty("e", tok);
+//				tt.addProperty("t", type);
+//				tokenToTypeArr.add(tt);
+//			}
+//			jObj.add("et", tokenToTypeArr);
+//			op.println(jObj);
+//		}
+//		op.close();
+	}
+
+	static JsonObject getJsonObject(int lineId){
+		JsonObject jObj = new JsonObject();
+		jObj.addProperty("lineId", lineId);
+		
+		JsonArray tokenToTypeArr = new JsonArray();
+		Map<String, String> token2Type = lineIdToStanTypes.get(lineId);
+		
+		if (token2Type==null) {
+			return null;
+		}
+		
+		for (String tok: token2Type.keySet()) {
+			String type = token2Type.get(tok);
+			JsonObject tt = new JsonObject();
+			tt.addProperty("e", tok);
+			tt.addProperty("t", type);
+			tokenToTypeArr.add(tt);
+		}
+		jObj.add("et", tokenToTypeArr);
+		return jObj;
 	}
 	
 }

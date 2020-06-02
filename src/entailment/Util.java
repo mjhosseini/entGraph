@@ -806,7 +806,7 @@ public class Util {
 		}
 
 		// create an empty Annotation just with the given text
-		System.out.println("text before annot: " + text);
+		// System.out.println("text before annot: " + text);
 		Annotation document = new Annotation(text);
 
 		// run all Annotators on this text
@@ -902,7 +902,7 @@ public class Util {
 		// "/Users/hosseini/Desktop/D/research/release/crawl"));
 		// BufferedReader br = new BufferedReader(new InputStreamReader(
 		// new FileInputStream("data/release/crawl"), "UTF-8"));
-		String fileName = "data/release/crawlbatched_en";
+		String fileName = "data0/release/crawlbatched_en";
 		if (args.length > 1) {
 			fileName = args[0];
 		}
@@ -1322,7 +1322,7 @@ public class Util {
 			artIdToEntToWiki = loadAidaLinked(AIDAPath);
 		}
 		System.err.println("useNamedEntities: " + shouldLink);
-		
+
 		boolean tokenizationInfo = false;
 		if (args.length >= 5) {
 			tokenizationInfo = Boolean.parseBoolean(args[5]);
@@ -1359,9 +1359,9 @@ public class Util {
 						String articleId = line.substring(12);
 						line = br.readLine();
 						String date = line.substring(7);
-						line = br.readLine();
 						String tokens = "";
 						if (tokenizationInfo) {
+							line = br.readLine();
 							tokens = line.substring(9);
 						}
 
@@ -1377,7 +1377,7 @@ public class Util {
 							continue;
 						}
 						lineIds.add(lineId);
-						
+
 						// Now, let's read all the pred_arg lines
 						String prArgLine = null;
 						curPrArgs = new ArrayList<String>();
@@ -1611,9 +1611,9 @@ public class Util {
 						String articleId = line.substring(12);
 						line = br.readLine();
 						String date = line.substring(7);
-						line = br.readLine();
 						String tokens = "";
 						if (tokenizationInfo) {
+							line = br.readLine();
 							tokens = line.substring(9);
 						}
 
@@ -2270,6 +2270,22 @@ public class Util {
 		}
 	}
 
+	// isConjunction or a bad thing!
+	public static boolean isConjunction(String pred) {
+		try {
+			String[] parts = pred.split("#");
+			if (parts.length != 3) {
+				return true;// Or, it's a bad thing!
+			}
+			pred = pred.split("#")[0];
+			pred = pred.substring(1, pred.length() - 1);
+			String[] ss = pred.split(",");
+			return ss[0].equals(ss[1]);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
 	public static String getWeek(String date) throws java.text.ParseException {
 		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
 		Calendar cal = Calendar.getInstance();
@@ -2725,7 +2741,7 @@ public class Util {
 		// String[] ss = "2013-02-07".split("$");
 		// System.out.println(ss.length);
 		// System.out.println("here");
-		// System.out.println(getLemma("You'll like it!"));
+		System.out.println(getLemma("Bugs are eaten by domesticated fowls. Bugs are eaten by fowls. Fowls eats Bugs."));
 		// HashMap<String, String> allPOSTags = getAllPOSTags("You will like Los
 		// Angeles");
 		// for (String s : allPOSTags.keySet()) {
@@ -2736,7 +2752,7 @@ public class Util {
 		// convertToPArgFormat(args);
 
 		// convertPredArgsToJsonUnsorted(args);
-		convertPredArgsToJson(args);
+		// convertPredArgsToJson(args);
 
 		// getRawText();
 
@@ -2786,4 +2802,5 @@ public class Util {
 		// countArgs("news_gen3.txt");
 		// System.out.println(getPredicateLemma("(is.with.2,is.with.2)"));
 	}
+
 }

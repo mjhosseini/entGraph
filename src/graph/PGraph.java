@@ -369,24 +369,10 @@ public class PGraph implements Comparable<PGraph> {
 		if (ConstantsGraphs.removeEventEventModifers && pred.contains("__") && !pred.startsWith("NEG__")) {
 			return true;
 		}
-		return isConjunction(pred);
+		return Util.isConjunction(pred);
 	}
 
-	// isConjunction or a bad thing!
-	static boolean isConjunction(String pred) {
-		try {
-			String[] parts = pred.split("#");
-			if (parts.length != 3) {
-				return true;// Or, it's a bad thing!
-			}
-			pred = pred.split("#")[0];
-			pred = pred.substring(1, pred.length() - 1);
-			String[] ss = pred.split(",");
-			return ss[0].equals(ss[1]);
-		} catch (Exception e) {
-			return false;
-		}
-	}
+	
 
 	// static Set<String> readTargetRels(String fpath) throws IOException {
 	// Set<String> ret = new HashSet<>();

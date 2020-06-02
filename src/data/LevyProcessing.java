@@ -956,7 +956,9 @@ public class LevyProcessing {
 		br.close();
 
 	}
-
+	
+	
+	//make sure candEdntities is there (used to capitalize).
 	public static void main(String[] args) throws IOException {
 		ConstantsParsing.nbestParses = 10;
 		ConstantsParsing.accepteds = new String[] { "GE", "EG", "EE", "GG" };

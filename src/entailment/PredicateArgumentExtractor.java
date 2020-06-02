@@ -371,6 +371,9 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		if (ungroundedSemParseInfos == null) {
 			text = Util.preprocess(text);
+			if (ConstantsParsing.writeDebugString) {
+				System.out.println("preprocessed text: " + text);
+			}
 			String sentence = text;
 			String mySent = "{\"sentence\" : \"" + sentence + "\"}";
 			ungroundedSemParseInfos = parser.processTextTokenized(mySent, ConstantsParsing.writeTokenizationInfo);
@@ -1681,7 +1684,10 @@ public class PredicateArgumentExtractor implements Runnable {
 		// Mexico and Turkey as examples of countries that Britain would fall behind
 		// without reforms.";
 //		String s = "Barack Obama decided to visit Hawaii.";
-		String s = "In a later text, agent Andy Dawson said even if Beljan remained in the hospital overnight, he still planned to play the third round.";
+//		String s = "___         Associated Press writers Ali Akbar Dareini in Tehran, Jim Heintz in Moscow and Elena Becatoros in Athens contributed to this report.";
+//		String s = "Obama visited Hawaii. What did he do? Obama was visiting Hawaii.";
+//		String s = "Bugs are eaten by domesticated fowls. Bugs are eaten by fowls. Fowls eats Bugs.";
+		String s = "The 25 countries that she placed under varying degrees of scrutiny.";
 //		String s = "It's not clear when Crist might take the stand.";
 		// String s = "John tries to leave on Monday.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";
@@ -1719,7 +1725,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		s = Util.preprocess(s);
 		// System.out.println("pre processed s: " + s);
 
-		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, true, null);
+		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, acceptableGEStrs.contains("GG"), null);
 		String mainRels = exPrss[0];
 		System.out.println(mainRels);
 		System.out.println("dsStr: " + exPrss[2]);

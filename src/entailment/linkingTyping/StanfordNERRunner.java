@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.Map;
 import java.util.Properties;
 
@@ -20,10 +21,12 @@ public class StanfordNERRunner implements Runnable {
 	int threadIdx;
 	String fname;
 	StanfordCoreNLP stanfordPipeline;
+	PrintStream op;
 
-	public StanfordNERRunner(int threadIdx, String fname) {
+	public StanfordNERRunner(int threadIdx, String fname, PrintStream op) {
 		this.threadIdx = threadIdx;
 		this.fname = fname;
+		this.op = op;
 		renewStanfordParser();
 	}
 
@@ -45,7 +48,7 @@ public class StanfordNERRunner implements Runnable {
 			String line;
 			while ((line = br.readLine()) != null) {
 
-				if (lineNumbers > 0 && lineNumbers % 1000000 == 0 && ConstantsAgg.backupToStanNER) {
+				if (lineNumbers > 0 && lineNumbers % 1000000 == 0 && threadIdx == 0) {
 					Util.renewStanfordParser();
 				}
 
@@ -72,6 +75,22 @@ public class StanfordNERRunner implements Runnable {
 
 				Map<String, String> tokenToType = Util.getSimpleNERTypeSent(newsLine);
 				StanfordNERHandler.lineIdToStanTypes.put(lineId, tokenToType);
+				
+				
+				synchronized (StanfordNERHandler.lineIdToStanTypes) {
+					if (StanfordNERHandler.lineIdToStanTypes.size() > 0 && StanfordNERHandler.lineIdToStanTypes.size() % 10 == 0) {
+//						System.err.println("writing stuff" + currentOuts.size());
+						while (StanfordNERHandler.lineIdToStanTypes.size() > 0) {
+							for (int this_lineId: StanfordNERHandler.lineIdToStanTypes.keySet()) {
+								JsonObject this_jObj = StanfordNERHandler.getJsonObject(this_lineId);
+								op.println(this_jObj);
+								StanfordNERHandler.lineIdToStanTypes.remove(this_lineId);
+							}
+							op.flush();
+						}
+						
+					}
+				}
 
 			}
 			br.close();
@@ -79,5 +98,4 @@ public class StanfordNERRunner implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
 }

@@ -130,7 +130,7 @@ public class EntailGraph extends SimpleEntailGraph {
 					mult = 2;
 				} else {
 					if (types.contains("location")) {//TODO: be careful! Added on 20/02/2020
-						mult = 10;
+						mult = 6;
 					}
 					else {
 						mult = 1;
