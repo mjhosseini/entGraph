@@ -11,12 +11,12 @@ import constants.ConstantsAgg;
 
 public class InvertedIdx {
 	int uniqueIdx;
-	List<Integer> samplesIdxes;
-	List<Double> vals;
+	List<Integer> samplesIdxes; // predicates. e.g., 2, 5, 6
+	List<Double> vals; // freqs
 	List<String> minRightTimes;
 	List<String> maxLeftTimes;
 	List<Double> PMIs;
-	Map<Integer, Integer> sampleIdxToArrIdx;
+	Map<Integer, Integer> sampleIdxToArrIdx; // e.g., 2->0, 5->1, 6->2
 	double norm1;
 	double sumPMIs;
 	

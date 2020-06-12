@@ -276,7 +276,7 @@ public class PredicateArgumentExtractor implements Runnable {
 										// etc
 						thisDSStr = getLongestRel(thisDSStr);
 					}
-					return new String[] { thisDSStr, "true" };
+					return new String[] { thisDSStr.split("\\$\\$")[0], "true" };
 				} else {
 					thisPartlyMatch = true;
 				}
@@ -310,7 +310,7 @@ public class PredicateArgumentExtractor implements Runnable {
 			ret = getLongestRel(ret);
 		}
 
-		return new String[] { ret, "false" };
+		return new String[] { ret.split("\\$\\$")[0], "false" };
 	}
 
 	public String getLongestRel(String ret) {

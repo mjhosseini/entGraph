@@ -685,6 +685,7 @@ public class EntailGraph extends SimpleEntailGraph {
 
 	// For each predicate, what are the predicates that we should find
 	// similarity to.
+	// We compute some stats for predicate-pairs with nonzero similarity
 	void setSimilarVecs() {
 		System.err.println("num of features: " + invertedIdxes.size());
 		System.err.println("num samples: " + pvecs.size());
@@ -708,11 +709,11 @@ public class EntailGraph extends SimpleEntailGraph {
 		// System.out.println("nnz2: "+nnz2);
 
 		int ii = 0;
-		for (InvertedIdx invIdx : invertedIdxes) {
+		for (InvertedIdx invIdx : invertedIdxes) { // for each arg-pair
 			if (ii % 10000 == 0) {
 				System.err.println(ii);
 			}
-			for (int i = 0; i < invIdx.samplesIdxes.size(); i++) {
+			for (int i = 0; i < invIdx.samplesIdxes.size(); i++) { // for pred1 in arg-pair
 				int pvecIdx1 = invIdx.samplesIdxes.get(i);
 				double val1 = invIdx.vals.get(i);
 
@@ -734,7 +735,7 @@ public class EntailGraph extends SimpleEntailGraph {
 
 				// System.out.println("intervals: "+ pvec1.predicate + " "+
 				// leftInterval1+" "+rightInterval1);
-				for (int j = i + 1; j < invIdx.samplesIdxes.size(); j++) {
+				for (int j = i + 1; j < invIdx.samplesIdxes.size(); j++) { // for pred2 in arg-pair
 					int pvecIdx2 = invIdx.samplesIdxes.get(j);
 					double val2 = invIdx.vals.get(j);
 					double PMI2 = invIdx.PMIs.get(j);

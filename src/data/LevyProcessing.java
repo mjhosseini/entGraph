@@ -32,6 +32,7 @@ public class LevyProcessing {
 	static Set<String> allPrevInstances;// instances in the levy set. Useful to
 										// see if sth has been swapped!
 	public static boolean processLevy;
+	public static boolean addTokenIdxes;
 
 	static {
 		String fname = root + "all_origLevy.txt";
@@ -533,7 +534,7 @@ public class LevyProcessing {
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
 		// PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_v2.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_v1_tok.txt"));
 		// PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA" +
 		// DistrTyping.numTopics + "rels_l.txt"));
 
@@ -594,10 +595,16 @@ public class LevyProcessing {
 					// dramatist hamlet
 					// LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[1], rel1ss[2]);
 					rel1 = rel1ss[0] + " " + lt1 + " " + lt2;
+					if (addTokenIdxes) {
+						 rel1 += " " + rel1ss[6];
+					}
 				} else {
 					// LDArel1 = rel1ss[0] + " " + rel1ss[2] + " " + rel1ss[1];
 					// LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[2], rel1ss[1]);
 					rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
+					if (addTokenIdxes) {
+						 rel1 += " " + rel1ss[6];
+					}
 				}
 			}
 
@@ -619,10 +626,16 @@ public class LevyProcessing {
 					// dramatist hamlet
 					// LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[1], rel2ss[2]);
 					rel2 = rel2ss[0] + " " + lt1 + " " + lt2;
+					if (addTokenIdxes) {
+						 rel2 += " " + rel2ss[6];
+					}
 				} else {
 					// LDArel2 = rel2ss[0] + " " + rel2ss[2] + " " + rel2ss[1];
 					// LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[2], rel2ss[1]);
 					rel2 = rel2ss[0] + " " + lt2 + " " + lt1;
+					if (addTokenIdxes) {
+						rel2 += " " + rel2ss[6];
+					}
 				}
 			}
 
@@ -881,7 +894,7 @@ public class LevyProcessing {
 		// String[] fileNames = new String[] { "zeichner" };//
 
 		// String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
-		String[] fileNames = new String[] { "dev_dir", "test_dir" };
+		String[] fileNames = new String[] { "dev", "test" };
 		// String[] fileNames = new String[] { "ber_all" };
 
 		for (String fname : fileNames) {
@@ -964,7 +977,11 @@ public class LevyProcessing {
 		ConstantsParsing.accepteds = new String[] { "GE", "EG", "EE", "GG" };
 		ConstantsParsing.onlyNounOrNE = false;
 		ConstantsParsing.removebasicEvnetifEEModifer = false;
+		ConstantsAgg.updatedTyping = false; // TODO (be careful, not used in latest experiments)
 		processLevy = true;
+		addTokenIdxes = true;//for BERT embeddings, we need to add token indices.
+		
+		
 
 		// countUniques(root + "re-annotated-full.tsv");
 		// makeCandEnts();
