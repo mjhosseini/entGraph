@@ -19,7 +19,7 @@ public class PredicateVector extends SimplePredicateVector {
 	// Don't store a HashMap here so that after the pvecs are formed, the speed
 	// will be high.
 	List<Integer> argIdxes;// we store in sparse format
-	List<Double> vals;
+	List<Double> vals;// number of arg-pairs for this predicate.
 	List<String> minRightIntervals;
 	List<String> maxLeftIntervals;
 	List<Double> PMIs;

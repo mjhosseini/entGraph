@@ -969,7 +969,6 @@ public class TypePropagateMN {
 	// }
 
 	public static void main(String[] args) {
-		System.out.println("[gtype1]say.3#government#product".split("#")[0]);
 		String root = ConstantsGraphs.root;
 		System.out.println(ConstantsSoftConst.tPropSuffix);
 

@@ -1687,7 +1687,9 @@ public class PredicateArgumentExtractor implements Runnable {
 //		String s = "___         Associated Press writers Ali Akbar Dareini in Tehran, Jim Heintz in Moscow and Elena Becatoros in Athens contributed to this report.";
 //		String s = "Obama visited Hawaii. What did he do? Obama was visiting Hawaii.";
 //		String s = "Bugs are eaten by domesticated fowls. Bugs are eaten by fowls. Fowls eats Bugs.";
-		String s = "The 25 countries that she placed under varying degrees of scrutiny.";
+//		String s = "The 25 countries that she placed under varying degrees of scrutiny.";
+//		String s = "As the global crisis gave way to the Great Recession, Canada’s economy suffered the consequences - mainly through a collapse in exports to the United States, which was in a deep recession. Canada lost output amounting to more than 4 per cent of real GDP and job losses equivalent to almost 2 1/2 per cent of our labour force. But an aggressive policy response helped to prevent a worse outcome. The Bank of Canada eased policy substantially in order to achieve its 2 per cent inflation target: it lowered the overnight policy rate to its lowest possible level (1/4 per cent) and took the unconventional step of making a conditional commitment to hold it there for more than a year ( Chart 5 ).";
+		String s = "Richard Foreman has written, directed and designed over fifty of his own plays both in New York City and abroad. The college Richard Foreman attended was what?";
 //		String s = "It's not clear when Crist might take the stand.";
 		// String s = "John tries to leave on Monday.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";

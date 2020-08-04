@@ -47,6 +47,7 @@ public class PGraph implements Comparable<PGraph> {
 		featNameToStr.put(FeatName.WeedPMIPr, "weed's pmi precision sim");
 		featNameToStr.put(FeatName.Iter, "iter 1");
 		featNameToStr.put(FeatName.rw, "rand walk 0 sims");
+		featNameToStr.put(FeatName.contextualized, "contextualized sims");
 		
 	}
 
@@ -586,7 +587,7 @@ public class PGraph implements Comparable<PGraph> {
 	}
 
 	public enum FeatName {
-		Cos, WeedProb, WeedPMI, Lin, BINC, WeedPMIPr, Iter, rw
+		Cos, WeedProb, WeedPMI, Lin, BINC, WeedPMIPr, Iter, rw, contextualized
 	}
 
 	public enum TransitiveMethod {

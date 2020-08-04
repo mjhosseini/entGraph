@@ -39,9 +39,13 @@ public class NewsQAProcessing {
 		// PrintStream op_unary_test = new PrintStream(new File(root_nQA +
 		// "newsqa_test_extractions_unary_v2.txt"));
 
-		String fname_squad = root_nQA + "squad_validation_sents.txt";
-		PrintStream op_squad = new PrintStream(new File(root_nQA + "squad_extractions.txt"));
-		PrintStream op_squad_unary = new PrintStream(new File(root_nQA + "squad_extractions_unary.txt"));
+//		String fname_squad = root_nQA + "squad_validation_sents.txt";
+//		PrintStream op_squad = new PrintStream(new File(root_nQA + "squad_extractions.txt"));
+//		PrintStream op_squad_unary = new PrintStream(new File(root_nQA + "squad_extractions_unary.txt"));
+		
+		String fname_squad = root_nQA + "otherqa_dev_sents.txt";
+		PrintStream op_squad = new PrintStream(new File(root_nQA + "otherqa_extractions.txt"));
+		PrintStream op_squad_unary = new PrintStream(new File(root_nQA + "otherqa_extractions_unary.txt"));
 
 		// extractRelationsNQA(fname_dev, op_dev, op_unary_dev);
 		// extractRelationsNQA(fname_test, op_test, op_unary_test);
