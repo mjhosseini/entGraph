@@ -324,7 +324,7 @@ public class EntailGraphFactory implements Runnable {
 							&& !acceptableTypes.contains(type2 + "#" + type1)) {
 						continue;
 					}
-
+					
 					// if (!EntailGraphFactoryAggregator.isCCG) {
 					// for (int j = 1; j < 3; j++) {
 					// parts[j] = Util.normalizeArg(parts[j]);

@@ -6,7 +6,8 @@ public class ConstantsGraphs {
 
 //	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_10_3thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_hier/";
 //	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_3_3_thloc_t6_noGG_f20Thing/";
-	public static String root = "../../python/gfiles/entgraphs_contextual_5e-4_1e-2_se_aord_95per_self_top_fill_40_bsz256_alpha_.3/";
+	public static String root = "../../python/gfiles/entgraphs_contextual_5e-4_1e-2_se_aord_95per_self_top_fill_0_bsz64/";
+//	public static String root = "../../python/gfiles/typedEntGrDir_NC_AUG_MC_ap50_conve/";
 	public static String suffix = "_sim.txt";
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	// public static String suffix = "_binc_lm1_.001_reg_1.5_1_.2_.01_i20.txt";
@@ -44,5 +45,5 @@ public class ConstantsGraphs {
 	public static boolean removeStopPreds = false; //false for TACL experiments, True for NC.
 	public static boolean removeNegs = false;// might change in transitive
 	public static boolean rankFeats = false; // was false for TACL experiments and NC. will be used for HTL
-	public static int maxRank = -1; // -1 means no constraints // was -1 for TACL experiments
+	public static int maxRank = -1; // -1 means no constraints // was -1 for TACL experiments. 100 for NC
 }

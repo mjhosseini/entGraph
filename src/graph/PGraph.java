@@ -206,6 +206,7 @@ public class PGraph implements Comparable<PGraph> {
 
 		boolean shouldRemove = false;
 		int rank = 1;
+		float currentMaxSim = 1;
 		while ((line = br.readLine()) != null) {
 			line = line.replace("` ", "").trim();
 			if (lIdx % 1000000 == 0) {
@@ -272,6 +273,9 @@ public class PGraph implements Comparable<PGraph> {
 						}
 						// System.out.println("npred: "+nPred);
 						sim = Float.parseFloat(ss[1]);
+						if (ConstantsSoftConst.divideByMax && rank == 1) {
+							currentMaxSim = sim;
+						}
 					} catch (Exception e) {
 						continue;
 					}
@@ -287,6 +291,12 @@ public class PGraph implements Comparable<PGraph> {
 					
 					if (ConstantsGraphs.rankFeats) {
 						sim = 1.0f /rank;
+					}
+					
+					if (ConstantsSoftConst.divideByMax) {
+//						System.out.println("currentMax: " + currentMaxSim);
+						sim /= currentMaxSim;
+//						System.out.println("sim: " + sim);
 					}
 					// else{
 					// System.out.println("gt: "+sim);

@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.maltparser.core.helper.HashSet;
 
 import constants.ConstantsParsing;
 import entailment.PredicateArgumentExtractor;
@@ -26,6 +28,8 @@ public class SherliicProcessing {
 		BufferedReader br = new BufferedReader(new FileReader(origFile));
 		PrintStream op = new PrintStream(new File(root + outFile));
 		br.readLine();
+		int numEnds = 0;
+		Set<String> allTypes = new HashSet<>();
 		while ((line = br.readLine()) != null) {
 //			System.out.println(line);
 			String[] ss = line.split(",");
@@ -43,6 +47,13 @@ public class SherliicProcessing {
 			boolean reverse2 = ss[14].toLowerCase().equals("true");
 			String end1 = ss[8];
 			String end2 = ss[12];
+			allTypes.add(ss[5].split("\\[")[0]);
+			allTypes.add(ss[7].split("\\[")[0]);
+			
+			
+			if (!end1.equals("") || !end2.equals("")) {
+				numEnds++;
+			}
 			
 			if (!addEnd) {
 				end1 = "";
@@ -55,6 +66,11 @@ public class SherliicProcessing {
 			op.println(sent2 + "\t" + sent1 +"\t" + label);
 			
 		}
+		
+		System.out.println("numEnds: " + numEnds);
+		System.out.println("allTypes: " + allTypes);
+		System.out.println("num all types: " + allTypes.size());
+		
 		br.close();
 	}
 	
@@ -187,10 +203,10 @@ public class SherliicProcessing {
 	}
 	
 	static void makeLevyFormatDSAll() throws IOException {
-		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/dev.csv", true, "dev_sherliic_orig.txt");
-		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/dev.csv", false, "dev_sherliic.txt");
-		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/test.csv", true, "test_sherliic_orig.txt");
-		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/test.csv", false, "test_sherliic.txt");
+		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/dev.csv", true, "dev_sherliic_orig_san.txt");
+		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/dev.csv", false, "dev_sherliic_san.txt");
+		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/test.csv", true, "test_sherliic_orig_san.txt");
+		makeLevyFormatDS("/Users/javadhosseini/Desktop/D/research/data/sherliic/test.csv", false, "test_sherliic_san.txt");
 	}
 	
 	static void test() {
@@ -206,8 +222,8 @@ public class SherliicProcessing {
 		makeLevyFormatDSAll();
 //		
 		ConstantsParsing.nbestParses = 10;
-		extractRelationsCCG("dev_sherliic", true);
-		extractRelationsCCG("test_sherliic", true);
+//		extractRelationsCCG("dev_sherliic", true);
+//		extractRelationsCCG("test_sherliic", true);
 		
 	}
 	
