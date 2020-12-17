@@ -91,7 +91,7 @@ A few more parameters in constants.ConstantsSoftConst:
 
 Run:
 
-    java -Xmx220G -cp lib/*:bin graph.softConst.TypePropagateMN.
+    java -Xmx220G -cp lib/*:bin graph.softConst.TypePropagateMN
   
 **Step 7**: Please follow the instructions outlined in https://github.com/mjhosseini/entgraph_eval to evaluate the graphs on the entailment datasets.
   
