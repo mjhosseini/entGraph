@@ -15,14 +15,14 @@ public class ConstantsParsing {
 	//we used to do this in Aggregator: ConstantsAgg.normalizePredicate
 	public static boolean removebasicEvnetifEEModifer = true; //was false for TACL experiments, true for NC.
 	public static boolean parseQuestions = false;// Always set it to false for processing the main corpus
-	public static boolean writeUnaryRels = false;
+	public static boolean writeUnaryRels = true;
 	public static boolean splitBinary2Unary = true;// if false, the unaries will be the ones that are indeed one arg, e.g., John walked
 	public static boolean writeDebugString = true;//should be false when running the experiments
-	public static boolean writeSemParse = false;
+	public static boolean writeSemParse = true;
 	public static boolean filterUntensed = false;// for deduplicating when a tense is added, eg [receiving; receiving.will]->[receiving.will]
 	public static boolean tenseParseTest = false;// for testing parses on tense pair lists.
 	
-	public static boolean snli = false;//false for TACL experiments, true for NC. a few good hacks for the snli ds
+	public static boolean snli = true;//false for TACL experiments, true for NC. a few good hacks for the snli ds
 	public static boolean writeTokenizationInfo = false;
 	public static int nbestParses = 1;
 }

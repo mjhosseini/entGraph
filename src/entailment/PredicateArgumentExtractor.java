@@ -1690,7 +1690,17 @@ public class PredicateArgumentExtractor implements Runnable {
 //		String s = "The 25 countries that she placed under varying degrees of scrutiny.";
 //		String s = "As the global crisis gave way to the Great Recession, Canada’s economy suffered the consequences - mainly through a collapse in exports to the United States, which was in a deep recession. Canada lost output amounting to more than 4 per cent of real GDP and job losses equivalent to almost 2 1/2 per cent of our labour force. But an aggressive policy response helped to prevent a worse outcome. The Bank of Canada eased policy substantially in order to achieve its 2 per cent inflation target: it lowered the overnight policy rate to its lowest possible level (1/4 per cent) and took the unconventional step of making a conditional commitment to hold it there for more than a year ( Chart 5 ).";
 //		String s = "Michael agreed to a contract with the Cleveland Indians.";
-		String s = "Where was Obama born?";
+//		
+//		String s = "Where was Obama born?";
+//		String s = "What city is the birthplace of the author of Macbeth, and hosted Euro 2012?";
+//		String s = "A similar technique is almost impossible to apply to other corps, such as cotton.";
+//		ConstantsParsing.parseQuestions = true;
+//		String s = "How many people live in capital of Texas?";
+//		String s = "Who lives in capital of Texas?";
+//		String s = "William Kermode was born in Tasmania in what.";
+//		String s = "The ad shown during the Super Bowl for the next Jason Bourne movie was paid by Sam.";
+		String s = "Kenya maintains diplomatic relations with Uganda.";
+//		String s = "Directed by Meiert Avis ; written by John Galt ; director of photography , Danny Hiele_;_edited by David Codron ; production designer , Philip Duffin ; produced by Michael Burns , Bic Tran , Marco Mehlitz and Michael Ohoven ; released by Lions Gate Films .";
 //		String s = "It's not clear when Crist might take the stand.";
 		// String s = "John tries to leave on Monday.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";

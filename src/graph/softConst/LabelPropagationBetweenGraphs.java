@@ -164,7 +164,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 						// TODO: added, be
 						// careful
 					}
-
+					
 					propagateOneEdge(pgraph, pgraph_neigh, pred_p, pred_q, sim, compScore2, rawPred_r, rawPred_rp,
 							tp2_plain, tp1_plain, aligned, neighborGraphs, minPairOcc1);
 				}
@@ -177,6 +177,7 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 	void propagateOneEdge(PGraph pgraph, PGraph pgraph_neigh, String pred_p, String pred_q, double sim,
 			double compScore, String rawPred_p, String rawPred_q, String tp1, String tp2, boolean aligned,
 			Set<Integer> neighborGraphs, int minPairOcc1) {
+		System.out.println(pgraph.types + " " + pgraph_neigh.types);
 		if (pgraph_neigh.pred2node.containsKey(pred_p) && pgraph_neigh.pred2node.containsKey(pred_q)) {
 			// System.out.println("propagating from graph: " + pgraph.types + " to graph " +
 			// pgraph_neigh.types + " for "
@@ -190,6 +191,8 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 			DefaultDirectedWeightedGraph<Integer, DefaultWeightedEdge> gMN = pgraph_neigh.gMN;
 			int p = pgraph_neigh.pred2node.get(pred_p).idx;
 			int q = pgraph_neigh.pred2node.get(pred_q).idx;
+			
+			System.out.println("p,q: " + p + " " + q);
 
 			double w;
 			DefaultWeightedEdge ee;
@@ -235,6 +238,9 @@ public class LabelPropagationBetweenGraphs implements Runnable {
 					pgraph_neigh.edgeToMNWeight.put(edgeStr, sumCoefs);
 				}
 			}
+		}
+		else {
+			System.out.println("did not have pred_p or pred_q");
 		}
 	}
 
