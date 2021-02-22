@@ -31,7 +31,11 @@ public class EntGraphBuilder {
 		// PGraph pgraph = new PGraph(root+"location#person_sim.txt");
 
 		// TODO: be careful
-		List<Float> lmbdas = EntGraphBuilder.getLambdas1();// (.08f);
+		
+		List<Float> lmbdas = EntGraphBuilder.getLambdas1();
+		if (!ConstantsTrans.checkFrgVio) {
+			lmbdas = EntGraphBuilder.getLambdas_HTL();
+		}
 
 		// List<Float> lmbdas = new ArrayList<>();
 		// // lmbdas.add(.04f);
@@ -173,7 +177,27 @@ public class EntGraphBuilder {
 		lmbdas.add(.06f);
 		lmbdas.add(.1f);
 		lmbdas.add(.2f);
+		lmbdas.add(.3f);
+		lmbdas.add(.4f);
+		lmbdas.add(.5f);
 		// lmbdas.remove(0);//TODO: remove this
+		return lmbdas;
+	}
+	
+	public static List<Float> getLambdas_HTL() {
+		List<Float> lmbdas = new ArrayList<>();
+		float maxLmbda = .05f;
+		int numLmbdas = 7;
+		float minLambda = .02f;
+		for (float lmbda = minLambda; lmbda <= maxLmbda; lmbda += (maxLmbda - minLambda) / (numLmbdas - 1)) {
+			lmbdas.add(lmbda);
+		}
+		lmbdas.add(.06f);
+		lmbdas.add(.1f);
+		lmbdas.add(.2f);
+		lmbdas.add(.3f);
+		lmbdas.add(.4f);
+		lmbdas.add(.5f);
 		return lmbdas;
 	}
 

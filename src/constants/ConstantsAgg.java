@@ -21,14 +21,12 @@ public class ConstantsAgg {
 	public static final boolean normalizePredicate = true;// if rawExtraction, wouldn't matter.
 	public static final boolean keepWillTense = false;// Must be false for normal entailment graphs
 	public static final boolean backupToStanNER = true;
-	public static final boolean onlyBinc = true;//vs all similarity measures. use to save memory and storage!
-	
+	public static final boolean onlyBinc = true;// vs all similarity measures. use to save memory and storage!
+
 	public static boolean removeEventEventModifiers = true;
 	public static boolean removeStopPreds = true;
-	public static boolean removePronouns = false;//TODO: You must move this to parsing 
+	public static boolean removePronouns = false;// TODO: You must move this to parsing
 	public static boolean cutoffBasedonNSGraphs = true;// use NSpike-based cutoffs
-	
-	
 
 	// cutoffs
 	public static int minArgPairForPred = 3;// 100;
@@ -39,9 +37,11 @@ public class ConstantsAgg {
 	public static int maxPredsTotal = -1;// 35000;
 
 	public static final int minPredForArg = -1;// min num of unique predicates for
-	public static boolean removeGGFromTopPairs = true;// Good for NC. whether we should remove triples with two general entities
+	public static boolean removeGGFromTopPairs = true;// Good for NC. whether we should remove triples with two general
+														// entities
 														// from top pairs
-	public static boolean removeGGFromThings = true;// Good for NC. whether we should remove triples with two general entities
+	public static boolean removeGGFromThings = true;// Good for NC. whether we should remove triples with two general
+													// entities
 	// from any thing graph
 
 	public static final int numThreads = 20;
@@ -55,30 +55,45 @@ public class ConstantsAgg {
 	public static EntailGraphFactoryAggregator.LinkPredModel linkPredModel = EntailGraphFactoryAggregator.LinkPredModel.ConvE;
 
 	// public static String relAddress = "news_gen12.json";
-	// public static String relAddress = "news_genC.json";
-	public static String relAddress = "news_genC_GG.json";
+	// public static String relAddress = "news_genC_GG.json";
+	public static String relAddress = "news_genC_GG_20per.json";
 	public static String NERAddress = "data/stan_NER/news_genC_stanNER.json";
 
-//	public static String simsFolder = "typedEntGrDir_aida_gen12_UT_hier_back" + minArgPairForPred + "_"
-//			+ minPredForArgPair;
+	// public static String simsFolder = "typedEntGrDir_aida_gen12_UT_hier_back" +
+	// minArgPairForPred + "_"
+	// + minPredForArgPair;
 
 	// public static String simsFolder = "typedEntGrDirC_NSBased_f20_thing60_60_" +
 	// minArgPairForPred + "_"
 	// + minPredForArgPair + "_test";
-//	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
-//			+ "thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_week";
-//	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
-//			+ "f20_GG_noGGThing_year";
-	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
+	// public static String simsFolder = "typedEntGrDirC_NSBased_" +
+	// minArgPairForPred + "_" + minPredForArgPair
+	// + "thing_80_location_thing_times4_f20_GG_UT_back_noGGThing_week";
+	// public static String simsFolder = "typedEntGrDirC_NSBased_" +
+	// minArgPairForPred + "_" + minPredForArgPair
+	// + "f20_GG_noGGThing_year";
+	// public static String simsFolder = "typedEntGrDirC_NSBased_" +
+	// minArgPairForPred + "_" + minPredForArgPair
+	// + "thloc_t6_noGG_f20Thing";
+
+	public static String simsFolder = "typedEntGrDirC_20per_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
 			+ "thloc_t6_noGG_f20Thing";
-//	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
-//			+ "_f20_GG_noGGThing_week";
-	
-//	public static String simsFolder = "typedEntGrDirC_CN_NBEE_" + minArgPairForPred + "_" + minPredForArgPair
-//			+ "_f20_GG_noGGThing_week";
-	
-//	public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
-//			+ "_f20_GG_week";
+
+	// public static String simsFolder = "typedEntGrDirC_NSBased_" +
+	// minArgPairForPred + "_" + minPredForArgPair
+	// + "thloc_t2_noGG_f20Thing_hier";
+
+	// public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" +
+	// minArgPairForPred + "_" + minPredForArgPair
+	// + "_f20_GG_noGGThing_week";
+
+	// public static String simsFolder = "typedEntGrDirC_CN_NBEE_" +
+	// minArgPairForPred + "_" + minPredForArgPair
+	// + "_f20_GG_noGGThing_week";
+
+	// public static String simsFolder = "typedEntGrDirC_CN_NBEE_NSBased_" +
+	// minArgPairForPred + "_" + minPredForArgPair
+	// + "_f20_GG_week";
 
 	public static String foreinTypesAddress = "data/german_types.txt";// only important if isForeign=True
 
@@ -87,21 +102,19 @@ public class ConstantsAgg {
 
 	public static boolean computeProbELSims = false;
 	public static boolean linkPredBasedRandWalk = false;
-	
+
 	public static String NSSizesAddress;
 	public static String NSPredSizesAddress;
-	
+
 	static {
-		
+
 		if (ConstantsAgg.addTimeStampToFeats) {
 			NSSizesAddress = "data/NS_sizes_week_3_3.txt";
 			NSPredSizesAddress = "data/NS_pred_sizes_week_3_3.txt";
-		}
-		else if (ConstantsAgg.figerHierarchy) {
+		} else if (ConstantsAgg.figerHierarchy) {
 			NSSizesAddress = "data/NS_sizes_hier_3_2.txt";
 			NSPredSizesAddress = "data/NS_pred_sizes_hier_3_2.txt";
-		}
-		else {
+		} else {
 			NSSizesAddress = "data/NS_sizes.txt";
 			NSPredSizesAddress = "data/NS_pred_sizes.txt";
 		}

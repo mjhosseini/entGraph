@@ -5,7 +5,7 @@ import graph.PGraph;
 public class ConstantsTrans {
 
 	public static PGraph.TransitiveMethod transMethod = PGraph.TransitiveMethod.HTLFRG;
-	public static boolean checkFrgVio = true;
+	public static boolean checkFrgVio = false;
 	public static boolean fullTNF = false;// Only relevant for TNF. true: Berant's TNF, false: Berant's HTL(-FRG)
 
 	public static int specILPMaxClusterAllowed = 100;// for SpectralILP, won't be used for HTL-FRG
@@ -23,12 +23,13 @@ public class ConstantsTrans {
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	// public static String graphPostFix = "_" + transMethod +
 	// "_conf_noconfE_test"+".txt";
-	public static String graphPostFix = "_" + transMethod;
+	public static String graphPostFix = "_" + transMethod +"_conf_final_mr100_.02"+".txt";
 	// +"_conf_nodisc_noconfE_san"+".txt";
 	// public static double discountNegScoresHTL = 1;
 	static {
 		if (!checkFrgVio && transMethod == PGraph.TransitiveMethod.HTLFRG) {
-			graphPostFix = "_HTL.txt";//"HTL_conf_nodisc_noconfE_san.txt";
+//			graphPostFix = "_HTL.txt";//"HTL_conf_nodisc_noconfE_san.txt";
+			graphPostFix = "_HTL_conf_final_mr100_.02"+".txt";
 		}
 
 	}
@@ -49,11 +50,24 @@ public class ConstantsTrans {
 		//normal case:
 //		ConstantsGraphs.removeEventEventModifers = true;
 //		ConstantsGraphs.removeNegs = true;
+		
+		//added on 16th Sep 2020, used to replicate results on NS BInc
+		ConstantsGraphs.removeEventEventModifers = false;//false for both NS, true for NC
+		ConstantsGraphs.removeNegs = false;//false for NS and NC
+		ConstantsGraphs.removeStopPreds = false;///false for both NS, true for NC
+		ConstantsGraphs.edgeThreshold = 0; // 0 for both, I think! (could be .01 for NS)
+		
+//		ConstantsGraphs.removeEventEventModifers = true;
+//		ConstantsGraphs.removeNegs = true;
+//		ConstantsGraphs.removeStopPreds = false;
+//		ConstantsGraphs.edgeThreshold = 0;
+		
+		ConstantsGraphs.maxRank = 100;//-1 for NS, 100 for NC.
+		//added on 16th Sep 2020
+		
 		ConstantsGraphs.sortEdgesConfidenceBased = true;
-		ConstantsGraphs.rankFeats = true;
 		if (ConstantsGraphs.sortEdgesConfidenceBased) {
 			PGraph.setPredToOcc(ConstantsGraphs.root);
 		}
 	}
-
 }

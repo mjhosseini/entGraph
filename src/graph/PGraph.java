@@ -28,6 +28,7 @@ import constants.ConstantsMNEmbIter;
 import constants.ConstantsSoftConst;
 import entailment.Util;
 import graph.EmbIter.MNEmbIter;
+import graph.softConst.TypePropagateMN;
 
 //entry point for running transitive graph making methods + iterative embedding (which never worked well)
 public class PGraph implements Comparable<PGraph> {
@@ -48,6 +49,7 @@ public class PGraph implements Comparable<PGraph> {
 		featNameToStr.put(FeatName.Iter, "iter 1");
 		featNameToStr.put(FeatName.rw, "rand walk 0 sims");
 		featNameToStr.put(FeatName.contextualized, "contextualized sims");
+		featNameToStr.put(FeatName.Global, "global sims");
 		
 	}
 
@@ -207,6 +209,7 @@ public class PGraph implements Comparable<PGraph> {
 		boolean shouldRemove = false;
 		int rank = 1;
 		float currentMaxSim = 1;
+		String currentPred = "";
 		while ((line = br.readLine()) != null) {
 			line = line.replace("` ", "").trim();
 			if (lIdx % 1000000 == 0) {
@@ -228,6 +231,7 @@ public class PGraph implements Comparable<PGraph> {
 				continue;
 			} else if (line.startsWith("predicate:")) {
 				String pred = line.substring(11);
+				currentPred = pred;
 				rank = 1;
 
 				if (shouldRemovePred(pred)) {
@@ -273,9 +277,11 @@ public class PGraph implements Comparable<PGraph> {
 						}
 						// System.out.println("npred: "+nPred);
 						sim = Float.parseFloat(ss[1]);
-						if (ConstantsSoftConst.divideByMax && rank == 1) {
-							currentMaxSim = sim;
-						}
+//						if (ConstantsSoftConst.divideByMax && rank == 1) {
+//							String rawPred = currentPred.split("#")[0];
+//							System.out.println("rawPred, maxSim: " + rawPred + " " + TypePropagateMN.rawPred2MaxScore.get(rawPred));
+//							currentMaxSim = TypePropagateMN.rawPred2MaxScore.get(rawPred);
+//						}
 					} catch (Exception e) {
 						continue;
 					}
@@ -293,11 +299,12 @@ public class PGraph implements Comparable<PGraph> {
 						sim = 1.0f /rank;
 					}
 					
-					if (ConstantsSoftConst.divideByMax) {
+//					if (ConstantsSoftConst.divideByMax) {
 //						System.out.println("currentMax: " + currentMaxSim);
-						sim /= currentMaxSim;
+//						sim /= currentMaxSim;
+//						sim = Math.min(sim, 1);
 //						System.out.println("sim: " + sim);
-					}
+//					}
 					// else{
 					// System.out.println("gt: "+sim);
 					// }
@@ -365,6 +372,87 @@ public class PGraph implements Comparable<PGraph> {
 		br.close();
 
 	}
+	
+//	public static void setRawPred2MinOfMaxScore(String fname) throws IOException {
+//		BufferedReader br = new BufferedReader(new FileReader(fname));
+//		String line = "";
+//		int lIdx = 0;
+//		boolean first = true;
+//		String simName = "";
+//
+//		boolean shouldRemove = false;
+//		int rank = 1;
+//		String currentRawPred = "";
+//		while ((line = br.readLine()) != null) {
+//			line = line.replace("` ", "").trim();
+//			if (lIdx % 1000000 == 0) {
+//				System.out.println("lidx: " + lIdx);
+//			}
+//			lIdx++;
+//			if (first) {
+//				// this.name = line;
+//				
+//				line = line.replace("types: ", "").replace(",", " ");
+//				line = line.substring(0, line.indexOf(' '));
+//				first = false;
+//			} else if (line.equals("")) {
+//				continue;
+//			} else if (line.startsWith("predicate:")) {
+//				String pred = line.substring(11);
+//				rank = 1;
+//				currentRawPred = pred.split("#")[0];
+//
+//				if (shouldRemovePred(pred)) {
+//					shouldRemove = true;
+//					continue;
+//				} else {
+//					shouldRemove = false;
+//				}
+//			} else {
+//				if (shouldRemove) {
+//					continue;
+//				}
+//				if (line.startsWith("num neighbors:")) {
+//					continue;
+//				}
+//				if (line.endsWith("sims") || line.endsWith("sim")) {
+//					simName = line.toLowerCase();
+//				} else {
+//
+//					if (!simName.contains(featNameToStr.get(ConstantsGraphs.featName)) || simName.contains("unary")
+//							|| simName.contains("sep")) {
+//						continue;
+//					}
+//					// if (!simName.contains("iter 1")) {
+//					// continue;
+//					// }
+//					String nPred = "";
+//					float sim = 0;
+//
+//					try {
+//						String[] ss = line.split(" ");
+//						nPred = ss[0];
+//						if (shouldRemovePred(nPred)) {
+//							continue;
+//						}
+//						// System.out.println("npred: "+nPred);
+//						sim = Float.parseFloat(ss[1]);
+////						if (ConstantsSoftConst.divideByMax && rank == 1) {
+////							if (!TypePropagateMN.rawPred2MaxScore.containsKey(currentRawPred) || TypePropagateMN.rawPred2MaxScore.get(currentRawPred) < sim) {
+////								TypePropagateMN.rawPred2MaxScore.put(currentRawPred, sim);
+////							}
+////						}
+//						rank++;
+//					} catch (Exception e) {
+//						continue;
+//					}
+//				}
+//			}
+//		}
+//
+//		br.close();
+//
+//	}
 
 	public void insertNode(Node n) {
 		// System.out.println("adding node: "+n.id+" "+n.idx);
@@ -597,7 +685,7 @@ public class PGraph implements Comparable<PGraph> {
 	}
 
 	public enum FeatName {
-		Cos, WeedProb, WeedPMI, Lin, BINC, WeedPMIPr, Iter, rw, contextualized
+		Cos, WeedProb, WeedPMI, Lin, BINC, WeedPMIPr, Iter, rw, contextualized, Global
 	}
 
 	public enum TransitiveMethod {

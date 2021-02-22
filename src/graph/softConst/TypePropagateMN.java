@@ -2,6 +2,7 @@ package graph.softConst;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ public class TypePropagateMN {
 	static Map<String, Double> predTypeCompatibility;// p#t1#t2#t3#t4 (it will be symmetric) //beta values
 	static Map<String, Double> beta1s;// p#t1#t3(it will be symmetric) // it won't be used if not factorized
 	static Map<String, Double> beta2s;// p#t2#t4(it will be symmetric) // it won't be used if not factorized
+//	public static Map<String, Float> rawPred2MaxScore;
 	static int allPropEdges = 0;
 	static double objChange = 0;
 	public static long numBetaOne = 0;
@@ -55,12 +57,45 @@ public class TypePropagateMN {
 		// } catch (FileNotFoundException e) {
 		// e.printStackTrace();
 		// }
+//		if (ConstantsSoftConst.divideByMax) {
+//			setRawPred2MinOfMaxScore(root);
+//		}
 		readPGraphs(root);
 		System.gc();
 		System.err.println("after reading all pgraphs");
 		memStat();
 
 	}
+	
+//	public void setRawPred2MinOfMaxScore(String root) {
+//		
+//		rawPred2MaxScore = new HashMap<>();
+//		File folder = new File(root);
+//		File[] files = folder.listFiles();
+//
+//		Arrays.sort(files);
+//
+//		for (File f : files) {
+//
+//			String fname = f.getName();
+//
+//			if (!fname.contains(ConstantsGraphs.suffix)) {
+//				continue;
+//			}
+//
+//			System.out.println("fname setMinOfMax: " + fname);
+//			try {
+//				PGraph.setRawPred2MinOfMaxScore(root + fname);
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//
+//		// for (PGraph pgraph: PGraph.pGraphs) {
+//		// pgraph.setSortedEdges();
+//		// }
+//
+//	}
 
 	static void memStat() {
 		int mb = 1024 * 1024;
