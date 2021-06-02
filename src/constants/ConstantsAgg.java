@@ -20,7 +20,7 @@ public class ConstantsAgg {
 	public static boolean addTimeStampToFeats = false;
 	public static final boolean normalizePredicate = true;// if rawExtraction, wouldn't matter.
 	public static final boolean keepWillTense = false;// Must be false for normal entailment graphs
-	public static final boolean backupToStanNER = true;
+	public static final boolean backupToStanNER = true; // false for TACL experiments
 	public static final boolean onlyBinc = true;// vs all similarity measures. use to save memory and storage!
 
 	public static boolean removeEventEventModifiers = true;
@@ -55,9 +55,12 @@ public class ConstantsAgg {
 	public static EntailGraphFactoryAggregator.LinkPredModel linkPredModel = EntailGraphFactoryAggregator.LinkPredModel.ConvE;
 
 	// public static String relAddress = "news_gen12.json";
-	// public static String relAddress = "news_genC_GG.json";
-	public static String relAddress = "news_genC_GG_20per.json";
+	 public static String relAddress = "news_genC_GG.json";
+//	public static String relAddress = "news_genC_GG_20per.json";
+//	public static String NERAddress = "data/stan_NER/news_genC_stanNER.json";
 	public static String NERAddress = "data/stan_NER/news_genC_stanNER.json";
+	
+//	public static String relAddress = "OIE/oie.json";
 
 	// public static String simsFolder = "typedEntGrDir_aida_gen12_UT_hier_back" +
 	// minArgPairForPred + "_"
@@ -76,8 +79,10 @@ public class ConstantsAgg {
 	// minArgPairForPred + "_" + minPredForArgPair
 	// + "thloc_t6_noGG_f20Thing";
 
-	public static String simsFolder = "typedEntGrDirC_20per_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
+	public static String simsFolder = "typedEntGrDirC_NSBased_" + minArgPairForPred + "_" + minPredForArgPair
 			+ "thloc_t6_noGG_f20Thing";
+	
+//	public static String simsFolder = "typedEntGrDir_oie_" + minArgPairForPred + "_" + minPredForArgPair;
 
 	// public static String simsFolder = "typedEntGrDirC_NSBased_" +
 	// minArgPairForPred + "_" + minPredForArgPair

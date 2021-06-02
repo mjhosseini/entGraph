@@ -27,12 +27,14 @@ public class UngroundedSemParseInfo {
 	public UngroundedSemParseInfo(List<LexicalGraph> graphs, String processedSentence, int startTokenIdx,
 			boolean tokenize) {
 		this.graphs = graphs;
+		
 		tokens = new ArrayList<String>();
 		tokenLemmas = new ArrayList<>();
 		
 		if (!tokenize || graphs.size() == 0) {
 			return;
 		}
+		
 		this.startTokenIdx = startTokenIdx;
 		LexicalGraph ungroundedGraph = graphs.get(0);
 		tokens = new ArrayList<String>();
@@ -122,12 +124,7 @@ public class UngroundedSemParseInfo {
 		}
 
 		// then check the left window.
-		for (int idx = Math.max(0, mainIdx - startTokenIdx - windowSize); idx < mainIdx - startTokenIdx; idx++) { // TODO:
-																													// check
-																													// if
-																													// 5
-																													// is
-																													// good
+		for (int idx = Math.max(0, mainIdx - startTokenIdx - windowSize); idx < mainIdx - startTokenIdx; idx++) {
 
 			if (predTokens.contains(tokens.get(idx))) {
 				predIdxes.add((idx + startTokenIdx));
@@ -152,6 +149,23 @@ public class UngroundedSemParseInfo {
 			System.out.println("pred idxes: " + ret);
 		}
 
+		return ret;
+	}
+	
+	public String getArgTokenIdxes(int entIdex, String arg) {
+		if (ConstantsParsing.writeDebugString) {
+			System.out.println("arg: " + arg);
+		}
+		int start = idxToTokenIdx[entIdex];
+		int len = arg.split("-").length;
+		
+		String ret = start +"";
+		for (int i=1; i<len; i++) {
+			ret += "_" + (start+i);
+		}
+		if (ConstantsParsing.writeDebugString) {
+			System.out.println("argTokIdxes: " + ret);
+		}
 		return ret;
 	}
 

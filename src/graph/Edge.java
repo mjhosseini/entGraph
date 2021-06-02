@@ -158,7 +158,7 @@ public class Edge implements Comparable<Edge> {
 			int occ2 = PGraph.predToOcc.get(pgraph.nodes.get(j).id);
 			confidence = Math.max((Math.min(occ1, occ2)), 1);
 		} catch (Exception ex) {
-
+			ex.printStackTrace();
 		}
 		return confidence;
 	}

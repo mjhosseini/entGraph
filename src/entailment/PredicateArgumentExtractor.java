@@ -327,6 +327,11 @@ public class PredicateArgumentExtractor implements Runnable {
 		return ret;
 	}
 
+	public String[] extractPredArgsStrsOIE(String text) {
+		// TODO
+		return null;
+	}
+
 	public String[] extractPredArgsStrs(String text)
 			throws ArgumentValidationException, IOException, InterruptedException {
 		return extractPredArgsStrs(text, 0, false, acceptableGEStrs.contains("GG"), null);
@@ -383,13 +388,13 @@ public class PredicateArgumentExtractor implements Runnable {
 
 		if (ConstantsParsing.writeTokenizationInfo) {
 			List<String> tokens = new ArrayList<>();
-			
+
 			for (UngroundedSemParseInfo ungroundedSemParseInfo : ungroundedSemParseInfos) {
-				for (String token: ungroundedSemParseInfo.tokens) {
+				for (String token : ungroundedSemParseInfo.tokens) {
 					tokens.add(token);
 				}
 			}
-			
+
 			String tokensStr = String.join(" ", tokens);
 			mainStr += "#tokens: " + tokensStr + "\n";
 			mainStrOnlyNEs += "#tokens: " + tokensStr + "\n";
@@ -687,7 +692,7 @@ public class PredicateArgumentExtractor implements Runnable {
 					twoHopVP(relInfos, idx2Node, ungroundedGraph.getEdges(), modifierStr, arg1, negated, arg1Index,
 							arg2Index, leftPred, rightPred, eventIndex, dsStr, acceptGG, sentIdx,
 							ungroundedSemParseInfo);
-					
+
 					for (BinaryRelInfo relInfo : relInfos) {
 						if (!acceptGG && !acceptableGEStrs.contains(relInfo.GEStr)) {
 							continue;
@@ -706,7 +711,7 @@ public class PredicateArgumentExtractor implements Runnable {
 							}
 
 							first = false;
-							
+
 							if (relInfoMainStrs.contains(relInfo.mainStr)) {
 								continue;
 							}
@@ -987,9 +992,18 @@ public class PredicateArgumentExtractor implements Runnable {
 			String[] parts = mainStr.split(" ");
 			String basePredicate = parts[0];
 			int eventIndex = Integer.parseInt(parts[3]);
+
+			// update predicateTokenIdxes
 			String predicateTokenIdxes = ungroundedSemParseInfo.getPredicateTokenIdxes(eventIndex, basePredicate);
-			int tokenInfoIdx = mainStr.lastIndexOf(" ");
-			mainStr = mainStr.substring(0, tokenInfoIdx) + " " + predicateTokenIdxes + "\n";
+
+			String[] ss2 = mainStr.split(" ");
+			ss2[6] = predicateTokenIdxes;
+
+			mainStr = String.join(" ", ss2);
+
+			// int tokenInfoIdx = mainStr.lastIndexOf(" ");
+			// mainStr = mainStr.substring(0, tokenInfoIdx) + " " + predicateTokenIdxes +
+			// "\n";
 		}
 
 		return mainStr;
@@ -1278,14 +1292,14 @@ public class PredicateArgumentExtractor implements Runnable {
 			int arg2Index, int eventIndex, int accepted, boolean foundNonTrivalDSStr,
 			HashMap<Integer, LexicalItem> idx2Node, int sentIdx, UngroundedSemParseInfo ungroundedSemParseInfo) {
 
-
 		if (ConstantsParsing.normalizePredicate) {
-			//predArgStr: predicate + " " + arg1 + " " + arg2 + " " + eventIdx
-			//we don't care about the order of input params arg1, arg2, arg1index, arg2index
+			// predArgStr: predicate + " " + arg1 + " " + arg2 + " " + eventIdx
+			// we don't care about the order of input params arg1, arg2, arg1index,
+			// arg2index
 			String[] ss = predArgStr.split(" ");
 			String[] predicateLemma = Util.getPredicateNormalized(ss[0], true);
 			String thisPred = predicateLemma[0];
-			
+
 			String thisArg1;
 			String thisArg2;
 
@@ -1294,20 +1308,31 @@ public class PredicateArgumentExtractor implements Runnable {
 				thisArg1 = ss[1];
 				thisArg2 = ss[2];// type1 and type2 are fine
 			} else {
-				swapped = !swapped;//swapping one more time
+				swapped = !swapped;// swapping one more time
 				thisArg1 = ss[2];
 				thisArg2 = ss[1];
 			}
-			
-			predArgStr = thisPred + " " + thisArg1 + " " + thisArg2 + " " + ss[3];  
-			
+
+			predArgStr = thisPred + " " + thisArg1 + " " + thisArg2 + " " + ss[3];
+
 		}
-		
-		
+
 		String predicateTokenIdxes = "";
+		String entitiesTokenIdxes = "";
 		if (ConstantsParsing.writeTokenizationInfo) {
 			String basePredicate = predArgStr.split(" ")[0];
 			predicateTokenIdxes = ungroundedSemParseInfo.getPredicateTokenIdxes(eventIndex, basePredicate);
+
+			String entity1TokenIdxes, entity2TokenIdxes;
+			if (!swapped) {
+				entity1TokenIdxes = ungroundedSemParseInfo.getArgTokenIdxes(arg1Index, arg1);
+				entity2TokenIdxes = ungroundedSemParseInfo.getArgTokenIdxes(arg2Index, arg2);
+			} else {
+				entity1TokenIdxes = ungroundedSemParseInfo.getArgTokenIdxes(arg2Index, arg2);
+				entity2TokenIdxes = ungroundedSemParseInfo.getArgTokenIdxes(arg1Index, arg1);
+			}
+
+			entitiesTokenIdxes = entity1TokenIdxes += " " + entity2TokenIdxes;
 		}
 
 		String GEStr = "";
@@ -1330,17 +1355,22 @@ public class PredicateArgumentExtractor implements Runnable {
 		relInfo.eventIdx = eventIndex;
 		relInfo.GEStr = GEStr;
 		relInfo.mainStr += predArgStr + " " + GEStr + " " + sentIdx
-				+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "") + "\n";
+				+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes + " " + entitiesTokenIdxes) : "")
+				+ "\n";
 
 		if (accepted == 2) {
 			relInfo.mainStrOnlyNEs += predArgStr + " " + GEStr + " " + sentIdx
-					+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "") + "\n";
+					+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes + " " + entitiesTokenIdxes)
+							: "")
+					+ "\n";
 		}
 		relInfo.dsStr = "";
 		if (eventIndex == arg1Index || eventIndex == arg2Index || arg1Index == arg2Index) {
 			if (!foundNonTrivalDSStr) {
 				relInfo.dsStr = predArgStr + " " + GEStr + " " + sentIdx
-						+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "");
+						+ (ConstantsParsing.writeTokenizationInfo
+								? (" " + predicateTokenIdxes + " " + entitiesTokenIdxes)
+								: "");
 			}
 			// System.out.println("not interesting: " + eventIndex + " " + arg1Index + "" +
 			// arg2Index + " " + arg1 + " "
@@ -1348,7 +1378,8 @@ public class PredicateArgumentExtractor implements Runnable {
 		} else {
 			relInfo.foundInteresting = true;
 			relInfo.dsStr = predArgStr + " " + GEStr + " " + sentIdx
-					+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes) : "");
+					+ (ConstantsParsing.writeTokenizationInfo ? (" " + predicateTokenIdxes + " " + entitiesTokenIdxes)
+							: "");
 
 		}
 		// if (relInfo.dsStr.equals("")) {
@@ -1679,30 +1710,41 @@ public class PredicateArgumentExtractor implements Runnable {
 		// the \\\"global race\\\" and namechecked India, China, Indonesia, Malaysia,
 		// Brazil, Mexico and Turkey as examples of countries that Britain would fall
 		// behind without reforms.";
-		// String s = "Cameron said the coalition's main aim was to stay ahead in the
-		// \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil,
-		// Mexico and Turkey as examples of countries that Britain would fall behind
-		// without reforms.";
-//		String s = "Barack Obama decided to visit Hawaii.";
-//		String s = "___         Associated Press writers Ali Akbar Dareini in Tehran, Jim Heintz in Moscow and Elena Becatoros in Athens contributed to this report.";
-//		String s = "Obama visited Hawaii. What did he do? Obama was visiting Hawaii.";
-//		String s = "Bugs are eaten by domesticated fowls. Bugs are eaten by fowls. Fowls eats Bugs.";
-//		String s = "The 25 countries that she placed under varying degrees of scrutiny.";
-//		String s = "As the global crisis gave way to the Great Recession, Canada’s economy suffered the consequences - mainly through a collapse in exports to the United States, which was in a deep recession. Canada lost output amounting to more than 4 per cent of real GDP and job losses equivalent to almost 2 1/2 per cent of our labour force. But an aggressive policy response helped to prevent a worse outcome. The Bank of Canada eased policy substantially in order to achieve its 2 per cent inflation target: it lowered the overnight policy rate to its lowest possible level (1/4 per cent) and took the unconventional step of making a conditional commitment to hold it there for more than a year ( Chart 5 ).";
-//		String s = "Michael agreed to a contract with the Cleveland Indians.";
-//		
-//		String s = "Where was Obama born?";
-//		String s = "What city is the birthplace of the author of Macbeth, and hosted Euro 2012?";
-//		String s = "A similar technique is almost impossible to apply to other corps, such as cotton.";
-//		ConstantsParsing.parseQuestions = true;
-//		String s = "How many people live in capital of Texas?";
-//		String s = "Who lives in capital of Texas?";
-//		String s = "William Kermode was born in Tasmania in what.";
-//		String s = "The ad shown during the Super Bowl for the next Jason Bourne movie was paid by Sam.";
+//		String s = "Cameron said the coalition's main aim was to stay ahead in the \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
+		String s = "Alex Smith died in home in London";
+		// Fowls eats Bugs.";
+		// String s = "The 25 countries that she placed under varying degrees of
+		// scrutiny.";
+		// String s = "As the global crisis gave way to the Great Recession, Canada’s
+		// economy suffered the consequences - mainly through a collapse in exports to
+		// the United States, which was in a deep recession. Canada lost output
+		// amounting to more than 4 per cent of real GDP and job losses equivalent to
+		// almost 2 1/2 per cent of our labour force. But an aggressive policy response
+		// helped to prevent a worse outcome. The Bank of Canada eased policy
+		// substantially in order to achieve its 2 per cent inflation target: it lowered
+		// the overnight policy rate to its lowest possible level (1/4 per cent) and
+		// took the unconventional step of making a conditional commitment to hold it
+		// there for more than a year ( Chart 5 ).";
+		// String s = "Michael agreed to a contract with the Cleveland Indians.";
+		//
+		// String s = "Where was Obama born?";
+		// String s = "What city is the birthplace of the author of Macbeth, and hosted
+		// Euro 2012?";
+		// String s = "A similar technique is almost impossible to apply to other corps,
+		// such as cotton.";
+		// ConstantsParsing.parseQuestions = true;
+		// String s = "How many people live in capital of Texas?";
+		// String s = "Who lives in capital of Texas?";
+		// String s = "William Kermode was born in Tasmania in what.";
+		// String s = "The ad shown during the Super Bowl for the next Jason Bourne
+		// movie was paid by Sam.";
 //		String s = "The Indians signed free agent center fielder Michael Bourn to a four-year, $48 million contract.";
-		String s = "Barack Obama is visiting New York.";
-//		String s = "Directed by Meiert Avis ; written by John Galt ; director of photography , Danny Hiele_;_edited by David Codron ; production designer , Philip Duffin ; produced by Michael Burns , Bic Tran , Marco Mehlitz and Michael Ohoven ; released by Lions Gate Films .";
-//		String s = "It's not clear when Crist might take the stand.";
+		// String s = "Barack Obama arrived at New York.";
+		// String s = "Directed by Meiert Avis ; written by John Galt ; director of
+		// photography , Danny Hiele_;_edited by David Codron ; production designer ,
+		// Philip Duffin ; produced by Michael Burns , Bic Tran , Marco Mehlitz and
+		// Michael Ohoven ; released by Lions Gate Films .";
+		// String s = "It's not clear when Crist might take the stand.";
 		// String s = "John tries to leave on Monday.";
 		// String s = "Two women having drinks and smoking cigarettes at the bar";
 		// String s = "Stay in contact with friends – in person. Put down the
@@ -1718,6 +1760,7 @@ public class PredicateArgumentExtractor implements Runnable {
 		// String s = "A man is walking and he is talking to his friend";
 		// String s = "The man is outdoors.";
 		// String s = "Man on bike with female standing on rear of back with arms around
+		// String s = "The man with blue shirt arrived in London.";
 		// his neck.";
 		// String s = "A woman in a black coat eats dinner while her dog looks on.";
 

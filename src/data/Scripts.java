@@ -801,23 +801,24 @@ public class Scripts {
 
 	static void makeDirFromAll(String f_all, String f_dir, String f_rels_all) throws IOException {
 		String root = "../../python/gfiles/ent/";
-		BufferedReader br = new BufferedReader(new FileReader(root + f_dir));
-		Set<String> dir_lines = new HashSet<>();
+		
+		Map<String, String> line2rels = new HashMap<>();
 		String line = null;
-		while ((line = br.readLine()) != null) {
-			dir_lines.add(line);
-		}
-
-		br.close();
-
-		br = new BufferedReader(new FileReader(root + f_all));
+		BufferedReader br = new BufferedReader(new FileReader(root + f_all));
 		BufferedReader br_rels = new BufferedReader(new FileReader(root + f_rels_all));
+		
 		while ((line = br.readLine()) != null) {
 			String line2 = br_rels.readLine();
-			if (dir_lines.contains(line)) {
-				System.out.println(line2);
-			}
+			line2rels.put(line, line2);
 		}
+		
+		br.close();
+		br = new BufferedReader(new FileReader(root + f_dir));
+		
+		while ((line = br.readLine()) != null) {
+			System.out.println(line2rels.get(line));
+		}
+
 		br_rels.close();
 		br.close();
 
@@ -964,7 +965,7 @@ public class Scripts {
 				System.out.println("bad line: " + line);
 				continue;
 			}
-			
+
 		}
 		br.close();
 		op.close();
@@ -983,8 +984,8 @@ public class Scripts {
 		// trueCase();
 
 		// getCommaTriple(rel, triple)
-		
-		fixIssueLinking();
+
+//		fixIssueLinking();
 
 		// convertZeichnerToLevyFormat("zeichner0.txt");
 		// getNAACLFormatCosSubset("naacl_levy_format0.txt", "naacl_levy_format.txt",
@@ -996,7 +997,7 @@ public class Scripts {
 		// convertConsToEntGraph();
 		// convertEntGraphToConstraints();
 
-		// makeDirFromAll("test.txt","test_dir.txt","test_rels.txt");
+		makeDirFromAll("test.txt", "test_dir.txt", "test_rels.txt");
 
 		// extractRelationsSNLIAll();
 

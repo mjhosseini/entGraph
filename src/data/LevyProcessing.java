@@ -525,6 +525,44 @@ public class LevyProcessing {
 
 	}
 
+	// We want to check if arg1 and arg2 correspond to parsed [relArg1 and relArg2],
+	// or [relArg2 and relArg1]
+	static boolean AreEntitiesSwapped(String arg1, String arg2, String relArg1, String relArg2) {
+		arg1 = Util.getLemma(arg1).replace("_", " ");
+		arg2 = Util.getLemma(arg2).replace("_", " ");
+
+		String[] thisArgs = new String[] { relArg1, relArg2 };
+
+		for (int i = 0; i < thisArgs.length; i++) {
+			thisArgs[i] = thisArgs[i].replace("-", " ");
+			thisArgs[i] = thisArgs[i].toLowerCase();
+			thisArgs[i] = Util.getLemma(thisArgs[i]);
+		}
+
+		// first check rigorously if both args match.
+
+		if (thisArgs[0].length() > 0 && thisArgs[1].length() > 0
+				&& ((arg1.contains(thisArgs[0]) && arg2.contains(thisArgs[1])))) {
+			return false;
+		} else if (thisArgs[0].length() > 0 && thisArgs[1].length() > 0
+				&& ((arg1.contains(thisArgs[1]) && arg2.contains(thisArgs[0])))) {
+			return true;
+		}
+
+		// Then check loosly.
+		else if (arg1.contains(thisArgs[0]) || arg2.contains(thisArgs[1])) {
+			return false;
+		}
+
+		else if (arg1.contains(thisArgs[1]) || arg2.contains(thisArgs[0])) {
+			return true;
+		}
+
+		System.out.println("not sure if entities are swapped, just assume they're not!" + arg1 + " " + arg2 + " "
+				+ relArg1 + " " + relArg2);
+		return false;
+	}
+
 	static void extractRelationsCCG(String fname, boolean longestRel) throws IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(root + fname + "_s.txt"));
@@ -534,9 +572,11 @@ public class LevyProcessing {
 		String line, line2;
 		PredicateArgumentExtractor prExt = new PredicateArgumentExtractor(null);
 		// PrintWriter op = new PrintWriter(new File(root + fname + "_rels_l8.txt"));
-		PrintWriter op = new PrintWriter(new File(root + fname + "_rels_v1_tok.txt"));
+		PrintWriter op = new PrintWriter(new File(root + fname + "_rels.txt"));
 		// PrintWriter opLDA = new PrintWriter(new File(root + fname + "_LDA" +
 		// DistrTyping.numTopics + "rels_l.txt"));
+
+		PrintWriter op_s2_types = new PrintWriter(new File(root + fname + "_s2_types.txt"));
 
 		while ((line = br.readLine()) != null) {
 			line2 = brDelim.readLine();
@@ -551,6 +591,7 @@ public class LevyProcessing {
 			Map<String, String> tokenToType2 = Util.getSimpleNERTypeSent(ssOrig[1]);
 
 			String rel1 = "", rel2 = "";
+			String rel1_types = "", rel2_types = "";
 			String[] ss2 = line2.split("\t");
 			String[] rel1Args = new String[] { ss2[0].split(",")[0].trim().toLowerCase(),
 					ss2[0].split(",")[2].trim().toLowerCase() };
@@ -589,6 +630,15 @@ public class LevyProcessing {
 
 				System.out.println(line + " " + lt1 + " " + lt2);
 
+				String t1 = lt1.split("::")[1].replace("_", " ");
+				String t2 = lt2.split("::")[1].replace("_", " ");
+
+				if (!AreEntitiesSwapped(rel1Args[0], rel1Args[1], rel1ss[1], rel1ss[2])) {
+					rel1_types = StringUtils.capitalize(t1) + "," + ss2[0].split(",")[1].trim() + "," + t2;
+				} else {
+					rel1_types = StringUtils.capitalize(t2) + "," + ss2[0].split(",")[1].trim() + "," + t1;
+				}
+
 				if (lemmas[1].equals("false")) {
 					// LDArel1 = rel1ss[0] + " " + rel1ss[1] + " " + rel1ss[2];// no change. e.g.:
 					// (write.1,write.2)
@@ -596,16 +646,18 @@ public class LevyProcessing {
 					// LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[1], rel1ss[2]);
 					rel1 = rel1ss[0] + " " + lt1 + " " + lt2;
 					if (addTokenIdxes) {
-						 rel1 += " " + rel1ss[6];
+						rel1 += " " + rel1ss[6];
 					}
 				} else {
 					// LDArel1 = rel1ss[0] + " " + rel1ss[2] + " " + rel1ss[1];
 					// LDAtypes1 = getLDATypesStr(rel1ss[0], rel1ss[2], rel1ss[1]);
 					rel1 = rel1ss[0] + " " + lt2 + " " + lt1;
 					if (addTokenIdxes) {
-						 rel1 += " " + rel1ss[6];
+						rel1 += " " + rel1ss[6];
 					}
 				}
+			} else {
+				rel1_types = "Thing," + ss2[0].split(",")[1].trim() + ",thing";
 			}
 
 			if (!rel2.equals("")) {
@@ -618,7 +670,16 @@ public class LevyProcessing {
 				String lt2 = Util.linkAndType(rel2ss[2], rel2ss[4].charAt(1) == 'E',
 						EntailGraphFactoryAggregator.typeScheme != TypeScheme.FIGER, tokenToType2);
 
+				String t1 = lt1.split("::")[1].replace("_", " ");
+				String t2 = lt2.split("::")[1].replace("_", " ");
+
 				System.out.println(line + " " + lt1 + " " + lt2);
+
+				if (!AreEntitiesSwapped(rel2Args[0], rel2Args[1], rel2ss[1], rel2ss[2])) {
+					rel2_types = StringUtils.capitalize(t1) + "," + ss2[1].split(",")[1].trim() + "," + t2;
+				} else {
+					rel2_types = StringUtils.capitalize(t2) + "," + ss2[1].split(",")[1].trim() + "," + t1;
+				}
 
 				if (lemmas[1].equals("false")) {
 					// LDArel2 = rel2ss[0] + " " + rel2ss[1] + " " + rel2ss[2];// no change. e.g.:
@@ -627,7 +688,7 @@ public class LevyProcessing {
 					// LDAtypes2 = getLDATypesStr(rel2ss[0], rel2ss[1], rel2ss[2]);
 					rel2 = rel2ss[0] + " " + lt1 + " " + lt2;
 					if (addTokenIdxes) {
-						 rel2 += " " + rel2ss[6];
+						rel2 += " " + rel2ss[6];
 					}
 				} else {
 					// LDArel2 = rel2ss[0] + " " + rel2ss[2] + " " + rel2ss[1];
@@ -637,15 +698,19 @@ public class LevyProcessing {
 						rel2 += " " + rel2ss[6];
 					}
 				}
+			} else {
+				rel2_types = "Thing," + ss2[1].split(",")[1].trim() + ",thing";
 			}
 
 			op.println(rel1 + "\t" + rel2 + "\t" + ss[2]);
+			op_s2_types.println(rel1_types + "\t" + rel2_types + "\t" + ss[2]);
 
 			// We'll assume that the LDAtypes are inherited only from the LHS of Levy (q)
 			// opLDA.println(LDArel1 + "\t" + LDArel2 + "\t" + ss[2] + "\t" + LDAtypes1);
 		}
 		br.close();
 		op.close();
+		op_s2_types.close();
 		brDelim.close();
 		// opLDA.close();
 		brOrig.close();
@@ -891,10 +956,10 @@ public class LevyProcessing {
 		// "all_new", "train_new", "dev_new",
 		// "test_new", "all_new_dir", "train_new_dir", "dev_new_dir", "test_new_dir"
 		// };//
-		// String[] fileNames = new String[] { "zeichner" };//
+		String[] fileNames = new String[] { "zeichner" };//
 
 		// String[] fileNames = new String[] { "all_comb", "dev", "test", "ber_all" };
-		String[] fileNames = new String[] { "dev", "test" };
+		// String[] fileNames = new String[] { "dev", "test" };
 		// String[] fileNames = new String[] { "ber_all" };
 
 		for (String fname : fileNames) {
@@ -969,19 +1034,17 @@ public class LevyProcessing {
 		br.close();
 
 	}
-	
-	
-	//make sure candEdntities is there (used to capitalize).
+
+	// make sure candEdntities is there (used to capitalize).
 	public static void main(String[] args) throws IOException {
 		ConstantsParsing.nbestParses = 10;
 		ConstantsParsing.accepteds = new String[] { "GE", "EG", "EE", "GG" };
 		ConstantsParsing.onlyNounOrNE = false;
 		ConstantsParsing.removebasicEvnetifEEModifer = false;
 		ConstantsAgg.updatedTyping = false; // TODO (be careful, not used in latest experiments)
+		ConstantsParsing.writeTokenizationInfo = false;
 		processLevy = true;
-		addTokenIdxes = true;//for BERT embeddings, we need to add token indices.
-		
-		
+		addTokenIdxes = ConstantsParsing.writeTokenizationInfo;// for BERT embeddings, we need to add token indices.
 
 		// countUniques(root + "re-annotated-full.tsv");
 		// makeCandEnts();

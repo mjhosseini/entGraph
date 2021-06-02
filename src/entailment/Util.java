@@ -19,6 +19,7 @@ import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -57,6 +58,8 @@ import com.ibm.icu.util.StringTokenizer;
 import ac.biu.nlp.normalization.BiuNormalizer;
 import constants.ConstantsAgg;
 import constants.ConstantsParsing;
+import edu.stanford.nlp.ie.util.RelationTriple;
+import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
@@ -64,8 +67,13 @@ import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.naturalli.NaturalLogicAnnotations;
+import edu.stanford.nlp.naturalli.OpenIE;
+import edu.stanford.nlp.naturalli.SentenceFragment;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.logging.RedwoodConfiguration;
 import entailment.linkingTyping.SimpleSpot;
@@ -78,6 +86,8 @@ public class Util {
 	public static StanfordCoreNLP stanPipeline;
 	public static StanfordCoreNLP stanPipelineSimple;// up to lemma
 	public static StanfordCoreNLP stanPipelineSimple2;// up to ssplit
+	public static StanfordCoreNLP stanPipelineOIE;// for openIe
+	public static Properties propsOIE;
 	static BiuNormalizer biuNormalizer;
 	// static String defaultEntTypesFName = "entTypes.txt";
 	// static String defaultGenTypesFName = "genTypes.txt";
@@ -163,6 +173,10 @@ public class Util {
 		// logger.setLevel(Level.OFF);
 		// System.out.println("here111");
 		stanPipelineSimple2 = new StanfordCoreNLP(props3);
+
+		propsOIE = new Properties();
+		propsOIE.put("annotators", "tokenize,ssplit,pos,lemma,depparse,natlog,openie");
+		stanPipelineOIE = new StanfordCoreNLP(propsOIE);
 
 		modals = new HashSet<String>();
 		String[] modalsList = new String[] { "can", "could", "may", "might", "must", "shall", "should", "will", "would",
@@ -1393,6 +1407,8 @@ public class Util {
 							int eventIdx, sentIdx;
 							String GorNE = null;
 							String predIdxes = null;
+							String arg1Idxes = null;
+							String arg2Idxes = null;
 
 							try {
 								StringTokenizer st = new StringTokenizer(prArgLine);
@@ -1404,6 +1420,8 @@ public class Util {
 								sentIdx = Integer.parseInt(st.nextToken());
 								if (tokenizationInfo) {
 									predIdxes = st.nextToken().replace(":", "_");
+									arg1Idxes = st.nextToken();
+									arg2Idxes = st.nextToken();
 								}
 								arg1 = simpleNormalize(arg1);
 								arg2 = simpleNormalize(arg2);
@@ -1441,7 +1459,9 @@ public class Util {
 							}
 
 							String prArg = "(" + pred + "::" + arg1 + "::" + arg2 + "::" + GorNE + "::" + sentIdx + "::"
-									+ eventIdx + (tokenizationInfo ? ("::" + predIdxes) : "") + ")";
+									+ eventIdx
+									+ (tokenizationInfo ? ("::" + predIdxes + "::" + arg1Idxes + "::" + arg2Idxes) : "")
+									+ ")";
 							curPrArgs.add(prArg);
 						}
 
@@ -1641,6 +1661,8 @@ public class Util {
 							int eventIdx, sentIdx;
 							String GorNE = null;
 							String predIdxes = null;
+							String arg1Idxes = null;
+							String arg2Idxes = null;
 
 							try {
 								StringTokenizer st = new StringTokenizer(prArgLine);
@@ -1652,6 +1674,8 @@ public class Util {
 								sentIdx = Integer.parseInt(st.nextToken());
 								if (tokenizationInfo) {
 									predIdxes = st.nextToken().replace(":", "_");
+									arg1Idxes = st.nextToken();
+									arg2Idxes = st.nextToken();
 								}
 								arg1 = simpleNormalize(arg1);
 								arg2 = simpleNormalize(arg2);
@@ -1702,7 +1726,7 @@ public class Util {
 							}
 
 							String prArg = "(" + pred + "::" + arg1 + "::" + arg2 + "::" + GorNE + "::" + sentIdx + "::"
-									+ eventIdx + (tokenizationInfo ? ("::" + predIdxes) : "") + ")";
+									+ eventIdx + (tokenizationInfo ? ("::" + predIdxes + "::" + arg1Idxes + "::" + arg2Idxes) : "") + ")";
 							curPrArgs.add(prArg);
 						}
 
@@ -2615,6 +2639,39 @@ public class Util {
 
 	}
 
+	static void run_oie(String text) {
+		// Annotate an example document.
+
+		Annotation doc = new Annotation(text);
+		stanPipelineOIE.annotate(doc);
+
+		// Loop over sentences in the document
+		int sentNo = 0;
+		for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
+			System.out.println("Sentence #" + ++sentNo + ": " + sentence.get(CoreAnnotations.TextAnnotation.class));
+
+			// Print SemanticGraph
+			// System.out.println(sentence.get(SemanticGraphCoreAnnotations.EnhancedDependenciesAnnotation.class).toString(SemanticGraph.OutputFormat.LIST));
+
+			// Get the OpenIE triples for the sentence
+			Collection<RelationTriple> triples = sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
+
+			// Print the triples
+			for (RelationTriple triple : triples) {
+				System.out.println(triple.confidence + "\t" + triple.subjectGloss() + "\t" + triple.relationGloss()
+						+ "\t" + triple.objectGloss());
+			}
+
+			// Alternately, to only run e.g., the clause splitter:
+			List<SentenceFragment> clauses = new OpenIE(propsOIE).clausesInSentence(sentence);
+			for (SentenceFragment clause : clauses) {
+				System.out.println(clause.parseTree.toString(SemanticGraph.OutputFormat.LIST));
+			}
+			System.out.println();
+		}
+
+	}
+
 	// public static void testCorefLines() throws IOException {
 	//
 	// BufferedReader br = new BufferedReader(new
@@ -2741,7 +2798,12 @@ public class Util {
 		// String[] ss = "2013-02-07".split("$");
 		// System.out.println(ss.length);
 		// System.out.println("here");
-		System.out.println(getLemma("Bugs are eaten by domesticated fowls. Bugs are eaten by fowls. Fowls eats Bugs."));
+		// System.out.println(getLemma("Bugs are eaten by domesticated fowls. Bugs are
+		// eaten by fowls. Fowls eats Bugs."));
+
+		// run_oie("Obama was born in Hawaii. He is our president.");
+		// run_oie("vancomycin is the treatment for infections.");
+
 		// HashMap<String, String> allPOSTags = getAllPOSTags("You will like Los
 		// Angeles");
 		// for (String s : allPOSTags.keySet()) {
@@ -2752,7 +2814,7 @@ public class Util {
 		// convertToPArgFormat(args);
 
 		// convertPredArgsToJsonUnsorted(args);
-		// convertPredArgsToJson(args);
+		convertPredArgsToJson(args);
 
 		// getRawText();
 

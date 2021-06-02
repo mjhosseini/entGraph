@@ -149,7 +149,11 @@ public class EntailGraphFactory implements Runnable {
 
 				} else if (!ConstantsAgg.rawExtractions) {
 					JsonObject jObj = jsonParser.parse(line).getAsJsonObject();
-					lineId = jObj.get("lineId").getAsInt();
+					try {
+						lineId = jObj.get("lineId").getAsInt();
+					} catch (Exception e) {
+						// TODO: remove this. I only added it to make the code compatible with an old OIE file.
+					}
 					if (ConstantsAgg.addTimeStampToFeats) {
 						datestamp = jObj.get("date").getAsString();
 						String[] ds_ss = datestamp.split(" ");

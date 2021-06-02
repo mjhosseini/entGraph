@@ -10,10 +10,8 @@ public class ConstantsGraphs {
 	// "../../python/gfiles/typedEntGrDirC_80per_NSBased_3_3thloc_t6_noGG_f20Thing/";
 	// public static String root =
 	// "../../python/gfiles/entgraphs_contextual_5e-4_1e-2_split_epair_fill_0_bsz64_onlytrain/";
-	// public static String root =
-	// "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
-	// public static String root =
-	// "../../python/gfiles/typedEntGrDirC_NSBased_3_3_thloc_t6_noGG_f20Thing/";
+//	public static String root = "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";
+//	public static String root = "../../python/gfiles/typedEntGrDirC_NSBased_3_3_thloc_t6_noGG_f20Thing/";
 	public static String root = "../../python/gfiles/entgraphs_newsC_contextual_5e-4_1e-2_bsz_64_d_250_4gpu_nr_.25_fill_0_bsz64/";
 	// public static String root =
 	// "../../python/gfiles/typedEntGrDirC_20per_NSBased_3_3thloc_t6_noGG_f20Thing/";
@@ -23,9 +21,9 @@ public class ConstantsGraphs {
 	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
 	// public static String suffix = "_tPropC_i4_1.5_.3_0_mr100_thr0.txt";
 	// public static String suffix = "_binc_lm1_.001_reg_1.5_1_.2_.01_i20.txt";
-	// public static PGraph.FeatName featName = PGraph.FeatName.BINC;
+//	public static PGraph.FeatName featName = PGraph.FeatName.BINC;
 	// public static PGraph.FeatName featName = PGraph.FeatName.Iter;
-	public static PGraph.FeatName featName = PGraph.FeatName.contextualized;
+	 public static PGraph.FeatName featName = PGraph.FeatName.contextualized;
 	// public static PGraph.FeatName featName = PGraph.FeatName.rw;
 	// public static String root =
 	// "../../python/gfiles/typedEntGrDir_aida_figer_3_3_f/";// ALL TACL EXPERIMENTS
@@ -60,6 +58,6 @@ public class ConstantsGraphs {
 	public static boolean removeStopPreds = true; // false for TACL experiments, True for NC.
 	public static boolean removeNegs = false;// might change in transitive
 	public static boolean rankFeats = false; // was false for TACL experiments and NC. If true, it uses 1/rank as the
-											// feat value.
-	public static int maxRank = 120; // -1 means no constraints // was -1 for TACL experiments. 100 for NC
+												// feat value.
+	public static int maxRank = -1; // -1 means no constraints // was -1 for TACL experiments. 100 for NC
 }
