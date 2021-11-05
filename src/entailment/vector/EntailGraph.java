@@ -49,6 +49,10 @@ public class EntailGraph extends SimpleEntailGraph {
 		}
 		return ret;
 	}
+	
+	public List<PredicateVector> getFullPvecs() {
+		return this.pvecs;
+	}
 
 	// deletes unnecessary objects!!!
 	void clean11() {
@@ -682,7 +686,7 @@ public class EntailGraph extends SimpleEntailGraph {
 			ii++;
 		}
 	}
-
+	
 	// For each predicate, what are the predicates that we should find
 	// similarity to.
 	// We compute some stats for predicate-pairs with nonzero similarity
