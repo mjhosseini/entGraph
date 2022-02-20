@@ -1,6 +1,7 @@
 package graph.selfTrain;
 
 import java.io.File;
+
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class ConfidentExampleMaker {
 
 	public static void main(String[] args) throws FileNotFoundException {
 
-		ConstantsGraphs.edgeThreshold = edgeThreshold;
+		ConstantsGraphs.edgeThreshold = (float)edgeThreshold;
 		ConstantsParsing.lemmatizePred = lemmatizePred;// It has been already lemmatized, so it shouldn't matter.
 		ConstantsGraphs.sortEdgesConfidenceBased = sortEdgesConfidenceBased;
 		

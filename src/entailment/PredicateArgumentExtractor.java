@@ -1697,90 +1697,8 @@ public class PredicateArgumentExtractor implements Runnable {
 		}
 
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
-		// String s = "Every European can travel freely within Europe.";
-		// String s = "Cleveland works at The White House.";
-		// String s = "Cleveland works at The White House.";
-		// String s = "The Avalanche were zero of four against the Coyotes.";
-		// String s = "Smith came up big and made one sprawling save after another.";
-		// String s = "Pluto’s moon is beautiful.";
-		// String s = "John gave Alice a book.";
-		// String s = "President Barack Obama intends to nominate B. Todd Jones as his
-		// choice to be the next leader of the U.S. Bureau of Alcohol, Tobacco, Firearms
-		// and Explosives. Cameron said the coalition's main aim was to stay ahead in
-		// the \\\"global race\\\" and namechecked India, China, Indonesia, Malaysia,
-		// Brazil, Mexico and Turkey as examples of countries that Britain would fall
-		// behind without reforms.";
-//		String s = "Cameron said the coalition's main aim was to stay ahead in the \"global race\" and namechecked India, China, Indonesia, Malaysia, Brazil, Mexico and Turkey as examples of countries that Britain would fall behind without reforms.";
-		String s = "Alex Smith died in home in London";
-		// Fowls eats Bugs.";
-		// String s = "The 25 countries that she placed under varying degrees of
-		// scrutiny.";
-		// String s = "As the global crisis gave way to the Great Recession, Canada’s
-		// economy suffered the consequences - mainly through a collapse in exports to
-		// the United States, which was in a deep recession. Canada lost output
-		// amounting to more than 4 per cent of real GDP and job losses equivalent to
-		// almost 2 1/2 per cent of our labour force. But an aggressive policy response
-		// helped to prevent a worse outcome. The Bank of Canada eased policy
-		// substantially in order to achieve its 2 per cent inflation target: it lowered
-		// the overnight policy rate to its lowest possible level (1/4 per cent) and
-		// took the unconventional step of making a conditional commitment to hold it
-		// there for more than a year ( Chart 5 ).";
-		// String s = "Michael agreed to a contract with the Cleveland Indians.";
-		//
-		// String s = "Where was Obama born?";
-		// String s = "What city is the birthplace of the author of Macbeth, and hosted
-		// Euro 2012?";
-		// String s = "A similar technique is almost impossible to apply to other corps,
-		// such as cotton.";
-		// ConstantsParsing.parseQuestions = true;
-		// String s = "How many people live in capital of Texas?";
-		// String s = "Who lives in capital of Texas?";
-		// String s = "William Kermode was born in Tasmania in what.";
-		// String s = "The ad shown during the Super Bowl for the next Jason Bourne
-		// movie was paid by Sam.";
-//		String s = "The Indians signed free agent center fielder Michael Bourn to a four-year, $48 million contract.";
-		// String s = "Barack Obama arrived at New York.";
-		// String s = "Directed by Meiert Avis ; written by John Galt ; director of
-		// photography , Danny Hiele_;_edited by David Codron ; production designer ,
-		// Philip Duffin ; produced by Michael Burns , Bic Tran , Marco Mehlitz and
-		// Michael Ohoven ; released by Lions Gate Films .";
-		// String s = "It's not clear when Crist might take the stand.";
-		// String s = "John tries to leave on Monday.";
-		// String s = "Two women having drinks and smoking cigarettes at the bar";
-		// String s = "Stay in contact with friends – in person. Put down the
-		// electronics and call a friend. Host a game night. Set “dates” for the winter
-		// to meet friends for dinner and a movie. Go shopping together. Meet for
-		// coffee. Take a social dance class with friends. Loneliness can also lead to
-		// depression. Having a highly active social life can decrease Alzheimer’s
-		// disease risk by a surprisingly high 70 percent, according to new findings
-		// published in the Journal of the International Neuropsychological Society. So
-		// put yourself out there and find a group to share and laugh with!";
-		// String s = "A man wearing glasses and a ragged costume is playing a Jaguar
-		// electric guitar and singing with the accompaniment of a drummer.";
-		// String s = "A man is walking and he is talking to his friend";
-		// String s = "The man is outdoors.";
-		// String s = "Man on bike with female standing on rear of back with arms around
-		// String s = "The man with blue shirt arrived in London.";
-		// his neck.";
-		// String s = "A woman in a black coat eats dinner while her dog looks on.";
-
-		// String s = "Tom managed to pass the exam.";
-		// String s = "Tom just visited Harry at home.";
-		// String s = "Tom visited Harry at home.";
-		// String s = "Tom laughed.";
-		// String s = "Tom gave up his dream";
-		// String s = "John ate a banana.";
-		// String s = "Chris sees Asha pay Boyang.";
-		// String s = "The cervical cancer vaccine , approved in 2006 , is recommended
-		// for girls around 11 or 12 .";
-		// String s = "what is the first book Sherlock Holmes appeared in?";
-		// String s = "what type of car does michael weston drive?";
-		// String s = "location_1 be combined with location_2";
-		// String s = "drug_1 should be taken by drug_2";
-		// String s = "disease is increasing in country";
-
+		String s = "Smith came up big and made one sprawling save after another.";
 		s = Util.preprocess(s);
-		// System.out.println("pre processed s: " + s);
 
 		String[] exPrss = prEx.extractPredArgsStrs(s, 0, true, acceptableGEStrs.contains("GG"), null);
 		String mainRels = exPrss[0];
@@ -1793,24 +1711,6 @@ public class PredicateArgumentExtractor implements Runnable {
 		PredicateArgumentExtractor prEx = new PredicateArgumentExtractor("");
 
 		TensePair[] tenseSentences = new TensePair[] {
-				// new TensePair("Past Simple","Obama received a gift."),
-				// new TensePair("Past Passive","A gift was received by Obama"),
-				// new TensePair("Present Simple","Obama receives a gift."),
-				// new TensePair("Future Simple","Obama will receive gift."),
-				// new TensePair("Past Perfect","Obama had received a gift."),
-				// new TensePair("Present Perfect","Obama has received a gift."),
-				// new TensePair("Future Perfect","Obama will have received a gift."),
-				// new TensePair("Future Passive", "A gift will be received by Obama"),
-				// new TensePair("Past Progressive","Obama was receiving a gift"),
-				// new TensePair("Present Progressive","Obama is receiving a gift."),
-				// new TensePair("Future Progressive","Obama will be receiving a gift."),
-				// new TensePair("Past Perfect Progressive","Obama had been receiving a gift"),
-				// new TensePair("Present Perfect Progressive","Obama has been receiving a
-				// gift"),
-				// new TensePair("Future Perfect Progressive", "Barack Obama will have been
-				// receiving a gift on Monday")
-				// new TensePair("Future Perfect Progressive", "John did not manage to arrive in
-				// London on Monday.") };
 				new TensePair("Future Perfect Progressive", "Barcelona did not manage to win the game.") };
 
 		for (TensePair s : tenseSentences) {
@@ -1822,8 +1722,6 @@ public class PredicateArgumentExtractor implements Runnable {
 			String mainRels = exPrss[0];
 			System.out.println(mainRels);
 			System.out.println("Finished parsing");
-			// System.out.println("pre-processed s: " + s);
-
 			// System.out.println(exPrss[4]);
 		}
 	}
