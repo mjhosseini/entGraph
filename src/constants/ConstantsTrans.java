@@ -19,16 +19,9 @@ public class ConstantsTrans {
 	public static boolean transitive = true;// otherwise, plain graph!
 	public static boolean confAvg = false;// must be false
 	public static int numTransThreads = 16;
-	// public static FeatName featName = FeatName.Iter;
-	// public static String suffix = "_tprop_lm1_.01_reg_1.5_.3.txt";
-	// public static String graphPostFix = "_" + transMethod +
-	// "_conf_noconfE_test"+".txt";
 	public static String graphPostFix = "_" + transMethod +"_conf_final_mr100_.02"+".txt";
-	// +"_conf_nodisc_noconfE_san"+".txt";
-	// public static double discountNegScoresHTL = 1;
 	static {
 		if (!checkFrgVio && transMethod == PGraph.TransitiveMethod.HTLFRG) {
-//			graphPostFix = "_HTL.txt";//"HTL_conf_nodisc_noconfE_san.txt";
 			graphPostFix = "_HTL_conf_final_mr100_.02"+".txt";
 		}
 
@@ -51,7 +44,7 @@ public class ConstantsTrans {
 //		ConstantsGraphs.removeEventEventModifers = true;
 //		ConstantsGraphs.removeNegs = true;
 		
-		//added on 16th Sep 2020, used to replicate results on NS BInc
+		//used to replicate results on NS BInc
 		ConstantsGraphs.removeEventEventModifers = false;//false for both NS, true for NC
 		ConstantsGraphs.removeNegs = false;//false for NS and NC
 		ConstantsGraphs.removeStopPreds = false;///false for both NS, true for NC
@@ -63,7 +56,6 @@ public class ConstantsTrans {
 //		ConstantsGraphs.edgeThreshold = 0;
 		
 		ConstantsGraphs.maxRank = 100;//-1 for NS, 100 for NC.
-		//added on 16th Sep 2020
 		
 		ConstantsGraphs.sortEdgesConfidenceBased = true;
 		if (ConstantsGraphs.sortEdgesConfidenceBased) {
