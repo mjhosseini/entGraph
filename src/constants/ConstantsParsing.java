@@ -25,5 +25,5 @@ public class ConstantsParsing {
 	public static boolean snli = false;//false for TACL experiments, true for NC. a few good hacks for the snli ds
 	public static boolean writeTokenizationInfo = true; // false for TACL experiments. true for the parsing used in the EMNLP-findings 2021 paper.
 	public static int nbestParses = 1;
-	public static boolean openIE = false;//openIE. Not implemented
+	public static boolean openIE = false;//openIE. Not implemented.
 }
