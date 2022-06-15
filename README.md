@@ -12,7 +12,7 @@ All the data can be downloaded from the project's codalab page https://worksheet
 
 ### Levy/Holt's Dataset
 
-The Levy/Holt's dataset along with its splits can be found in the LevyHoltDS folder. The folder contains dev (the development set), test (the test set), dev_dir (the directional portion of the dev set), and test_dir (the directional portion of the test set).
+The Levy/Holt's dataset along with its splits can be found in the LevyHoltDS folder. The folder contains dev (the development set), test (the test set), dev_dir (the directional portion of the dev set), and test_dir (the directional portion of the test set). Please note:
 
 - The directional portions contain example entailment pairs where <p entails q> and <q does not entail p>. A symmetric model will have the precision exactly .5 on these portions.
 
