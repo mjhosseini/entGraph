@@ -14,7 +14,7 @@ All the data can be downloaded from the project's codalab page https://worksheet
 
 The Levy/Holt's dataset along with its splits can be found in the LevyHoltDS folder. The folder contains dev (the development set), test (the test set), dev_dir (the directional portion of the dev set), and test_dir (the directional portion of the test set). Please note:
 
-- The format is: "triple_q[TAB]triple_p[TAB]label", where label (either TRUE or FALSE) means whether triple_p entails triple_q (TRUE) or not (FALSE). **Please note the order of the triples, which is reverse similar to the Levy's 2016 dataset, i.e., p=>q, where p is the right-hand side predicate and q is the left-hand-side predicate.**
+- The format is: "triple_q[TAB]triple_p[TAB]label", where label (either TRUE or FALSE) means whether triple_p entails triple_q (TRUE) or not (FALSE). **Please note that the order of the triples is reverse, similar to the Levy's 2016 dataset, i.e., p=>q, where p is the right-hand side predicate and q is the left-hand-side predicate.**
 
 - The directional portions contain example entailment pairs where (p ENTAILS q) and (q DOES NOT ENTAIL p). A symmetric model will have the precision exactly .5 on these portions.
 
