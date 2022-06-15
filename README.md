@@ -14,7 +14,12 @@ All the data can be downloaded from the project's codalab page https://worksheet
 
 The Levy/Holt's dataset along with its splits can be found in the LevyHoltDS folder. The folder contains dev (the development set), test (the test set), dev_dir (the directional portion of the dev set), and test_dir (the directional portion of the test set). Please note:
 
-- The format is: "triple_q[TAB]triple_p[TAB]label", where label (either TRUE or FALSE) means whether triple_p entails triple_q (TRUE) or not (FALSE). **Please note that the order of the triples is reverse, similar to the Levy's 2016 dataset, i.e., p=>q, where p is the right-hand side predicate and q is the left-hand-side predicate.**
+- The format is: "triple_q[TAB]triple_p[TAB]label", where label (either TRUE or FALSE) means whether triple_p entails triple_q (TRUE) or not (FALSE). **Please note that the order of the triples is reverse, similar to the Levy and Dagan (2016) dataset, i.e., p=>q, where p is the right-hand side predicate and q is the left-hand-side predicate.**
+
+- Each partition has 3 files, e.g., the dev partition contains:
+-- dev_s.txt: The human readable format: "arg1,q,arg2[TAB]arg1,p,arg2[TAB]label". The order is p=>q as mentioned above. The argument order of the second triple is sometimes the reverse order of the first triple.
+-- dev.txt. The original file, where each line has: "type1, q, arg2[TAB]arg1, p, arg2[TAB]label. This is again based on evy and Dagan (2016) dataset.
+-- dev_rels.txt: The parsed relations based on a CCG parser: "CCG_q arg1:type1 arg2:type2[TAB]CCG_p arg1:type1 arg2:type2". The order is p=>q as mentioned above. The argument order of the second triple is sometimes the reverse order of the first triple. The types are based on FIGER first level types.
 
 - The directional portions contain example entailment pairs where (p ENTAILS q) and (q DOES NOT ENTAIL p). A symmetric model will have the precision exactly .5 on these portions.
 
