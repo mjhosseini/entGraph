@@ -1,0 +1,630 @@
+Ephedrine,is used in,Medicine	Ephedrine,is widely used in,Medicine	True
+Ephedrine,is widely used in,Medicine	Ephedrine,is used in,Medicine	False
+Kanamycin,is useful in,infections	Kanamycin,kills,infections	True
+Kanamycin,kills,infections	Kanamycin,is useful in,infections	False
+Norway,shows,a piedmont	A piedmont,is common to,Norway	True
+A piedmont,is common to,Norway	Norway,shows,a piedmont	False
+Cadmium,is released into,The Air	Cadmium,is found in,The Air	False
+Cadmium,is found in,The Air	Cadmium,is released into,The Air	True
+Acyclovir,is the treatment for,infections	Acyclovir,kills,infections	True
+Acyclovir,kills,infections	Acyclovir,is the treatment for,infections	False
+Radon,is released into,The Air	Radon,is found in,The Air	False
+Radon,is found in,The Air	Radon,is released into,The Air	True
+Clothing,was made of,Leather	Leather,is used in,Clothing	False
+Leather,is used in,Clothing	Clothing,was made of,Leather	True
+Oxygen,is found in,Water	Water,is a combination of,Oxygen	True
+Water,is a combination of,Oxygen	Oxygen,is found in,Water	False
+Mandarin,is the language of,China	Mandarin,is officially recognized in,China	False
+Mandarin,is officially recognized in,China	Mandarin,is the language of,China	True
+Lanolin,is used in,Medicine	Lanolin,has been used extensively in,Medicine	True
+Lanolin,has been used extensively in,Medicine	Lanolin,is used in,Medicine	False
+Air,is made up of,Nitrogen	Nitrogen,is found in,The Air	False
+Nitrogen,is found in,The Air	Air,is made up of,Nitrogen	True
+Fsh,causes,ovulation	Fsh,have been used to induce,ovulation	True
+Fsh,have been used to induce,ovulation	Fsh,causes,ovulation	False
+Geologists,interprets,Laws	Geologists,began to study,the laws	False
+Geologists,began to study,the laws	Geologists,interprets,Laws	True
+The Air,tainted with,pestilence	Pestilence,is transmitted by,Air	False
+Pestilence,is transmitted by,Air	The Air,tainted with,pestilence	True
+Crockett,was killed at,the alamo	Crockett,died at,the alamo	False
+Crockett,died at,the alamo	Crockett,was killed at,the alamo	True
+Human interferon,can be used to fight,infections	Human interferon,kills,infections	True
+Human interferon,kills,infections	Human interferon,can be used to fight,infections	False
+Amon,was worshiped in,Egypt	Amon,became the god of,Egypt	True
+Amon,became the god of,Egypt	Amon,was worshiped in,Egypt	False
+That great commonwealth,promotes,Peace	That great commonwealth,sought to promote,Peace	False
+That great commonwealth,sought to promote,Peace	That great commonwealth,promotes,Peace	True
+Virus,is often characterized by,gingivitis	Gingivitis,is caused by,a virus	False
+Gingivitis,is caused by,a virus	Virus,is often characterized by,gingivitis	True
+Hops,is used to make,Beer	Hops,are added to,the beer	True
+Hops,are added to,the beer	Hops,is used to make,Beer	False
+The Air,is made up of,fifth oxygen	Fifth oxygen,is found in,The Air	False
+Fifth oxygen,is found in,The Air	The Air,is made up of,fifth oxygen	True
+General Lee,is a politician from,Texas	General Lee,had served in,Texas	False
+General Lee,had served in,Texas	General Lee,is a politician from,Texas	True
+Jones,is a politician from,Texas	Jones,was elected president of,Texas	True
+Jones,was elected president of,Texas	Jones,is a politician from,Texas	False
+Halevy,resided in,Paris	Halevy,was a native of,Paris	True
+Halevy,was a native of,Paris	Halevy,resided in,Paris	False
+Plato,is associated with,Communism	Plato,advocates,Communism	True
+Plato,advocates,Communism	Plato,is associated with,Communism	False
+Pyelonephritis,requires,Antibiotics	Pyelonephritis,should be treated with,Antibiotics	False
+Pyelonephritis,should be treated with,Antibiotics	Pyelonephritis,requires,Antibiotics	True
+Steroids,is used in,Medicine	Steroids,are widely used in,Medicine	True
+Steroids,are widely used in,Medicine	Steroids,is used in,Medicine	False
+President Nixon,announced on,Television	President Nixon,appeared on,Television	False
+President Nixon,appeared on,Television	President Nixon,announced on,Television	True
+Tamoxifen,kills,Cancer	Tamoxifen,reduced the incidence of,Cancer	False
+Tamoxifen,reduced the incidence of,Cancer	Tamoxifen,kills,Cancer	True
+Cattle,eats,Hay	Cattle,are fed on,Hay	True
+Cattle,are fed on,Hay	Cattle,eats,Hay	False
+The artist,was awarded,a medal	The medal,is awarded annually to,the artist	True
+The medal,is awarded annually to,the artist	The artist,was awarded,a medal	False
+Testosterone,increases,Libido	Testosterone,can increase,Libido	False
+Testosterone,can increase,Libido	Testosterone,increases,Libido	True
+Sulfur,is found in,The Air	Sulfur,combines with oxygen in,The Air	True
+Sulfur,combines with oxygen in,The Air	Sulfur,is found in,The Air	False
+Free oxygen,is found in,The Air	The Air,must contain,free oxygen	True
+The Air,must contain,free oxygen	Free oxygen,is found in,The Air	False
+Cleveland,committed,Troops	Cleveland,also used,the troops	True
+Cleveland,also used,the troops	Cleveland,committed,Troops	False
+Eczema,can cause,a rash	Eczema,appears as,a rash	True
+Eczema,appears as,a rash	Eczema,can cause,a rash	False
+Islam,is the religion in,Malaysia	Malaysia,believes in,Islam	False
+Malaysia,believes in,Islam	Islam,is the religion in,Malaysia	True
+Leonidas,fought,the persians	Leonidas,repulsed,the persians	True
+Leonidas,repulsed,the persians	Leonidas,fought,the persians	False
+Mohammedanism,is the creed of,India	Mohammedanism,is predominant in,India	False
+Mohammedanism,is predominant in,India	Mohammedanism,is the creed of,India	True
+Zinc,is permanent in,Air	Zinc,is found in,The Air	False
+Zinc,is found in,The Air	Zinc,is permanent in,Air	True
+The communists,is associated with,Communism	The communists,want,Communism	True
+The communists,want,Communism	The communists,is associated with,Communism	False
+Rats,give me,the creeps	The creeps,is spread by,Rats	False
+The creeps,is spread by,Rats	Rats,give me,the creeps	True
+George Bush,is a politician from,Texas	George Bush,was the governor of,Texas	True
+George Bush,was the governor of,Texas	George Bush,is a politician from,Texas	False
+Truman,approached,Stalin	Truman,met,Stalin	False
+Truman,met,Stalin	Truman,approached,Stalin	True
+Linen,is used in,Clothing	The clothing,should be of,Linen	True
+The clothing,should be of,Linen	Linen,is used in,Clothing	False
+Smetana,began to compose,the opera	Smetana,composed,an opera	True
+Smetana,composed,an opera	Smetana,began to compose,the opera	False
+Magicians,appeared on,Television	Magicians,perform on,Television	True
+Magicians,perform on,Television	Magicians,appeared on,Television	False
+These vines,would produce,Wine	These vines,is used to make,Wine	True
+These vines,is used to make,Wine	These vines,would produce,Wine	False
+The gentle deer,eats,Crops	The gentle deer,nibbled at,the crops	True
+The gentle deer,nibbled at,the crops	The gentle deer,eats,Crops	False
+A policeman,will get,a medal	A policeman,was awarded,a medal	False
+A policeman,was awarded,a medal	A policeman,will get,a medal	True
+Lyme disease,starts with,a rash	Lyme disease,can cause,a rash	False
+Lyme disease,can cause,a rash	Lyme disease,starts with,a rash	True
+The cult,is predominant in,India	The cult,is widespread in,India	False
+The cult,is widespread in,India	The cult,is predominant in,India	True
+Trachoma,is caused by,bacteria	Trachoma,is probably caused by,bacteria	False
+Trachoma,is probably caused by,bacteria	Trachoma,is caused by,bacteria	True
+Kazakhstan,is bounded on the east by,China	Kazakhstan,is a neighbor of,China	False
+Kazakhstan,is a neighbor of,China	Kazakhstan,is bounded on the east by,China	True
+Reagan,is the governor of,California	Reagan,served as governor of,California	False
+Reagan,served as governor of,California	Reagan,is the governor of,California	True
+Works,is common to,America	Works,have appeared in,America	False
+Works,have appeared in,America	Works,is common to,America	True
+Livestock,eats,Crops	The crops,are fed to,Livestock	True
+The crops,are fed to,Livestock	Livestock,eats,Crops	False
+The north pole,was discovered by,Peary	Peary,reached,the north pole	False
+Peary,reached,the north pole	The north pole,was discovered by,Peary	True
+Richards,became governor of,Texas	Richards,is a politician from,Texas	False
+Richards,is a politician from,Texas	Richards,became governor of,Texas	True
+The vedanta,is predominant in,India	The vedanta,is the philosophy of,India	False
+The vedanta,is the philosophy of,India	The vedanta,is predominant in,India	True
+Browne,resided in,Paris	Browne,was a student in,Paris	True
+Browne,was a student in,Paris	Browne,resided in,Paris	False
+China,exports,Rice	China,sends,more rice	True
+China,sends,more rice	China,exports,Rice	False
+Rye,is used to make,Bread	The bread,was composed of,Rye	True
+The bread,was composed of,Rye	Rye,is used to make,Bread	False
+Sheepskin,is used in,Clothing	The clothing,consists mainly of,sheepskin	True
+The clothing,consists mainly of,sheepskin	Sheepskin,is used in,Clothing	False
+Emissaries,preached,Communism	Emissaries,is associated with,Communism	False
+Emissaries,is associated with,Communism	Emissaries,preached,Communism	True
+Julian,fought,the persians	Julian,led against,the persians	True
+Julian,led against,the persians	Julian,fought,the persians	False
+The Air,gives you,Rheumatism	Rheumatism,is transmitted by,Air	False
+Rheumatism,is transmitted by,Air	The Air,gives you,Rheumatism	True
+That commonwealth,sought to promote,Peace	That commonwealth,promotes,Peace	True
+That commonwealth,promotes,Peace	That commonwealth,sought to promote,Peace	False
+Athena,was worshiped in,Athens	Athena,was the goddess of,Athens	True
+Athena,was the goddess of,Athens	Athena,was worshiped in,Athens	False
+Singers,were singing on,Television	Singers,appeared on,Television	False
+Singers,appeared on,Television	Singers,were singing on,Television	True
+Students,is associated with,Communism	Communism,was strengthened by,students	True
+Communism,was strengthened by,students	Students,is associated with,Communism	False
+The black death,decimated,Europe	The black death,struck,Europe	False
+The black death,struck,Europe	The black death,decimated,Europe	True
+The pharisees,have organized,Communism	The pharisees,is associated with,Communism	False
+The pharisees,is associated with,Communism	The pharisees,have organized,Communism	True
+Bangladesh,is a neighbor of,India	Bangladesh,is surrounded by,India	True
+Bangladesh,is surrounded by,India	Bangladesh,is a neighbor of,India	False
+Keynes,was the prophet of,capitalism	Keynes,is associated with,capitalism	False
+Keynes,is associated with,capitalism	Keynes,was the prophet of,capitalism	True
+Islam,entered,India	India,believes in,Islam	True
+India,believes in,Islam	Islam,entered,India	False
+The young birds,are fed with,Insects	The young birds,eats,Insects	False
+The young birds,eats,Insects	The young birds,are fed with,Insects	True
+The Pacific,borders,Russia	Russia,expanded to,The Pacific	True
+Russia,expanded to,The Pacific	The Pacific,borders,Russia	False
+The first men,walked on,the moon	The first men,to land on,the moon	False
+The first men,to land on,the moon	The first men,walked on,the moon	True
+Whiskey,contains,Alcohol	Whiskey,consists chiefly of,Alcohol	True
+Whiskey,consists chiefly of,Alcohol	Whiskey,contains,Alcohol	False
+Upton Sinclair,is the governor of,California	Upton Sinclair,ran for governor of,California	False
+Upton Sinclair,ran for governor of,California	Upton Sinclair,is the governor of,California	True
+The scale insects,eats,Crops	The scale insects,do damage to,Crops	False
+The scale insects,do damage to,Crops	The scale insects,eats,Crops	True
+Colorado Springs,is packed with,Tourists	Colorado Springs,attracts numbers of,Tourists	False
+Colorado Springs,attracts numbers of,Tourists	Colorado Springs,is packed with,Tourists	True
+Epidemic typhus,has,a rash	Epidemic typhus,can cause,a rash	False
+Epidemic typhus,can cause,a rash	Epidemic typhus,has,a rash	True
+Peary,had discovered,the north pole	Peary,reached,the north pole	False
+Peary,reached,the north pole	Peary,had discovered,the north pole	True
+The deer,eats,Crops	The deer,nibbled at,the crops	True
+The deer,nibbled at,the crops	The deer,eats,Crops	False
+The jews,is associated with,capitalism	The jews,were the creators of,capitalism	True
+The jews,were the creators of,capitalism	The jews,is associated with,capitalism	False
+Granules,is used in,Medicine	Granules,are frequently encountered in,Medicines	True
+Granules,are frequently encountered in,Medicines	Granules,is used in,Medicine	False
+Paderewski,played,the piano	Paderewski,sat and played,the piano	True
+Paderewski,sat and played,the piano	Paderewski,played,the piano	False
+This feeder,eats,Carrion	Carrion,are devoured by,this feeder	True
+Carrion,are devoured by,this feeder	This feeder,eats,Carrion	False
+Castro,appeared on,Television	Castro,spoke on,Television	True
+Castro,spoke on,Television	Castro,appeared on,Television	False
+Scarlet fever,can cause,a rash	Scarlet fever,is characterized by,a rash	True
+Scarlet fever,is characterized by,a rash	Scarlet fever,can cause,a rash	False
+Frances wright,preached,Communism	Frances wright,is associated with,Communism	False
+Frances wright,is associated with,Communism	Frances wright,preached,Communism	True
+Presley,first appeared on,Television	Presley,appeared on,Television	False
+Presley,appeared on,Television	Presley,first appeared on,Television	True
+Tamoxifen,kills,Cancer	Tamoxifen,has been used to treat,Cancer	False
+Tamoxifen,has been used to treat,Cancer	Tamoxifen,kills,Cancer	True
+Vancomycin,is the treatment for,infections	Vancomycin,kills,infections	False
+Vancomycin,kills,infections	Vancomycin,is the treatment for,infections	True
+Engels,is associated with,Communism	Engels,defined,Communism	True
+Engels,defined,Communism	Engels,is associated with,Communism	False
+Gonadotropins,are required for,ovulation	Gonadotropins,causes,ovulation	False
+Gonadotropins,causes,ovulation	Gonadotropins,are required for,ovulation	True
+Infectious disease,requires,Antibiotics	Antibiotics,would abolish,infectious disease	True
+Antibiotics,would abolish,infectious disease	Infectious disease,requires,Antibiotics	False
+The leprosy,prevailed extensively in,Europe	The leprosy,decimated,Europe	True
+The leprosy,decimated,Europe	The leprosy,prevailed extensively in,Europe	False
+Babylon,was the city of,marduk	Marduk,was worshiped in,Babylon	False
+Marduk,was worshiped in,Babylon	Babylon,was the city of,marduk	True
+Nixon,announced on,Television	Nixon,appeared on,Television	False
+Nixon,appeared on,Television	Nixon,announced on,Television	True
+Britain,is separated by,a strait	A strait,surrounds,Britain	True
+A strait,surrounds,Britain	Britain,is separated by,a strait	False
+Stalin,was the leader of,the soviet union	Stalin,represented,the soviet union	False
+Stalin,represented,the soviet union	Stalin,was the leader of,the soviet union	True
+The crops,were destroyed by,Grasshoppers	Grasshoppers,eats,Crops	True
+Grasshoppers,eats,Crops	The crops,were destroyed by,Grasshoppers	False
+India,exported tons of,Rice	India,exports,Rice	False
+India,exports,Rice	India,exported tons of,Rice	True
+The states,exports,Sugar	The states,exported pounds of,Sugar	True
+The states,exported pounds of,Sugar	The states,exports,Sugar	False
+Richards,was elected governor of,Texas	Richards,is a politician from,Texas	False
+Richards,is a politician from,Texas	Richards,was elected governor of,Texas	True
+Bruin,eats,Corn	Bruin,was fond of,Corn	True
+Bruin,was fond of,Corn	Bruin,eats,Corn	False
+Saudi Arabia,believes in,Islam	Saudi Arabia,is the home of,Islam	True
+Saudi Arabia,is the home of,Islam	Saudi Arabia,believes in,Islam	False
+Roosevelt,made peace with,Britain	Roosevelt,supported,Britain	True
+Roosevelt,supported,Britain	Roosevelt,made peace with,Britain	False
+India,believes in,Islam	Islam,was brought to,India	False
+Islam,was brought to,India	India,believes in,Islam	True
+Claudio monteverdi,was the composer of,Opera	Claudio monteverdi,composed,an opera	False
+Claudio monteverdi,composed,an opera	Claudio monteverdi,was the composer of,Opera	True
+Astronauts,walked on,the moon	Astronauts,had landed on,the moon	False
+Astronauts,had landed on,the moon	Astronauts,walked on,the moon	True
+Yellow fever,is transferred by,mosquitoes	Yellow fever,is transmitted by the bite of,a mosquito	True
+Yellow fever,is transmitted by the bite of,a mosquito	Yellow fever,is transferred by,mosquitoes	False
+The Constitution,was a effort of,legislators	Legislators,drafted,The Constitution	True
+Legislators,drafted,The Constitution	The Constitution,was a effort of,legislators	False
+This infection,may be treated with,a resistant penicillin	A resistant penicillin,kills,infections	True
+A resistant penicillin,kills,infections	This infection,may be treated with,a resistant penicillin	False
+Jupiter,controls,Thunder	Jupiter,was the god of,Thunder	True
+Jupiter,was the god of,Thunder	Jupiter,controls,Thunder	False
+Respighi,has composed,Operas	Respighi,composed,an opera	False
+Respighi,composed,an opera	Respighi,has composed,Operas	True
+Smith,is associated with,Communism	Smith,introduced an element of,Communism	True
+Smith,introduced an element of,Communism	Smith,is associated with,Communism	False
+A coin,was issued in,Rome	A coin,was used in,Rome	False
+A coin,was used in,Rome	A coin,was issued in,Rome	True
+Augustus,fought,the romans	The romans,were exasperated against,Augustus	False
+The romans,were exasperated against,Augustus	Augustus,fought,the romans	True
+Smith,is associated with,Communism	Smith,attempted to establish,Communism	True
+Smith,attempted to establish,Communism	Smith,is associated with,Communism	False
+Beer,can be made from,Maize	Maize,is used to make,Beer	True
+Maize,is used to make,Beer	Beer,can be made from,Maize	False
+Cheese,is imported from,France	France,produces,Cheese	False
+France,produces,Cheese	Cheese,is imported from,France	True
+Bruce,was the manager of,capitalism	Bruce,is associated with,capitalism	False
+Bruce,is associated with,capitalism	Bruce,was the manager of,capitalism	True
+Galileo,was imprisoned by,The Church	Galileo,was persecuted by,The Church	False
+Galileo,was persecuted by,The Church	Galileo,was imprisoned by,The Church	True
+Leprosy,decimated,Europe	Leprosy,became widespread in,Europe	False
+Leprosy,became widespread in,Europe	Leprosy,decimated,Europe	True
+Peary,carried to,the north pole	Peary,reached,the north pole	False
+Peary,reached,the north pole	Peary,carried to,the north pole	True
+Debussy,was born and died in,Paris	Debussy,resided in,Paris	False
+Debussy,resided in,Paris	Debussy,was born and died in,Paris	True
+The only democrat,was a representative from,Texas	The only democrat,is a politician from,Texas	False
+The only democrat,is a politician from,Texas	The only democrat,was a representative from,Texas	True
+The sun god,was worshiped in,Egypt	The sun god,ruled in,Egypt	True
+The sun god,ruled in,Egypt	The sun god,was worshiped in,Egypt	False
+Hemoglobin,is contained within,the blood cells	Hemoglobin,is essential for,blood cells	True
+Hemoglobin,is essential for,blood cells	Hemoglobin,is contained within,the blood cells	False
+Polk,negotiated with,Britain	Polk,made peace with,Britain	True
+Polk,made peace with,Britain	Polk,negotiated with,Britain	False
+These lymphomas,are responsive to,Chemotherapy	These lymphomas,requires,Chemotherapy	True
+These lymphomas,requires,Chemotherapy	These lymphomas,are responsive to,Chemotherapy	False
+Common alcohol,is known as,Alcohol	Common alcohol,contains,Alcohol	False
+Common alcohol,contains,Alcohol	Common alcohol,is known as,Alcohol	True
+This enzyme,is essential for,blood cells	This enzyme,is found in,the blood cells	False
+This enzyme,is found in,the blood cells	This enzyme,is essential for,blood cells	True
+The hog,eats,Corn	The hog,is fed with,Corn	True
+The hog,is fed with,Corn	The hog,eats,Corn	False
+The beijing dialect,is officially recognized in,China	The beijing dialect,are found in the regions of,China	False
+The beijing dialect,are found in the regions of,China	The beijing dialect,is officially recognized in,China	True
+This brahms,had worked upon,a symphony	This brahms,composed,a symphony	True
+This brahms,composed,a symphony	This brahms,had worked upon,a symphony	False
+Grippe,is caused by,bacteria	Grippe,are believed to be caused by,bacteria	False
+Grippe,are believed to be caused by,bacteria	Grippe,is caused by,bacteria	True
+Events,is common to,America	Events,had occurred in,America	False
+Events,had occurred in,America	Events,is common to,America	True
+The chlorate,is extensively used in,Medicine	The chlorate,is used in,Medicine	False
+The chlorate,is used in,Medicine	The chlorate,is extensively used in,Medicine	True
+Haydn,wrote a set of,symphonies	Haydn,composed,a symphony	False
+Haydn,composed,a symphony	Haydn,wrote a set of,symphonies	True
+The jew,is associated with,capitalism	The jew,was the representative of,capitalism	True
+The jew,was the representative of,capitalism	The jew,is associated with,capitalism	False
+This preparation,soon became,a medicine	This preparation,is used in,Medicine	False
+This preparation,is used in,Medicine	This preparation,soon became,a medicine	True
+Reagan,was elected governor of,California	Reagan,is the governor of,California	True
+Reagan,is the governor of,California	Reagan,was elected governor of,California	False
+Mulberries,are preferred by,these birds	Mulberries,is consumed by,Birds	False
+Mulberries,is consumed by,Birds	Mulberries,are preferred by,these birds	True
+Nigeria,is the exporter of,Oil	Nigeria,exports,Oil	False
+Nigeria,exports,Oil	Nigeria,is the exporter of,Oil	True
+Picasso,developed,cubism	Cubism,was started by,Picasso	True
+Cubism,was started by,Picasso	Picasso,developed,cubism	False
+Mandarin,is spoken in,China	Mandarin,is officially recognized in,China	True
+Mandarin,is officially recognized in,China	Mandarin,is spoken in,China	False
+Alcohol,is made from,Sugar Cane	Sugar Cane,is used to make,Alcohol	False
+Sugar Cane,is used to make,Alcohol	Alcohol,is made from,Sugar Cane	True
+Eisenhower,is associated with,Communism	Eisenhower,sponsors,Communism	True
+Eisenhower,sponsors,Communism	Eisenhower,is associated with,Communism	False
+Lincoln,was stricken down by,the assassin	The assassin,assassinated,Lincoln	True
+The assassin,assassinated,Lincoln	Lincoln,was stricken down by,the assassin	False
+The cholera,was conveyed in,The Air	The cholera,is transmitted by,Air	True
+The cholera,is transmitted by,Air	The cholera,was conveyed in,The Air	False
+Relapsing fever,decimated,Europe	Relapsing fever,has prevailed in,Europe	False
+Relapsing fever,has prevailed in,Europe	Relapsing fever,decimated,Europe	True
+Chronic gonorrhea,is caused by,bacteria	Chronic gonorrhea,means the presence of,bacteria	False
+Chronic gonorrhea,means the presence of,bacteria	Chronic gonorrhea,is caused by,bacteria	True
+Mites,eats,Crops	Mites,are pests of,Crops	True
+Mites,are pests of,Crops	Mites,eats,Crops	False
+Representative bartlett,appeared on,Television	Representative bartlett,was interviewed on,Television	True
+Representative bartlett,was interviewed on,Television	Representative bartlett,appeared on,Television	False
+Chloramphenicol,kills,infections	Chloramphenicol,has been used in the treatment of,infections	False
+Chloramphenicol,has been used in the treatment of,infections	Chloramphenicol,kills,infections	True
+Roosevelt,led during,the great depression	Roosevelt,was president during,the great depression	True
+Roosevelt,was president during,the great depression	Roosevelt,led during,the great depression	False
+The crops,had been devoured by,Grasshoppers	Grasshoppers,eats,Crops	False
+Grasshoppers,eats,Crops	The crops,had been devoured by,Grasshoppers	True
+Rossini,composed,an opera	Rossini,had composed,the opera	True
+Rossini,had composed,the opera	Rossini,composed,an opera	False
+President Johnson,announced on,Television	President Johnson,appeared on,Television	False
+President Johnson,appeared on,Television	President Johnson,announced on,Television	True
+The fur seals,lives in,The Sea	The fur seals,swim in,The Sea	False
+The fur seals,swim in,The Sea	The fur seals,lives in,The Sea	True
+Elements,may have reached,America	Elements,is common to,America	True
+Elements,is common to,America	Elements,may have reached,America	False
+Yellow fever,is transferred by,mosquitoes	Yellow fever,is carried by,mosquitoes	False
+Yellow fever,is carried by,mosquitoes	Yellow fever,is transferred by,mosquitoes	True
+A sore throat,is caused by,a virus	A sore throat,might be caused by,the virus	False
+A sore throat,might be caused by,the virus	A sore throat,is caused by,a virus	True
+Racine,would have written,Hamlet	Racine,wrote,Hamlet	True
+Racine,wrote,Hamlet	Racine,would have written,Hamlet	False
+Poland,exports,Coal	Poland,exported tons of,Coal	True
+Poland,exported tons of,Coal	Poland,exports,Coal	False
+The experimenter,interprets,Laws	The experimenter,must have a knowledge of,the laws	False
+The experimenter,must have a knowledge of,the laws	The experimenter,interprets,Laws	True
+Gutenberg,developed,the printing press	The printing press,was invented by,Gutenberg	True
+The printing press,was invented by,Gutenberg	Gutenberg,developed,the printing press	False
+The triassic,saw the rise of,the dinosaurs	The dinosaurs,appeared in,the triassic	False
+The dinosaurs,appeared in,the triassic	The triassic,saw the rise of,the dinosaurs	True
+Compounds,is used in,Medicine	Compounds,are widely used in,Medicine	True
+Compounds,are widely used in,Medicine	Compounds,is used in,Medicine	False
+Isoniazid,may be used for,infection	Isoniazid,kills,infections	True
+Isoniazid,kills,infections	Isoniazid,may be used for,infection	False
+Viruses,isolated from,natural colds	Natural colds,is caused by,a virus	False
+Natural colds,is caused by,a virus	Viruses,isolated from,natural colds	True
+Sweden,did not join,the european union	Sweden,is not part of,the european union	False
+Sweden,is not part of,the european union	Sweden,did not join,the european union	True
+Eisenhower,committed,Troops	Eisenhower,responded by sending,Troops	True
+Eisenhower,responded by sending,Troops	Eisenhower,committed,Troops	False
+Thailand,exported tons of,Rice	Thailand,exports,Rice	False
+Thailand,exports,Rice	Thailand,exported tons of,Rice	True
+Glaciers,is common to,Norway	Glaciers,are found in,Norway	False
+Glaciers,are found in,Norway	Glaciers,is common to,Norway	True
+The incidence,is highest in,America	The incidence,is common to,America	False
+The incidence,is common to,America	The incidence,is highest in,America	True
+Proudhon,is associated with,capitalism	Proudhon,indicts,capitalism	True
+Proudhon,indicts,capitalism	Proudhon,is associated with,capitalism	False
+The north pole,was found by,Ross	Ross,reached,the north pole	False
+Ross,reached,the north pole	The north pole,was found by,Ross	True
+Sweet cider,contains,Alcohol	Sweet cider,may have,Alcohol	False
+Sweet cider,may have,Alcohol	Sweet cider,contains,Alcohol	True
+Tasmania,is the state of,Australia	Tasmania,is part of,Australia	False
+Tasmania,is part of,Australia	Tasmania,is the state of,Australia	True
+Galileo,was condemned by,The Church	Galileo,was persecuted by,The Church	True
+Galileo,was persecuted by,The Church	Galileo,was condemned by,The Church	False
+Stravinsky,resided in,Paris	Stravinsky,moved to,Paris	True
+Stravinsky,moved to,Paris	Stravinsky,resided in,Paris	False
+Picasso,remained in,Paris	Picasso,resided in,Paris	False
+Picasso,resided in,Paris	Picasso,remained in,Paris	True
+Metronidazole,is the treatment for,infection	Metronidazole,kills,infections	True
+Metronidazole,kills,infections	Metronidazole,is the treatment for,infection	False
+Water,is a combination of,hydrogen	Hydrogen,is found in,Water	False
+Hydrogen,is found in,Water	Water,is a combination of,hydrogen	True
+Detroit,was bombed by,the allies	Allies,made an attack upon,Detroit	False
+Allies,made an attack upon,Detroit	Detroit,was bombed by,the allies	True
+Hemoglobin,is essential for,blood cells	Blood cells,consist of,hemoglobin	False
+Blood cells,consist of,hemoglobin	Hemoglobin,is essential for,blood cells	True
+Shintoism,is the religion of,Japan	Shintoism,is predominant in,Japan	False
+Shintoism,is predominant in,Japan	Shintoism,is the religion of,Japan	True
+Orpiment,is much used as,a medicine	Orpiment,is used in,Medicine	False
+Orpiment,is used in,Medicine	Orpiment,is much used as,a medicine	True
+Switzerland,produces,Cheese	Cheese,is the product of,Switzerland	True
+Cheese,is the product of,Switzerland	Switzerland,produces,Cheese	False
+Geysers,is common to,New Zealand	Geysers,occur in,New Zealand	False
+Geysers,occur in,New Zealand	Geysers,is common to,New Zealand	True
+Cancers,may be treated by,the following salve	The following salve,kills,Cancer	True
+The following salve,kills,Cancer	Cancers,may be treated by,the following salve	False
+The rash,was due to,rubella	Rubella,can cause,a rash	False
+Rubella,can cause,a rash	The rash,was due to,rubella	True
+Clothing,was made from,hides	Hides,is used in,Clothing	False
+Hides,is used in,Clothing	Clothing,was made from,hides	True
+Some cheese,is imported from,The Netherlands	The Netherlands,produces,Cheese	False
+The Netherlands,produces,Cheese	Some cheese,is imported from,The Netherlands	True
+India,is the home of,Brahmanism	Brahmanism,is predominant in,India	False
+Brahmanism,is predominant in,India	India,is the home of,Brahmanism	True
+Tunisians,confessed on,Television	Tunisians,appeared on,Television	False
+Tunisians,appeared on,Television	Tunisians,confessed on,Television	True
+Progesterone,facilitates,ovulation	Progesterone,causes,ovulation	True
+Progesterone,causes,ovulation	Progesterone,facilitates,ovulation	False
+Athena,was the patroness of,Athens	Athena,was worshiped in,Athens	False
+Athena,was worshiped in,Athens	Athena,was the patroness of,Athens	True
+The democrat,is a politician from,Texas	The democrat,was a representative from,Texas	True
+The democrat,was a representative from,Texas	The democrat,is a politician from,Texas	False
+The triassic,saw the rise of,the dinosaurs	Dinosaurs,evolved during,the triassic	False
+Dinosaurs,evolved during,the triassic	The triassic,saw the rise of,the dinosaurs	True
+The Secretary,interprets,Laws	The laws,have been approved by,The Secretary	True
+The laws,have been approved by,The Secretary	The Secretary,interprets,Laws	False
+Donizetti,composed,an opera	Donizetti,had composed,Operas	True
+Donizetti,had composed,Operas	Donizetti,composed,an opera	False
+Thailand,is the exporter of,Rice	Thailand,exports,Rice	False
+Thailand,exports,Rice	Thailand,is the exporter of,Rice	True
+Stanford,was elected governor of,California	Stanford,is the governor of,California	False
+Stanford,is the governor of,California	Stanford,was elected governor of,California	True
+Maize,is used to make,Bread	Maize,may be made into,Bread	False
+Maize,may be made into,Bread	Maize,is used to make,Bread	True
+Young tunisians,appeared on,Television	Young tunisians,confessed on,Television	True
+Young tunisians,confessed on,Television	Young tunisians,appeared on,Television	False
+Germany,declared and invaded,Belgium	Germany,declared war on,Belgium	False
+Germany,declared war on,Belgium	Germany,declared and invaded,Belgium	True
+Ascension day,is the day after,Easter	Ascension day,is the end of,Easter	False
+Ascension day,is the end of,Easter	Ascension day,is the day after,Easter	True
+A writer,rebuilds,tissue	A writer,will make,a tissue	False
+A writer,will make,a tissue	A writer,rebuilds,tissue	True
+A zoster,is seen with,a rash	A zoster,can cause,a rash	False
+A zoster,can cause,a rash	A zoster,is seen with,a rash	True
+Lymphoma,should be treated with,Chemotherapy	Lymphoma,requires,Chemotherapy	True
+Lymphoma,requires,Chemotherapy	Lymphoma,should be treated with,Chemotherapy	False
+General taylor,was in command in,Florida	General taylor,is the governor of,Florida	True
+General taylor,is the governor of,Florida	General taylor,was in command in,Florida	False
+Typhus fever,is bred in,The Air	Typhus fever,is transmitted by,Air	False
+Typhus fever,is transmitted by,Air	Typhus fever,is bred in,The Air	True
+This cholinesterase,is essential for,blood cells	This cholinesterase,is found in,blood cells	False
+This cholinesterase,is found in,blood cells	This cholinesterase,is essential for,blood cells	True
+Women,rebuilds,tissue	Women,tend to have,tissue	False
+Women,tend to have,tissue	Women,rebuilds,tissue	True
+Kennedy,committed,Troops	Kennedy,deployed,Troops	True
+Kennedy,deployed,Troops	Kennedy,committed,Troops	False
+Keynes,is associated with,capitalism	Keynes,was the engineer of,capitalism	True
+Keynes,was the engineer of,capitalism	Keynes,is associated with,capitalism	False
+Gide,looked towards,Communism	Gide,is associated with,Communism	True
+Gide,is associated with,Communism	Gide,looked towards,Communism	False
+Cattle,eats,Corn	Corn,is fed to,Cattle	True
+Corn,is fed to,Cattle	Cattle,eats,Corn	False
+Hogs,eats,Corn	Corn,was fed to,hogs	True
+Corn,was fed to,hogs	Hogs,eats,Corn	False
+Paris,is packed with,Tourists	Tourists,visit,Paris	False
+Tourists,visit,Paris	Paris,is packed with,Tourists	True
+Vedanta,is predominant in,India	Vedanta,is the philosophy of,India	True
+Vedanta,is the philosophy of,India	Vedanta,is predominant in,India	False
+The bread,was a mixture of,Rye	Rye,is used to make,Bread	False
+Rye,is used to make,Bread	The bread,was a mixture of,Rye	True
+Switzerland,produces,Cheese	Switzerland,is an exporter of,Cheese	True
+Switzerland,is an exporter of,Cheese	Switzerland,produces,Cheese	False
+Representatives,interprets,Laws	The laws,are discussed by,Representatives	False
+The laws,are discussed by,Representatives	Representatives,interprets,Laws	True
+Maize,was introduced from,America	America,exports,Maize	False
+America,exports,Maize	Maize,was introduced from,America	True
+Clothing,was made from,Buckskin	Buckskin,is used in,Clothing	False
+Buckskin,is used in,Clothing	Clothing,was made from,Buckskin	True
+Cheese,can only be made in,Switzerland	Switzerland,produces,Cheese	False
+Switzerland,produces,Cheese	Cheese,can only be made in,Switzerland	True
+China,sent,Rice	China,exports,Rice	True
+China,exports,Rice	China,sent,Rice	False
+Capitalism,produced by,the owners	The owners,is associated with,capitalism	False
+The owners,is associated with,capitalism	Capitalism,produced by,the owners	True
+Mononucleosis,is probably caused by,a virus	Mononucleosis,is caused by,a virus	True
+Mononucleosis,is caused by,a virus	Mononucleosis,is probably caused by,a virus	False
+The first aeroplane,was built by,the wright brothers	The first aeroplane,was invented by,the wright brothers	True
+The first aeroplane,was invented by,the wright brothers	The first aeroplane,was built by,the wright brothers	False
+Professional magicians,perform on,Television	Professional magicians,appeared on,Television	False
+Professional magicians,appeared on,Television	Professional magicians,perform on,Television	True
+A form,is common to,America	A form,is found in,America	False
+A form,is found in,America	A form,is common to,America	True
+Picasso,moved to,Paris	Picasso,resided in,Paris	False
+Picasso,resided in,Paris	Picasso,moved to,Paris	True
+The athanasius,was worshiped in,Egypt	The athanasius,was seated on the throne of,Egypt	True
+The athanasius,was seated on the throne of,Egypt	The athanasius,was worshiped in,Egypt	False
+Geysers,is common to,New Zealand	Geysers,are found in,New Zealand	False
+Geysers,are found in,New Zealand	Geysers,is common to,New Zealand	True
+Joan Miro,was born in,Barcelona	Joan Miro,lived in,Barcelona	False
+Joan Miro,lived in,Barcelona	Joan Miro,was born in,Barcelona	True
+Nelson,died at,Trafalgar	Nelson,was killed at the battle of,Trafalgar	True
+Nelson,was killed at the battle of,Trafalgar	Nelson,died at,Trafalgar	False
+Another officer,has flown to,the north pole	Another officer,reached,the north pole	False
+Another officer,reached,the north pole	Another officer,has flown to,the north pole	True
+Hcg,causes,ovulation	Hcg,is used to stimulate,ovulation	True
+Hcg,is used to stimulate,ovulation	Hcg,causes,ovulation	False
+Islam,is the religion of,Malaysia	Malaysia,believes in,Islam	False
+Malaysia,believes in,Islam	Islam,is the religion of,Malaysia	True
+Monteverdi,composed,an opera	Monteverdi,was the composer of,Opera	True
+Monteverdi,was the composer of,Opera	Monteverdi,composed,an opera	False
+The iraq,believes in,Islam	Islam,burst forth in,the iraq	True
+Islam,burst forth in,the iraq	The iraq,believes in,Islam	False
+India,is the birthplace of,Hinduism	Hinduism,is predominant in,India	False
+Hinduism,is predominant in,India	India,is the birthplace of,Hinduism	True
+Britain,possesses in,the indian ocean	The indian ocean,surrounds,Britain	True
+The indian ocean,surrounds,Britain	Britain,possesses in,the indian ocean	False
+Bartlett,was interviewed on,Television	Bartlett,appeared on,Television	False
+Bartlett,appeared on,Television	Bartlett,was interviewed on,Television	True
+The north pole,was discovered by,Ross	Ross,reached,the north pole	False
+Ross,reached,the north pole	The north pole,was discovered by,Ross	True
+Both medals,would go to,Physicists	Physicists,was awarded,a medal	False
+Physicists,was awarded,a medal	Both medals,would go to,Physicists	True
+Medals,were won by,Athletes	Athletes,was awarded,a medal	False
+Athletes,was awarded,a medal	Medals,were won by,Athletes	True
+Medals,were won by,competitors	Competitors,was awarded,a medal	False
+Competitors,was awarded,a medal	Medals,were won by,competitors	True
+The heavenly artisans,prepared to make,the clothes	The heavenly artisans,makes,Clothes	False
+The heavenly artisans,makes,Clothes	The heavenly artisans,prepared to make,the clothes	True
+Infections,may be treated with,chloramphenicol	Chloramphenicol,kills,infections	True
+Chloramphenicol,kills,infections	Infections,may be treated with,chloramphenicol	False
+Several antibiotics,have been used to treat,infections	Several antibiotics,kills,infections	True
+Several antibiotics,kills,infections	Several antibiotics,have been used to treat,infections	False
+The cattle,must eat,Hay	The cattle,eats,Hay	False
+The cattle,eats,Hay	The cattle,must eat,Hay	True
+Delegates,met to draft,a constitution	Delegates,drafted,The Constitution	True
+Delegates,drafted,The Constitution	Delegates,met to draft,a constitution	False
+The russian successes,is associated with,Communism	Communism,made by,the russian successes	True
+Communism,made by,the russian successes	The russian successes,is associated with,Communism	False
+Plato,is associated with,Communism	Plato,demanded,Communism	True
+Plato,demanded,Communism	Plato,is associated with,Communism	False
+An american runner,seems to have won,a medal	An american runner,was awarded,a medal	False
+An american runner,was awarded,a medal	An american runner,seems to have won,a medal	True
+Hemoglobin,is essential for,blood cells	Hemoglobin,is found in,blood cells	False
+Hemoglobin,is found in,blood cells	Hemoglobin,is essential for,blood cells	True
+Carpenters,makes,Furniture	The furniture,was made by,Carpenters	True
+The furniture,was made by,Carpenters	Carpenters,makes,Furniture	False
+Athene,was the goddess of,Athens	Athene,was worshiped in,Athens	False
+Athene,was worshiped in,Athens	Athene,was the goddess of,Athens	True
+Pyrrhus,fought,the romans	Pyrrhus,won over,the romans	True
+Pyrrhus,won over,the romans	Pyrrhus,fought,the romans	False
+The black death,decimated,Europe	The black death,killed in,Europe	False
+The black death,killed in,Europe	The black death,decimated,Europe	True
+The south pole,was discovered by,Amundsen	Amundsen,reached,the south pole	False
+Amundsen,reached,the south pole	The south pole,was discovered by,Amundsen	True
+Copernicus,was born in,Poland	Copernicus,was a native of,Poland	True
+Copernicus,was a native of,Poland	Copernicus,was born in,Poland	False
+Stella,was born and died at,Paris	Stella,resided in,Paris	False
+Stella,resided in,Paris	Stella,was born and died at,Paris	True
+Rubella,can cause,a rash	The rash,was caused by,rubella	True
+The rash,was caused by,rubella	Rubella,can cause,a rash	False
+Islam,entered,China	China,believes in,Islam	True
+China,believes in,Islam	Islam,entered,China	False
+Sibelius,composed,a symphony	Sibelius,has composed,symphonies	True
+Sibelius,has composed,symphonies	Sibelius,composed,a symphony	False
+Rumania,entered the war against,Germany	Rumania,declared war on,Germany	True
+Rumania,declared war on,Germany	Rumania,entered the war against,Germany	False
+Ciprofloxacin,is useful for,infections	Ciprofloxacin,kills,infections	True
+Ciprofloxacin,kills,infections	Ciprofloxacin,is useful for,infections	False
+Valencia,is packed with,Tourists	Valencia,is popular with,Tourists	False
+Valencia,is popular with,Tourists	Valencia,is packed with,Tourists	True
+Hemoglobin,is essential for,blood cells	A blood cell,contains molecules of,hemoglobin	False
+A blood cell,contains molecules of,hemoglobin	Hemoglobin,is essential for,blood cells	True
+Islam,was introduced into,Yemen	Yemen,believes in,Islam	True
+Yemen,believes in,Islam	Islam,was introduced into,Yemen	False
+Cook,had discovered,the north pole	Cook,reached,the north pole	False
+Cook,reached,the north pole	Cook,had discovered,the north pole	True
+Lice,can transmit,trench fever	Trench fever,is transferred by,lice	True
+Trench fever,is transferred by,lice	Lice,can transmit,trench fever	False
+The black death,swept across,Europe	The black death,decimated,Europe	True
+The black death,decimated,Europe	The black death,swept across,Europe	False
+Fluoride,is essential for,Bones	Fluoride,is present in,the bones	False
+Fluoride,is present in,the bones	Fluoride,is essential for,Bones	True
+Virus,is detected in,nasopharyngeal carcinoma	Nasopharyngeal carcinoma,is caused by,a virus	True
+Nasopharyngeal carcinoma,is caused by,a virus	Virus,is detected in,nasopharyngeal carcinoma	False
+An ox,eats,Hay	An ox,came to eat,the hay	True
+An ox,came to eat,the hay	An ox,eats,Hay	False
+Audubon,remained in,Paris	Audubon,resided in,Paris	False
+Audubon,resided in,Paris	Audubon,remained in,Paris	True
+Pyrrhus,fought,the romans	Pyrrhus,was beaten by,the romans	True
+Pyrrhus,was beaten by,the romans	Pyrrhus,fought,the romans	False
+Picasso,resided in,Paris	Picasso,settled in,Paris	True
+Picasso,settled in,Paris	Picasso,resided in,Paris	False
+Air,consists primarily of,Nitrogen	Nitrogen,is found in,The Air	False
+Nitrogen,is found in,The Air	Air,consists primarily of,Nitrogen	True
+Iodine,kills,Cancer	That cancer,should be treated with,iodine	False
+That cancer,should be treated with,iodine	Iodine,kills,Cancer	True
+Bubonic plague,arrived in,Europe	Bubonic plague,decimated,Europe	True
+Bubonic plague,decimated,Europe	Bubonic plague,arrived in,Europe	False
+Bombs,are masses of,Lava	Lava,is used in,Bombs	False
+Lava,is used in,Bombs	Bombs,are masses of,Lava	True
+The water,is higher in,chlorine	Chlorine,is found in,Water	False
+Chlorine,is found in,Water	The water,is higher in,chlorine	True
+Marduk,was the deity of,Babylon	Marduk,was worshiped in,Babylon	False
+Marduk,was worshiped in,Babylon	Marduk,was the deity of,Babylon	True
+Jove,controls,Thunder	Jove,wields,the thunder	True
+Jove,wields,the thunder	Jove,controls,Thunder	False
+Ross,reached,the north pole	The north pole,was located by,Ross	True
+The north pole,was located by,Ross	Ross,reached,the north pole	False
+Goodyear,was awarded,a medal	Goodyear,however obtained,the medal	False
+Goodyear,however obtained,the medal	Goodyear,was awarded,a medal	True
+Horses,eats,Hay	Horses,prefer,Hay	True
+Horses,prefer,Hay	Horses,eats,Hay	False
+Zinc,is permanent in,The Air	Zinc,is found in,The Air	False
+Zinc,is found in,The Air	Zinc,is permanent in,The Air	True
+Bennett,composed,a symphony	Bennett,could have written,a symphony	False
+Bennett,could have written,a symphony	Bennett,composed,a symphony	True
+Lincoln,issued a call for,Troops	Lincoln,committed,Troops	True
+Lincoln,committed,Troops	Lincoln,issued a call for,Troops	False
+Rye,is grown for,Bread	Rye,is used to make,Bread	False
+Rye,is used to make,Bread	Rye,is grown for,Bread	True
+East Pakistan,was surrounded by,India	East Pakistan,is a neighbor of,India	False
+East Pakistan,is a neighbor of,India	East Pakistan,was surrounded by,India	True
+Lenin,defined,Communism	Lenin,is associated with,Communism	False
+Lenin,is associated with,Communism	Lenin,defined,Communism	True
+Antibiotics,may be prescribed for,Bronchitis	Bronchitis,requires,Antibiotics	True
+Bronchitis,requires,Antibiotics	Antibiotics,may be prescribed for,Bronchitis	False
+Burma,exported tons of,Rice	Burma,exports,Rice	False
+Burma,exports,Rice	Burma,exported tons of,Rice	True
+Cattle,eats,Crops	Cattle,fattened on,Crops	True
+Cattle,fattened on,Crops	Cattle,eats,Crops	False
+Acyclovir,has been fighting,infections	Acyclovir,kills,infections	True
+Acyclovir,kills,infections	Acyclovir,has been fighting,infections	False
+Washington,is packed with,Politicians	Washington,is overrun with,Politicians	True
+Washington,is overrun with,Politicians	Washington,is packed with,Politicians	False
+Ernst,moved to,Paris	Ernst,resided in,Paris	False
+Ernst,resided in,Paris	Ernst,moved to,Paris	True
+Bushnell,is the governor of,Florida	Bushnell,ruling in,Florida	False
+Bushnell,ruling in,Florida	Bushnell,is the governor of,Florida	True
+Santa Claus,reached,the north pole	Santa Claus,dwelt at,the north pole	True
+Santa Claus,dwelt at,the north pole	Santa Claus,reached,the north pole	False
+Q fever,begins with,Headache	Q fever,can cause,a headache	False
+Q fever,can cause,a headache	Q fever,begins with,Headache	True
