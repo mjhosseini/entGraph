@@ -10,6 +10,15 @@ This codebase contains the implementation for the following paper:
 
 All the data can be downloaded from the project's codalab page https://worksheets.codalab.org/worksheets/0x8684ad8e95e24c4d80074278bce37ba4/, except specified otherwise.
 
+### Levy/Holt's Dataset
+
+The Levy/Holt's dataset along with its splits can be found in the LevyHoltDS folder. The folder contains dev (the development set), test (the test set), dev_dir (the directional portion of the dev set), and test_dir (the directional portion of the test set).
+
+- The directional portions contain example entailment pairs where <p entails q> and <q does not entail p>. A symmetric model will have the precision exactly .5 on these portions.
+
+- The experiments for this paper are only run on dev and test. Please see our 2021 paper for experiments on the directional portions: [[paper]](https://aclanthology.org/2021.findings-emnlp.238.pdf)
+  
+- The code below will download the dataset separately. So you can run the code without using the LevyHoltDS directory.
 
 ### How to Run the Code
 
